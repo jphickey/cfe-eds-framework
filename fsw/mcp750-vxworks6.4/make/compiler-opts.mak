@@ -29,6 +29,7 @@ $(FIXED_WIND_BASE)/target/src/config \
 $(FIXED_WIND_BASE)/target/src/drv \
 $(FIXED_WIND_BASE)/target/config/comps/src \
 $(FIXED_WIND_BASE)/target/config/comps/src/dosfs2 \
+$(FIXED_WIND_BASE)/target/config/mcp750 
 
 SYSINCS = $(VXINCDIR:%=-I%)
 
