@@ -7,10 +7,12 @@
 **      All rights reserved. This software(cFE) was created at NASA Goddard 
 **      Space Flight Center pursuant to government contracts.
 **
-**      This is governed by the NASA Open Source Agreement and may be used, 
-**      distributed and modified only pursuant to the terms of that agreement.
+**      This software may be used only pursuant to a United States government 
+**      sponsored project and the United States government may not be charged
+**      for use thereof. 
 **
 **
+
 ** Purpose:
 **   cFE BSP main entry point.
 **
@@ -363,8 +365,6 @@ int main(int argc, char *argv[])
    */
    CFE_ES_Main(reset_type, reset_subtype, 1, (uint8 *)CFE_ES_NONVOL_STARTUP_FILE); 
 
-   OS_printf("PSP: Back from CFE_ES_Main\n");
-
    /*
    ** Re-enable Signals to current thread so that
    ** any signals will interrupt in this threads context
@@ -411,6 +411,7 @@ int main(int argc, char *argv[])
 **  Return:
 **    (none)
 */
+
 void CFE_PSP_SigintHandler (void)
 {
       OS_printf("\nCFE_PSP: Control-C Captured - Exiting cFE\n");

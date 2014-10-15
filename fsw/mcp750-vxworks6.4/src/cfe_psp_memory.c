@@ -3,14 +3,14 @@
 **
 **      MCP750 vxWorks 6.x Version
 **
-**      Copyright (c) 2004-2012, United States government as represented by the 
+**      Copyright (c) 2004-2006, United States government as represented by the 
 **      administrator of the National Aeronautics Space Administration.  
 **      All rights reserved. This software(cFE) was created at NASA Goddard 
 **      Space Flight Center pursuant to government contracts.
 **
-**      This is governed by the NASA Open Source Agreement and may be used, 
-**      distributed and modified only pursuant to the terms of that agreement.
-** 
+**      This software may be used only pursuant to a United States government 
+**      sponsored project and the United States government may not be charged
+**      for use thereof. 
 **
 **
 ** Purpose:

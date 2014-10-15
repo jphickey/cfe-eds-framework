@@ -2,7 +2,7 @@
 ** File   :	cfe_psp_memtab.c
 **
 **
-**      Copyright (c) 2004-2012, United States government as represented by the 
+**      Copyright (c) 2004-2006, United States government as represented by the 
 **      administrator of the National Aeronautics Space Administration.  
 **      All rights reserved. 
 **

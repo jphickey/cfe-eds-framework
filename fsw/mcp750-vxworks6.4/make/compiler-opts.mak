@@ -29,7 +29,6 @@ $(FIXED_WIND_BASE)/target/src/config \
 $(FIXED_WIND_BASE)/target/src/drv \
 $(FIXED_WIND_BASE)/target/config/comps/src \
 $(FIXED_WIND_BASE)/target/config/comps/src/dosfs2 \
-$(FIXED_WIND_BASE)/target/config/mcp750 
 
 SYSINCS = $(VXINCDIR:%=-I%)
 
@@ -47,7 +46,7 @@ ENDIAN_DEFS=-D_EB -DENDIAN=_EB -DSOFTWARE_BIG_BIT_ORDER
 ##
 ## Compiler Architecture Switches
 ## 
-ARCH_OPTS = -mcpu=750 -mstrict-align -fno-builtin -fvolatile
+ARCH_OPTS = -mcpu=750 -mstrict-align -fno-builtin
 
 ##
 ## Application specific compiler switches 

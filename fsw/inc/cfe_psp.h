@@ -1,14 +1,14 @@
 /*
 **  File Name:  cfe_psp.h
 **
-**      Copyright (c) 2004-2012, United States government as represented by the
+**      Copyright (c) 2004-2006, United States government as represented by the
 **      administrator of the National Aeronautics Space Administration.
 **      All rights reserved. This software(cFE) was created at NASA's Goddard
 **      Space Flight Center pursuant to government contracts.
 **
-**      This is governed by the NASA Open Source Agreement and may be used,
-**      distributed and modified only pursuant to the terms of that agreement.
-**
+**      This software may be used only pursuant to a United States government
+**      sponsored project and the United States government may not be charged
+**      for use thereof.
 **
 **  Author:  A. Cudmore
 **
@@ -21,7 +21,7 @@
 **            some of these routines could migrate into the OS AL.
 **
 **  $Log: cfe_psp.h  $
-**  Revision 1.3 2009/07/29 13:04:46EDT acudmore 
+**  Revision 1.3 2009/07/29 12:04:46GMT-05:00 acudmore 
 **  Added Bank parameter to EEPROM Power up/down and EEPROM write enable/disable functions.
 **  Revision 1.2 2009/07/22 17:34:10EDT acudmore 
 **  Added new watchdog API

@@ -23,7 +23,11 @@ LDFLAGS = -m32 -Wl,-export-dynamic
 ##
 ## Libraries to link in
 ##
-LIBS =  -lm -lstdc++ -lpthread -ldl -lrt
+LIBS =  -lm -lpthread -ldl -lrt
+##
+## Uncomment the following line to link in C++ standard libs
+## LIBS += -lstdc++
+## 
 
 ##
 ## cFE Core Link Rule
