@@ -29,7 +29,6 @@ Target_PspConfigData GLOBAL_PSP_CONFIGDATA =
 {
       .PSP_WatchdogMin = CFE_PSP_WATCHDOG_MIN,
       .PSP_WatchdogMax = CFE_PSP_WATCHDOG_MAX,
-      .PSP_DriverList = TARGET_IODRIVER_PRELOADLISTDATA,
       .PSP_MemTableSize = CFE_PSP_MEM_TABLE_SIZE,
       .PSP_MemoryTable = CFE_PSP_MemoryTable,
 

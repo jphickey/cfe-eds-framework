@@ -54,6 +54,7 @@
  * of the PSP to be completely CFE-independent.
  */
 #include <target_config.h>
+#include "cfe_psp_module.h"
 
 #define CFE_ES_MAIN_FUNCTION        (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
 #define CFE_TIME_1HZ_FUNCTION       (*GLOBAL_CONFIGDATA.CfeConfig->System1HzISR)
@@ -80,6 +81,14 @@ extern void CFE_TIME_Local1HzISR(void);
 
 #define CFE_ES_MAIN_FUNCTION     CFE_ES_Main
 #define CFE_TIME_1HZ_FUNCTION    CFE_TIME_Local1HzISR
+
+/*
+ * The classic build does not support static modules,
+ * so stub the ModuleInit() function out right here
+ */
+void CFE_PSP_ModuleInit(void)
+{
+}
 
 #endif
 
@@ -327,6 +336,13 @@ int main(int argc, char *argv[])
    ** Initialize the OS API data structures
    */
    OS_API_Init();
+
+   /*
+   ** Initialize the statically linked modules (if any)
+   ** This is only applicable to CMake build - classic build
+   ** does not have the logic to selectively include/exclude modules
+   */
+   CFE_PSP_ModuleInit();
      
    sleep(1);
 

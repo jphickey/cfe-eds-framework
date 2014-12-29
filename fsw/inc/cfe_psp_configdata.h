@@ -21,14 +21,6 @@
 /* cfe_psp.h is required for the definition of CFE_PSP_MemTable_t */
 #include <cfe_psp.h>
 
-typedef const struct CFE_PSP_IoDriverApi CFE_PSP_IoDriverApi_t;
-
-typedef const struct
-{
-   const char *Name;
-   CFE_PSP_IoDriverApi_t *Api;
-} CFE_PSP_IoDriverLoadEntry_t;
-
 /*
 ** PSP software version record
 ** (replaces PSP_*_VERSION macros)
@@ -53,7 +45,6 @@ typedef const struct
 {
    uint32 PSP_WatchdogMin;                /**< PSP Minimum watchdog in milliseconds */
    uint32 PSP_WatchdogMax;                /**< PSP Maximum watchdog in milliseconds */
-   CFE_PSP_IoDriverLoadEntry_t *PSP_DriverList; /**< List of drivers (API structures) statically linked into PSP */
    uint32 PSP_MemTableSize;               /**< Size of PSP memory table */
    CFE_PSP_MemTable_t *PSP_MemoryTable;   /**< Pointer to PSP memory table (forward reference) */
 
@@ -81,12 +72,6 @@ typedef const struct
  * Allows the actual instantiation to be done outside this module
  */
 extern Target_PspConfigData GLOBAL_PSP_CONFIGDATA;
-
-/**
- * Extern reference to driver preload list.
- * Allows the actual instantiation to be done outside this module
- */
-extern CFE_PSP_IoDriverLoadEntry_t TARGET_IODRIVER_PRELOADLISTDATA[];
 
 /**
  * Extern reference to the psp memory table

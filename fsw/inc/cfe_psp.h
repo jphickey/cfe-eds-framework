@@ -70,6 +70,8 @@
 #define CFE_PSP_INVALID_MEM_SIZE            (-25)
 #define CFE_PSP_INVALID_MEM_ATTR            (-26)
 #define CFE_PSP_ERROR_NOT_IMPLEMENTED       (-27)
+#define CFE_PSP_INVALID_MODULE_NAME         (-28)
+#define CFE_PSP_INVALID_MODULE_ID           (-29)
 
 
 
