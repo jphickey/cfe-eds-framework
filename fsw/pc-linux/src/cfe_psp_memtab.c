@@ -58,7 +58,7 @@ CFE_PSP_MemTable_t CFE_PSP_MemoryTable[CFE_PSP_MEM_TABLE_SIZE] =
 /*
 ** Simulate EEPROM by mapping in a file
 */
-int32 CFE_PSP_SetupEEPROM(uint32 EEPROMSize, uint32 *EEPROMAddress)
+int32 CFE_PSP_SetupEEPROM(uint32 EEPROMSize, cpuaddr *EEPROMAddress)
 {
    
    int          FileDescriptor;
@@ -133,7 +133,7 @@ int32 CFE_PSP_SetupEEPROM(uint32 EEPROMSize, uint32 *EEPROMAddress)
    /*
    ** Return the address to the caller
    */
-   *EEPROMAddress = (uint32)DataBuffer; 
+   *EEPROMAddress = (cpuaddr)DataBuffer;
    
    return(0);
 }

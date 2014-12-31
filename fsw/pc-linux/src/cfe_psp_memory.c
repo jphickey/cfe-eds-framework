@@ -417,7 +417,7 @@ void CFE_PSP_DeleteResetArea(void)
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetResetArea (void *PtrToResetArea, uint32 *SizeOfResetArea)
+int32 CFE_PSP_GetResetArea (cpuaddr *PtrToResetArea, uint32 *SizeOfResetArea)
 {
    int32 return_code;
    
@@ -427,7 +427,7 @@ int32 CFE_PSP_GetResetArea (void *PtrToResetArea, uint32 *SizeOfResetArea)
    }
    else
    {
-      memcpy(PtrToResetArea,&(CFE_PSP_ResetAreaPtr),sizeof(PtrToResetArea));
+      *PtrToResetArea = (cpuaddr)CFE_PSP_ResetAreaPtr;
       *SizeOfResetArea = CFE_PSP_RESET_AREA_SIZE;
       return_code = CFE_PSP_SUCCESS;
    }
@@ -542,7 +542,7 @@ void CFE_PSP_DeleteUserReservedArea(void)
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetUserReservedArea(void *PtrToUserArea, uint32 *SizeOfUserArea )
+int32 CFE_PSP_GetUserReservedArea(cpuaddr *PtrToUserArea, uint32 *SizeOfUserArea )
 {
    int32 return_code;
    
@@ -552,7 +552,7 @@ int32 CFE_PSP_GetUserReservedArea(void *PtrToUserArea, uint32 *SizeOfUserArea )
    }
    else
    {
-      memcpy(PtrToUserArea,&(CFE_PSP_UserReservedAreaPtr),sizeof(PtrToUserArea));
+      *PtrToUserArea = (cpuaddr)(&CFE_PSP_UserReservedAreaPtr);
       *SizeOfUserArea = CFE_PSP_USER_RESERVED_SIZE;
       return_code = CFE_PSP_SUCCESS;
    }
@@ -607,7 +607,7 @@ int32 CFE_PSP_InitVolatileDiskMem(uint32 RestartType )
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetVolatileDiskMem(void *PtrToVolDisk, uint32 *SizeOfVolDisk )
+int32 CFE_PSP_GetVolatileDiskMem(cpuaddr *PtrToVolDisk, uint32 *SizeOfVolDisk )
 {
    int32 return_code;
    
@@ -617,7 +617,7 @@ int32 CFE_PSP_GetVolatileDiskMem(void *PtrToVolDisk, uint32 *SizeOfVolDisk )
    }
    else
    {
-      memset(&(PtrToVolDisk),0,sizeof(PtrToVolDisk));
+      *PtrToVolDisk = 0;
       *SizeOfVolDisk = 0;
       return_code = CFE_PSP_SUCCESS;
    }
@@ -718,7 +718,7 @@ void CFE_PSP_DeleteProcessorReservedMemory(void)
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetKernelTextSegmentInfo(void *PtrToKernelSegment, uint32 *SizeOfKernelSegment)
+int32 CFE_PSP_GetKernelTextSegmentInfo(cpuaddr *PtrToKernelSegment, uint32 *SizeOfKernelSegment)
 {
    /*
    ** Prevent warnings by referencing parameters
@@ -746,10 +746,9 @@ int32 CFE_PSP_GetKernelTextSegmentInfo(void *PtrToKernelSegment, uint32 *SizeOfK
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetCFETextSegmentInfo(void *PtrToCFESegment, uint32 *SizeOfCFESegment)
+int32 CFE_PSP_GetCFETextSegmentInfo(cpuaddr *PtrToCFESegment, uint32 *SizeOfCFESegment)
 {
    int32 return_code;
-   uint32 Address;
    
    if ( SizeOfCFESegment == NULL )
    {
@@ -757,9 +756,8 @@ int32 CFE_PSP_GetCFETextSegmentInfo(void *PtrToCFESegment, uint32 *SizeOfCFESegm
    }
    else
    {
-      Address = (uint32) (&_init);
-      memcpy(PtrToCFESegment,&Address,sizeof(PtrToCFESegment));
-      *SizeOfCFESegment = (uint32) ((uint32) &_fini - (uint32) &_init);
+      *PtrToCFESegment = (cpuaddr)(&_init);
+      *SizeOfCFESegment = (uint32) (((cpuaddr) &_fini) - ((cpuaddr) &_init));
       
       return_code = CFE_PSP_SUCCESS;
    }

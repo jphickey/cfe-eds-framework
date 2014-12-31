@@ -118,7 +118,7 @@ typedef struct
 {
    uint32 MemoryType;
    uint32 WordSize;
-   uint32 StartAddr;
+   cpuaddr StartAddr;
    uint32 Size;
    uint32 Attributes;
 } CFE_PSP_MemTable_t;
@@ -161,7 +161,7 @@ extern uint32        CFE_PSP_GetRestartType(uint32 *restartSubType );
 */
 
 
-extern void          CFE_PSP_FlushCaches(uint32 type, uint32 address, uint32 size);
+extern void          CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size);
 /*
 ** This is a BSP specific cache flush routine
 */
@@ -237,31 +237,31 @@ extern int32 CFE_PSP_ReadFromCDS(void *PtrToDataToRead, uint32 CDSOffset, uint32
 ** CFE_PSP_ReadFromCDS reads from the CDS Block
 */
 
-extern int32 CFE_PSP_GetResetArea (void *PtrToResetArea, uint32 *SizeOfResetArea);
+extern int32 CFE_PSP_GetResetArea (cpuaddr *PtrToResetArea, uint32 *SizeOfResetArea);
 /*
 ** CFE_PSP_GetResetArea returns the location and size of the ES Reset information area.
 ** This area is preserved during a processor reset and is used to store the
 ** ER Log, System Log and reset related variables
 */
 
-extern int32 CFE_PSP_GetUserReservedArea(void *PtrToUserArea, uint32 *SizeOfUserArea );
+extern int32 CFE_PSP_GetUserReservedArea(cpuaddr *PtrToUserArea, uint32 *SizeOfUserArea );
 /*
 ** CFE_PSP_GetUserReservedArea returns the location and size of the memory used for the cFE
 ** User reserved area.
 */
 
-extern int32 CFE_PSP_GetVolatileDiskMem(void *PtrToVolDisk, uint32 *SizeOfVolDisk );
+extern int32 CFE_PSP_GetVolatileDiskMem(cpuaddr *PtrToVolDisk, uint32 *SizeOfVolDisk );
 /*
 ** CFE_PSP_GetVolatileDiskMem returns the location and size of the memory used for the cFE
 ** volatile disk.
 */
 
-extern int32 CFE_PSP_GetKernelTextSegmentInfo(void *PtrToKernelSegment, uint32 *SizeOfKernelSegment);
+extern int32 CFE_PSP_GetKernelTextSegmentInfo(cpuaddr *PtrToKernelSegment, uint32 *SizeOfKernelSegment);
 /*
 ** CFE_PSP_GetKernelTextSegmentInfo returns the location and size of the kernel memory.
 */
 
-extern int32 CFE_PSP_GetCFETextSegmentInfo(void *PtrToCFESegment, uint32 *SizeOfCFESegment);
+extern int32 CFE_PSP_GetCFETextSegmentInfo(cpuaddr *PtrToCFESegment, uint32 *SizeOfCFESegment);
 /*
 ** CFE_PSP_GetCFETextSegmentInfo returns the location and size of the kernel memory.
 */
@@ -336,36 +336,36 @@ extern void CFE_PSP_SetDefaultExceptionEnvironment(void);
 /*
 ** I/O Port API
 */
-int32 CFE_PSP_PortRead8         (uint32 PortAddress, uint8 *ByteValue);
-int32 CFE_PSP_PortWrite8        (uint32 PortAddress, uint8 ByteValue);
-int32 CFE_PSP_PortRead16        (uint32 PortAddress, uint16 *uint16Value);
-int32 CFE_PSP_PortWrite16       (uint32 PortAddress, uint16 uint16Value);
-int32 CFE_PSP_PortRead32        (uint32 PortAddress, uint32 *uint32Value);
-int32 CFE_PSP_PortWrite32       (uint32 PortAddress, uint32 uint32Value);
+int32 CFE_PSP_PortRead8         (cpuaddr PortAddress, uint8 *ByteValue);
+int32 CFE_PSP_PortWrite8        (cpuaddr PortAddress, uint8 ByteValue);
+int32 CFE_PSP_PortRead16        (cpuaddr PortAddress, uint16 *uint16Value);
+int32 CFE_PSP_PortWrite16       (cpuaddr PortAddress, uint16 uint16Value);
+int32 CFE_PSP_PortRead32        (cpuaddr PortAddress, uint32 *uint32Value);
+int32 CFE_PSP_PortWrite32       (cpuaddr PortAddress, uint32 uint32Value);
 
 /*
 ** Memory API
 */
-int32 CFE_PSP_MemRead8          (uint32 MemoryAddress, uint8 *ByteValue);
-int32 CFE_PSP_MemWrite8         (uint32 MemoryAddress, uint8 ByteValue);
-int32 CFE_PSP_MemRead16         (uint32 MemoryAddress, uint16 *uint16Value);
-int32 CFE_PSP_MemWrite16        (uint32 MemoryAddress, uint16 uint16Value);
-int32 CFE_PSP_MemRead32         (uint32 MemoryAddress, uint32 *uint32Value);
-int32 CFE_PSP_MemWrite32        (uint32 MemoryAddress, uint32 uint32Value);
+int32 CFE_PSP_MemRead8          (cpuaddr MemoryAddress, uint8 *ByteValue);
+int32 CFE_PSP_MemWrite8         (cpuaddr MemoryAddress, uint8 ByteValue);
+int32 CFE_PSP_MemRead16         (cpuaddr MemoryAddress, uint16 *uint16Value);
+int32 CFE_PSP_MemWrite16        (cpuaddr MemoryAddress, uint16 uint16Value);
+int32 CFE_PSP_MemRead32         (cpuaddr MemoryAddress, uint32 *uint32Value);
+int32 CFE_PSP_MemWrite32        (cpuaddr MemoryAddress, uint32 uint32Value);
 
 int32 CFE_PSP_MemCpy            (void *dest, void *src, uint32 n);
 int32 CFE_PSP_MemSet            (void *dest, uint8 value, uint32 n);
 
-int32  CFE_PSP_MemValidateRange (uint32 Address, uint32 Size, uint32 MemoryType);
+int32  CFE_PSP_MemValidateRange (cpuaddr Address, uint32 Size, uint32 MemoryType);
 uint32 CFE_PSP_MemRanges        (void);
-int32  CFE_PSP_MemRangeSet      (uint32 RangeNum, uint32 MemoryType, uint32 StartAddr, 
+int32  CFE_PSP_MemRangeSet      (uint32 RangeNum, uint32 MemoryType, cpuaddr StartAddr,
                                  uint32 Size,     uint32 WordSize,   uint32 Attributes);
-int32  CFE_PSP_MemRangeGet      (uint32 RangeNum, uint32 *MemoryType, uint32 *StartAddr, 
+int32  CFE_PSP_MemRangeGet      (uint32 RangeNum, uint32 *MemoryType, cpuaddr *StartAddr,
                                  uint32 *Size,    uint32 *WordSize,   uint32 *Attributes);
 
-int32 CFE_PSP_EepromWrite8      (uint32 MemoryAddress, uint8 ByteValue);
-int32 CFE_PSP_EepromWrite16     (uint32 MemoryAddress, uint16 uint16Value);
-int32 CFE_PSP_EepromWrite32     (uint32 MemoryAddress, uint32 uint32Value);
+int32 CFE_PSP_EepromWrite8      (cpuaddr MemoryAddress, uint8 ByteValue);
+int32 CFE_PSP_EepromWrite16     (cpuaddr MemoryAddress, uint16 uint16Value);
+int32 CFE_PSP_EepromWrite32     (cpuaddr MemoryAddress, uint32 uint32Value);
 
 int32 CFE_PSP_EepromWriteEnable (uint32 Bank);
 int32 CFE_PSP_EepromWriteDisable(uint32 Bank);

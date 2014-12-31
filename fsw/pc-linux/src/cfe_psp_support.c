@@ -120,7 +120,7 @@ void CFE_PSP_Panic(int32 ErrorCode)
 **  Return:
 **    (none)
 */
-void CFE_PSP_FlushCaches(uint32 type, uint32 address, uint32 size)
+void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 {
    printf("CFE_PSP_FlushCaches called -- Currently no Linux/OSX/Cygwin implementation\n");
 }
