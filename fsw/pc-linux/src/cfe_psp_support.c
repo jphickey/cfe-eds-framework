@@ -36,9 +36,6 @@
 */
 #include "common_types.h"
 #include "osapi.h"
-#include "cfe_es.h"            /* For reset types */
-#include "cfe_platform_cfg.h"  /* for processor ID */
-#include "cfe_mission_cfg.h"   /* for spacecraft ID */
 
 /*
 ** Types and prototypes for this module
@@ -68,19 +65,19 @@ extern uint32  CFE_PSP_CpuId;
 void CFE_PSP_Restart(uint32 reset_type)
 {
 
-   if ( reset_type == CFE_ES_POWERON_RESET )
+   if ( reset_type == CFE_PSP_RST_TYPE_POWERON )
    {
        OS_printf("CFE_PSP: Exiting cFE with POWERON Reset status.\n");
        OS_printf("CFE_PSP: Start the cFE Core with the PO parameter to complete the Power On Reset\n");
        OS_printf("CFE_PSP: When the Power On Reset is completed, the Shared Memroy segments will be CLEARED\n");
-       exit(CFE_ES_POWERON_RESET);
+       exit(CFE_PSP_RST_TYPE_POWERON);
    }
    else
    {
        OS_printf("CFE_PSP: Exiting cFE with PROCESSOR Reset status.\n");
        OS_printf("CFE_PSP: Shared Memory segments have been PRESERVED.\n");
        OS_printf("CFE_PSP: Restart the cFE with the PR parameter to complete the Processor Reset.\n");
-       exit(CFE_ES_PROCESSOR_RESET);
+       exit(CFE_PSP_RST_TYPE_PROCESSOR);
    }
 
 }

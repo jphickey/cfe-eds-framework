@@ -134,8 +134,8 @@ void CFE_PSP_Main(  int ModeId, char *StartupFilePath )
    /*
    ** Determine Reset type by reading the hardware reset register.
    */
-   reset_type = CFE_ES_POWERON_RESET;
-   reset_subtype = CFE_ES_POWER_CYCLE;
+   reset_type = CFE_PSP_RST_TYPE_POWERON;
+   reset_subtype = CFE_PSP_RST_SUBTYPE_POWER_CYCLE;
 
    /*
    ** Initialize the reserved memory 

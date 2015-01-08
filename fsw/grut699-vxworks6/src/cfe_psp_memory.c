@@ -329,14 +329,14 @@ int32 CFE_PSP_InitProcessorReservedMemory( uint32 RestartType )
 {
    int32 return_code = CFE_PSP_SUCCESS;;
  
-   if ( RestartType != CFE_ES_PROCESSOR_RESET )
+   if ( RestartType != CFE_PSP_RST_TYPE_PROCESSOR )
    {
       OS_printf("CFE_PSP: Clearing Processor Reserved Memory.\n");
       memset((void *)CFE_PSP_ReservedMemoryPtr, 0, sizeof(CFE_PSP_ReservedMemory_t));
    }
    
    CFE_PSP_ReservedMemoryPtr->bsp_last_reset_type = CFE_PSP_ReservedMemoryPtr->bsp_reset_type;
-   CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_ES_PROCESSOR_RESET; 
+   CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_PSP_RST_TYPE_PROCESSOR; 
 
    return(return_code);
 }

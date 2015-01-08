@@ -90,7 +90,7 @@ void CFE_PSP_Panic(int32 ErrorCode)
    /*
    ** Debug Switch is not set, do a processor Reset
    */
-   CFE_PSP_Restart(CFE_ES_PROCESSOR_RESET);
+   CFE_PSP_Restart(CFE_PSP_RST_TYPE_PROCESSOR);
 }
 
 /******************************************************************************
@@ -128,9 +128,9 @@ void CFE_PSP_Restart(uint32 reset_type)
    intCpuLock();
 #endif
    
-   if ( reset_type == CFE_ES_POWERON_RESET )
+   if ( reset_type == CFE_PSP_RST_TYPE_POWERON )
    {
-      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_ES_POWERON_RESET;
+      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_PSP_RST_TYPE_POWERON;
       /*
       ** The sysToMonitor function flushes caches for us
       *
@@ -158,7 +158,7 @@ void CFE_PSP_Restart(uint32 reset_type)
    }
    else
    {
-      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_ES_PROCESSOR_RESET;
+      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
       /*
       ** The sysToMonitor function flushes caches for us
       *
