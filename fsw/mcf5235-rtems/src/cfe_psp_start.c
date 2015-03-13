@@ -146,7 +146,7 @@ void CFE_PSP_Main(  int ModeId, char *StartupFilePath )
    ** Call cFE entry point. This will return when cFE startup
    ** is complete.
    */
-   CFE_ES_Main(reset_type,reset_subtype, 1, (uint8 *)StartupFilePath); 
+   CFE_ES_Main(reset_type,reset_subtype, 1, StartupFilePath);
 
    /*
    ** Setup the timer to fire at 1hz 

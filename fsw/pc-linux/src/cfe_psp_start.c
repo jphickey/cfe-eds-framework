@@ -75,7 +75,7 @@
 
 #include "cfe_platform_cfg.h"
 
-extern void CFE_ES_Main(uint32 StartType, uint32 StartSubtype, uint32 ModeId, uint8 *StartFilePath );
+extern void CFE_ES_Main(uint32 StartType, uint32 StartSubtype, uint32 ModeId, const char *StartFilePath );
 extern void CFE_TIME_Local1HzISR(void);
 
 #define CFE_ES_MAIN_FUNCTION     CFE_ES_Main
@@ -398,7 +398,7 @@ int main(int argc, char *argv[])
    /*
    ** Call cFE entry point.
    */
-   CFE_ES_MAIN_FUNCTION(reset_type, reset_subtype, 1, (uint8 *)CFE_ES_NONVOL_STARTUP_FILE);
+   CFE_ES_MAIN_FUNCTION(reset_type, reset_subtype, 1, CFE_ES_NONVOL_STARTUP_FILE);
 
    /*
    ** Re-enable Signals to current thread so that

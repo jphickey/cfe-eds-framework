@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
    /*
    ** Call cFE entry point.
    */
-   CFE_ES_Main(reset_type, reset_subtype, 1, (uint8 *)CFE_ES_NONVOL_STARTUP_FILE); 
+   CFE_ES_Main(reset_type, reset_subtype, 1, CFE_ES_NONVOL_STARTUP_FILE);
 
    /*
    ** Let the main thread sleep 

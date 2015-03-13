@@ -52,8 +52,8 @@ S
 **
 */
 
-extern void CFE_ES_EXCEPTION_FUNCTION (uint32  HostTaskId,     uint8 *ReasonString,
-                                 uint32 *ContextPointer, uint32 ContextSize);
+extern void CFE_ES_EXCEPTION_FUNCTION (uint32  HostTaskId,     const char *ReasonString,
+                                 const uint32 *ContextPointer, uint32 ContextSize);
 
 #endif
 
@@ -126,7 +126,7 @@ void CFE_PSP_ExceptionHook (int task_id, int vector, uint8 *pEsf )
     ** Call the Generic cFE routine to finish processing the exception and
     ** restart the cFE
     */
-    CFE_ES_EXCEPTION_FUNCTION((uint32)task_id, (uint8 *)CFE_PSP_ExceptionReasonString,
+    CFE_ES_EXCEPTION_FUNCTION((uint32)task_id, CFE_PSP_ExceptionReasonString,
                                 (uint32 *)&CFE_PSP_ExceptionContext, sizeof(CFE_PSP_ExceptionContext_t));
 
     /*
