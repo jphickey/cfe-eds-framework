@@ -21,6 +21,30 @@
 #include "osapi.h"
 #include "osconfig.h"   
 
+#ifdef VOLTAB_PATH
+
+#define VOLTAB_MACRO                                                                      \
+OS_VolumeInfo_t OS_VolumeTable [NUM_TABLE_ENTRIES] =                                      \
+{                                                                                         \
+{"/ramdev0", VOLTAB_PATH, FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     },            \
+{"/cf",      VOLTAB_PATH, FS_BASED, FALSE, FALSE, TRUE,  "CF", "/cf", 512   },            \
+{"/ramdev1", " ",                    FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"/ramdev2", " ",                    FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"/ramdev3", " ",                    FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"/ramdev4", " ",                    FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }  \
+};
+
+VOLTAB_MACRO
+
+#else
 /* 
 ** OSAL volume table. This is the only file in the PSP that still has the 
 ** OS_ naming convention, since it belongs to the OSAL. 
@@ -50,4 +74,5 @@ OS_VolumeInfo_t OS_VolumeTable [NUM_TABLE_ENTRIES] =
 };
 
 
+#endif
 
