@@ -52,7 +52,7 @@
  **	 CFE_PSP_ERROR_ADD_MISALIGNED The Address is not aligned to 16 bit addressing
  **   scheme.
  */
-int32 CFE_PSP_EepromWrite32( uint32 MemoryAddress, uint32 uint32Value )
+int32 CFE_PSP_EepromWrite32( cpuaddr MemoryAddress, uint32 uint32Value )
 {
    uint32 ret_value = CFE_PSP_SUCCESS;
     
@@ -89,7 +89,7 @@ int32 CFE_PSP_EepromWrite32( uint32 MemoryAddress, uint32 uint32Value )
  **   CFE_PSP_ERROR_ADD_MISALIGNED The Address is not aligned to 16 bit addressing
  **   scheme.
  */
-int32 CFE_PSP_EepromWrite16( uint32 MemoryAddress, uint16 uint16Value )
+int32 CFE_PSP_EepromWrite16( cpuaddr MemoryAddress, uint16 uint16Value )
 {
    uint32 write32;
    uint32 temp32;
@@ -162,7 +162,6 @@ int32 CFE_PSP_EepromWrite16( uint32 MemoryAddress, uint16 uint16Value )
    }   
 #endif	
 	
-   printf("Temp: Write32 = %08X\n",write32);
    return(CFE_PSP_EepromWrite32(aligned_address,write32)) ;
     
 }
@@ -188,7 +187,7 @@ int32 CFE_PSP_EepromWrite16( uint32 MemoryAddress, uint16 uint16Value )
  **   timeout.
  */
 
-int32 CFE_PSP_EepromWrite8( uint32 MemoryAddress, uint8 ByteValue )
+int32 CFE_PSP_EepromWrite8( cpuaddr MemoryAddress, uint8 ByteValue )
 {
    uint32 aligned_address ;
    uint16 write16 ,temp16;

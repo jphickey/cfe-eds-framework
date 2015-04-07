@@ -73,15 +73,15 @@
 void CFE_PSP_Restart(uint32 reset_type)
 {
 
-   if ( reset_type == CFE_ES_POWERON_RESET )
+   if ( reset_type == CFE_PSP_RST_TYPE_POWERON )
    {
-      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_ES_POWERON_RESET;
+      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_PSP_RST_TYPE_POWERON;
       CFE_PSP_FlushCaches(1, (uint32 )CFE_PSP_ReservedMemoryPtr, sizeof(CFE_PSP_ReservedMemory_t));
       reboot(BOOT_CLEAR);
    }
    else
    {
-      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_ES_PROCESSOR_RESET;
+      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
       CFE_PSP_FlushCaches(1, (uint32 )CFE_PSP_ReservedMemoryPtr, sizeof(CFE_PSP_ReservedMemory_t));
       reboot(BOOT_NORMAL);
    }

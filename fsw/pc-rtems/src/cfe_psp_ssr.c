@@ -2,14 +2,14 @@
 ** File:  cfe_psp_ssr.c
 **
 **
-**      Copyright (c) 2004-2006, United States government as represented by the
+**      Copyright (c) 2004-2012, United States government as represented by the
 **      administrator of the National Aeronautics Space Administration.
 **      All rights reserved. This software(cFE) was created at NASA Goddard
 **      Space Flight Center pursuant to government contracts.
 **
-**      This software may be used only pursuant to a United States government
-**      sponsored project and the United States government may not be charged
-**      for use thereof.
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
+**
 **
 **
 ** Purpose:
@@ -22,30 +22,37 @@
 **
 ******************************************************************************/
 
+
+/*
+**  Include Files
+*/
+#include <stdio.h>
+#include <stdlib.h>
+
+
 /*
 ** cFE includes
 */
 #include "common_types.h"
 #include "osapi.h"
+//#include "cfe_es.h"            /* For reset types */
+//#include "cfe_platform_cfg.h"  /* for processor ID */
+//#include "cfe_mission_cfg.h"   /* for spacecraft ID */
 
 /*
 ** Types and prototypes for this module
 */
 #include "cfe_psp.h"
-#include "cfe_psp_config.h"
+#include "cfe_psp_memory.h"
 
-/*
-**  Standard Include Files
-*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 /******************************************************************************
 **  Function:  CFE_PSP_InitSSR
 **
 **  Purpose:
-**    Initializes the Solid State Recorder device. This can be filled in for the platform.
+**    Initializes the Solid State Recorder device. Dummy function for this 
+**    platform.
+**
 **
 **  Arguments:
 **    bus, device, device name
@@ -56,11 +63,11 @@
 
 int32 CFE_PSP_InitSSR(uint32 bus, uint32 device, char *DeviceName )
 {
-   int32 Status;
+   int32     ReturnCode;
 
-   Status = CFE_PSP_ERROR;
+   ReturnCode = CFE_PSP_SUCCESS;
+
+   return(ReturnCode);
    
-   return(Status);
-
 }
 

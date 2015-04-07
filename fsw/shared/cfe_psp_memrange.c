@@ -60,13 +60,12 @@ extern CFE_PSP_MemTable_t CFE_PSP_MemoryTable[CFE_PSP_MEM_TABLE_SIZE];
 **   CFE_PSP_INVALID_MEM_RANGE -- The Memory range associated with the address is not large enough to contain
 **                            Address + Size.
 */
-int32 CFE_PSP_MemValidateRange(uint32 Address, uint32 Size, uint32 MemoryType)
+int32 CFE_PSP_MemValidateRange(cpuaddr Address, uint32 Size, uint32 MemoryType)
 {
-   uint32 RangeIsValid = FALSE;
-   uint32 StartAddressToTest = Address;
-   uint32 EndAddressToTest = Address + Size - 1;
-   uint32 StartAddressInTable;
-   uint32 EndAddressInTable;
+   cpuaddr StartAddressToTest = Address;
+   cpuaddr EndAddressToTest = Address + Size - 1;
+   cpuaddr StartAddressInTable;
+   cpuaddr EndAddressInTable;
    uint32 TypeInTable;
    int32  ReturnCode = CFE_PSP_INVALID_MEM_ADDR;
    uint32 i;
@@ -113,19 +112,16 @@ int32 CFE_PSP_MemValidateRange(uint32 Address, uint32 Size, uint32 MemoryType)
                */
                if ( MemoryType == CFE_PSP_MEM_ANY )
                {
-                  RangeIsValid = TRUE;
                   ReturnCode = CFE_PSP_SUCCESS;
                   break;  /* The range is valid, break out of the loop */
                }
                else if ( MemoryType == CFE_PSP_MEM_RAM && TypeInTable == CFE_PSP_MEM_RAM )
                {
-                  RangeIsValid = TRUE;
                   ReturnCode = CFE_PSP_SUCCESS;
                   break; /* The range is valid, break out of the loop */
                }   
                else if ( MemoryType == CFE_PSP_MEM_EEPROM && TypeInTable == CFE_PSP_MEM_EEPROM )
                {
-                  RangeIsValid = TRUE;
                   ReturnCode = CFE_PSP_SUCCESS;
                   break; /* The range is valid, break out of the loop */
                }
@@ -210,7 +206,7 @@ uint32 CFE_PSP_MemRanges(void)
 **   CFE_PSP_INVALID_MEM_WORDSIZE -- The WordSIze parameter is not one of the predefined types.
 **   CFE_PSP_INVALID_MEM_ATTR -- The Attributes parameter is not one of the predefined types.
 */
-int32  CFE_PSP_MemRangeSet      (uint32 RangeNum, uint32 MemoryType, uint32 StartAddr, 
+int32  CFE_PSP_MemRangeSet      (uint32 RangeNum, uint32 MemoryType, cpuaddr StartAddr,
                                  uint32 Size,     uint32 WordSize,   uint32 Attributes)
 {
 
@@ -279,7 +275,7 @@ int32  CFE_PSP_MemRangeSet      (uint32 RangeNum, uint32 MemoryType, uint32 Star
 **   CFE_PSP_INVALID_POINTER   -- Parameter error
 **   CFE_PSP_INVALID_MEM_RANGE -- The index into the table is invalid
 */
-int32  CFE_PSP_MemRangeGet      (uint32 RangeNum, uint32 *MemoryType, uint32 *StartAddr, 
+int32  CFE_PSP_MemRangeGet      (uint32 RangeNum, uint32 *MemoryType, cpuaddr *StartAddr,
                             uint32 *Size,     uint32 *WordSize,   uint32 *Attributes)
 {
 

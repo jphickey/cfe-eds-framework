@@ -58,7 +58,7 @@ CFE_PSP_MemTable_t CFE_PSP_MemoryTable[CFE_PSP_MEM_TABLE_SIZE] =
 /*
 ** Simulate EEPROM by mapping in a file
 */
-int32 CFE_PSP_SetupEEPROM(uint32 EEPROMSize, uint32 *EEPROMAddress)
+int32 CFE_PSP_SetupEEPROM(uint32 EEPROMSize, cpuaddr *EEPROMAddress)
 {
    
    int          FileDescriptor;
@@ -123,7 +123,7 @@ int32 CFE_PSP_SetupEEPROM(uint32 EEPROMSize, uint32 *EEPROMAddress)
    /*
    ** Map the file to a memory space
    */
-   if ((DataBuffer = mmap((caddr_t)0, EEPROMSize, PROT_READ | PROT_WRITE, MAP_SHARED, FileDescriptor, 0)) == (caddr_t)(-1)) 
+   if ((DataBuffer = mmap(NULL, EEPROMSize, PROT_READ | PROT_WRITE, MAP_SHARED, FileDescriptor, 0)) == (void*)(-1))
    {
       OS_printf("CFE_PSP: mmap to EEPROM File failed\n");
       close(FileDescriptor);
@@ -133,7 +133,7 @@ int32 CFE_PSP_SetupEEPROM(uint32 EEPROMSize, uint32 *EEPROMAddress)
    /*
    ** Return the address to the caller
    */
-   *EEPROMAddress = (uint32)DataBuffer; 
+   *EEPROMAddress = (cpuaddr)DataBuffer;
    
    return(0);
 }

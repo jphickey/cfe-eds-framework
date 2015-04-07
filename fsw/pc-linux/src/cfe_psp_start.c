@@ -43,11 +43,45 @@
 */
 #include "common_types.h"
 #include "osapi.h"
-#include "cfe_es.h"            /* For reset types */
-#include "cfe_platform_cfg.h"  /* for processor ID */
-#include "cfe_mission_cfg.h"   /* for Spacecraft ID */
 
-#include "cfe_psp.h"            
+#include "cfe_psp.h"
+
+#ifdef _ENHANCED_BUILD_
+
+/*
+ * The preferred way to obtain the CFE tunable values at runtime is via
+ * the dynamically generated configuration object.  This allows a single build
+ * of the PSP to be completely CFE-independent.
+ */
+#include <target_config.h>
+
+#define CFE_ES_MAIN_FUNCTION        (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
+#define CFE_TIME_1HZ_FUNCTION       (*GLOBAL_CONFIGDATA.CfeConfig->System1HzISR)
+#define CFE_ES_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
+#define CFE_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
+#define CFE_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
+#define CFE_SPACECRAFT_ID           (GLOBAL_CONFIGDATA.Default_SpacecraftId)
+
+#else
+
+/*
+ * cfe_platform_cfg.h needed for CFE_ES_NONVOL_STARTUP_FILE, CFE_CPU_ID/CPU_NAME/SPACECRAFT_ID
+ *
+ *  - this should NOT be included here -
+ *
+ * it is only for compatibility with the old makefiles.  Including this makes the PSP build
+ * ONLY compatible with a CFE build using this exact same CFE platform config.
+ */
+
+#include "cfe_platform_cfg.h"
+
+extern void CFE_ES_Main(uint32 StartType, uint32 StartSubtype, uint32 ModeId, uint8 *StartFilePath );
+extern void CFE_TIME_Local1HzISR(void);
+
+#define CFE_ES_MAIN_FUNCTION     CFE_ES_Main
+#define CFE_TIME_1HZ_FUNCTION    CFE_TIME_Local1HzISR
+
+#endif
 
 /*
 ** Defines
@@ -88,7 +122,7 @@ typedef struct
 /*
 ** Prototypes for this module
 */
-void CFE_PSP_SigintHandler (void);
+void CFE_PSP_SigintHandler (int signal);
 void CFE_PSP_TimerHandler (int signum);
 void CFE_PSP_DeleteOSResources (void);
 void CFE_PSP_DisplayUsage(char *Name );
@@ -97,9 +131,10 @@ void CFE_PSP_ProcessArgumentDefaults(CFE_PSP_CommandData_t *CommandData);
 /*
 **  External Declarations
 */
-extern void CFE_TIME_Local1HzISR(void);
-extern void CFE_PSP_DeleteProcessorReservedMemory(void);    
+extern void CFE_PSP_DeleteProcessorReservedMemory(void);
+#ifdef CFE_PSP_EEPROM_SUPPORT
 extern int32 CFE_PSP_SetupEEPROM(uint32 EEPROMSize, uint32 *EEPROMAddress);
+#endif
 
 /*
 ** Global variables
@@ -243,12 +278,12 @@ int main(int argc, char *argv[])
    */
    if (strncmp("PR", CommandData.ResetType, 2 ) == 0 )
    {
-     reset_type = CFE_ES_PROCESSOR_RESET;
+     reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
       OS_printf("CFE_PSP: Starting the cFE with a PROCESSOR reset.\n");
    }
    else
    {
-      reset_type = CFE_ES_POWERON_RESET;
+      reset_type = CFE_PSP_RST_TYPE_POWERON;
       OS_printf("CFE_PSP: Starting the cFE with a POWER ON reset.\n");
    }
 
@@ -363,7 +398,7 @@ int main(int argc, char *argv[])
    /*
    ** Call cFE entry point.
    */
-   CFE_ES_Main(reset_type, reset_subtype, 1, (uint8 *)CFE_ES_NONVOL_STARTUP_FILE); 
+   CFE_ES_MAIN_FUNCTION(reset_type, reset_subtype, 1, (uint8 *)CFE_ES_NONVOL_STARTUP_FILE);
 
    /*
    ** Re-enable Signals to current thread so that
@@ -412,7 +447,7 @@ int main(int argc, char *argv[])
 **    (none)
 */
 
-void CFE_PSP_SigintHandler (void)
+void CFE_PSP_SigintHandler (int signal)
 {
       OS_printf("\nCFE_PSP: Control-C Captured - Exiting cFE\n");
       CFE_PSP_DeleteProcessorReservedMemory();
@@ -438,7 +473,7 @@ void CFE_PSP_TimerHandler (int signum)
       /*
       ** call the CFE_TIME 1hz ISR
       */
-      if((TimerCounter % 4) == 0) CFE_TIME_Local1HzISR();
+      if((TimerCounter % 4) == 0) CFE_TIME_1HZ_FUNCTION();
 
 	  /* update timer counter */
 	  TimerCounter++;
@@ -460,30 +495,29 @@ void CFE_PSP_TimerHandler (int signum)
 void CFE_PSP_DeleteOSResources (void)
 {
    uint32          i;
-   int32           ReturnCode;
 
    for ( i = 0; i < OS_MAX_TASKS; i++)
-      ReturnCode = OS_TaskDelete(i);
+      OS_TaskDelete(i);
    printf("CFE_PSP: Deleted all Tasks in system\n");
    
    for ( i = 0; i < OS_MAX_BIN_SEMAPHORES; i++ )
-      ReturnCode = OS_BinSemDelete(i);
+      OS_BinSemDelete(i);
    printf("CFE_PSP: Deleted all Binary Semaphores in system\n");
       
    for ( i = 0; i < OS_MAX_COUNT_SEMAPHORES; i++ )
-      ReturnCode = OS_CountSemDelete(i);
+      OS_CountSemDelete(i);
    printf("CFE_PSP: Deleted all Counting Semaphores in system\n");
    
    for ( i = 0; i < OS_MAX_MUTEXES; i++ )
-      ReturnCode = OS_MutSemDelete(i);
+      OS_MutSemDelete(i);
    printf("CFE_PSP: Deleted all Mutexes in system\n");
 
    for ( i = 0; i < OS_MAX_QUEUES; i++ )
-      ReturnCode = OS_QueueDelete(i);
+      OS_QueueDelete(i);
    printf("CFE_PSP: Deleted all Queues in system\n");
   
    for ( i = 0; i < OS_MAX_TIMERS; i++ )
-      ReturnCode = OS_TimerDelete(i);
+      OS_TimerDelete(i);
    printf("CFE_PSP: Deleted all Timers in system\n");
  
    printf("CFE_PSP: NOTE: After quitting the cFE with a Control-C signal, it MUST be started next time\n");

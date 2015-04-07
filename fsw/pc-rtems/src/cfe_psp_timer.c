@@ -2,14 +2,14 @@
 ** File:  cfe_psp_timer.c
 **
 **
-**      Copyright (c) 2004-2006, United States government as represented by the
+**      Copyright (c) 2004-2012, United States government as represented by the
 **      administrator of the National Aeronautics Space Administration.
 **      All rights reserved. This software(cFE) was created at NASA Goddard
 **      Space Flight Center pursuant to government contracts.
 **
-**      This software may be used only pursuant to a United States government
-**      sponsored project and the United States government may not be charged
-**      for use thereof.
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
+**
 **
 **
 ** Purpose:
@@ -26,18 +26,19 @@
 **  Include Files
 */
 
+/*
+**  Include Files
+*/
+#include <stdio.h>
+#include <stdlib.h>
 
 /*
 ** cFE includes
 */
 #include "common_types.h"
 #include "osapi.h"
-
-/*
-**  System Include Files
-*/
-#include <stdio.h>
-#include <stdlib.h>
+//#include "cfe_es.h"            /* For reset types */
+//#include "cfe_platform_cfg.h"  /* for processor ID */
 
 /*
 ** Types and prototypes for this module
@@ -46,16 +47,18 @@
 
 
 /******************* Macro Definitions ***********************/
+#define WATCHDOG_MIN_TIME   0
+#define WATCHDOG_MAX_TIME   0xFFFFFFFF
 
-#define CFE_PSP_TIMER_TICKS_PER_SECOND       1000000     /* Resolution of the least significant 32 bits of the 64 bit
-                                                           time stamp returned by OS_BSPGet_Timebase in timer ticks per second.
+#define CFE_PSP_TIMER_TICKS_PER_SECOND       100    /* Resolution of the least significant 32 bits of the 64 bit
+                                                           time stamp returned by CFE_PSP_Get_Timebase in timer ticks per second.
                                                            The timer resolution for accuracy should not be any slower than 1000000
                                                            ticks per second or 1 us per tick */
-#define CFE_PSP_TIMER_LOW32_ROLLOVER         1000000     /* The number that the least significant 32 bits of the 64 bit
-                                                           time stamp returned by OS_BSPGet_Timebase rolls over.  If the lower 32
-                                                           bits rolls at 1 second, then the OS_BSP_TIMER_LOW32_ROLLOVER will be 1000000.
+#define CFE_PSP_TIMER_LOW32_ROLLOVER         0           /* The number that the least significant 32 bits of the 64 bit
+                                                           time stamp returned by CFE_PSP_Get_Timebase rolls over.  If the lower 32
+                                                           bits rolls at 1 second, then the CFE_PSP_TIMER_LOW32_ROLLOVER will be 1000000.
                                                            if the lower 32 bits rolls at its maximum value (2^32) then
-                                                           OS_BSP_TIMER_LOW32_ROLLOVER will be 0. */
+                                                           CFE_PSP_TIMER_LOW32_ROLLOVER will be 0. */
 
 /******************************************************************************
 **  Function:  CFE_PSP_GetTime()
@@ -67,15 +70,9 @@
 
 void CFE_PSP_GetTime( OS_time_t *LocalTime)
 {
-
-    /* since we don't have a hardware register to access like the mcp750,
-     * we use a call to the OS to get the time */
-
     OS_GetLocalTime(LocalTime);
-
+    
 }/* end CFE_PSP_GetLocalTime */
-
-
 
 /******************************************************************************
 **  Function:  CFE_PSP_Get_Timer_Tick()
@@ -92,7 +89,6 @@ void CFE_PSP_GetTime( OS_time_t *LocalTime)
 */
 uint32 CFE_PSP_Get_Timer_Tick(void)
 {
-   /* SUB -add function call code*/
    return (0);
 }
 
@@ -101,7 +97,7 @@ uint32 CFE_PSP_Get_Timer_Tick(void)
 **
 **  Purpose:
 **    Provides the resolution of the least significant 32 bits of the 64 bit
-**    time stamp returned by OS_BSPGet_Timebase in timer ticks per second.
+**    time stamp returned by CFE_PSP_Get_Timebase in timer ticks per second.
 **    The timer resolution for accuracy should not be any slower than 1000000
 **    ticks per second or 1 us per tick
 **
@@ -164,7 +160,7 @@ void CFE_PSP_Get_Timebase(uint32 *Tbu, uint32* Tbl)
 **
 **  Purpose:
 **    Provides a common interface to decrementer counter. This routine
-**    is in the PSP because it is sometimes implemented in hardware and
+**    is in the BSP because it is sometimes implemented in hardware and
 **    sometimes taken care of by the RTOS.
 **
 **  Arguments:
@@ -175,7 +171,6 @@ void CFE_PSP_Get_Timebase(uint32 *Tbu, uint32* Tbl)
 
 uint32 CFE_PSP_Get_Dec(void)
 {
-   /* SUB -add function call code*/
    return(0);
 }
 

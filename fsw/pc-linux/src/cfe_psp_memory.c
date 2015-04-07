@@ -42,13 +42,11 @@
 */
 #include "common_types.h"
 #include "osapi.h"
-#include "cfe_es.h"            /* For reset types */
-#include "cfe_platform_cfg.h"  /* for processor ID */
 
 /*
 ** Types and prototypes for this module
 */
-#include "cfe_psp.h"            
+#include "cfe_psp.h"
 
 /*
 ** PSP Specific defines
@@ -59,9 +57,29 @@
 #define CFE_PSP_RESET_KEY_FILE ".resetkeyfile"
 #define CFE_PSP_RESERVED_KEY_FILE ".reservedkeyfile"
 
+#ifdef _ENHANCED_BUILD_
+
+#include <target_config.h>
+
+/*
+ * Define the PSP-supported capacities to be the maximum allowed,
+ * (since the PC-linux PSP has the advantage of abundant disk space to hold this)
+ */
+#define CFE_PSP_CDS_SIZE            (GLOBAL_CONFIGDATA.CfeConfig->CdsSize)
+#define CFE_PSP_RESET_AREA_SIZE     (GLOBAL_CONFIGDATA.CfeConfig->ResetAreaSize)
+#define CFE_PSP_USER_RESERVED_SIZE  (GLOBAL_CONFIGDATA.CfeConfig->UserReservedSize)
+
+#else
+
+#include "cfe_es.h"            /* For memory sizes */
+#include "cfe_platform_cfg.h"  /* for processor ID */
+
 #define CFE_PSP_CDS_SIZE            CFE_ES_CDS_SIZE
 #define CFE_PSP_RESET_AREA_SIZE     CFE_ES_RESET_AREA_SIZE
 #define CFE_PSP_USER_RESERVED_SIZE  CFE_ES_USER_RESERVED_SIZE
+
+#endif
+
 
 /*
 ** Internal prototypes for this module
@@ -144,7 +162,7 @@ int32 CFE_PSP_InitCDS(uint32 RestartType )
         exit(-1);
    }
 
-   if ( RestartType == CFE_ES_POWERON_RESET )
+   if ( RestartType == CFE_PSP_RST_TYPE_POWERON )
    {
       OS_printf("CFE_PSP: Clearing out CFE CDS Shared memory segment.\n");
       memset(CFE_PSP_CDSPtr, 0, CFE_PSP_CDS_SIZE);
@@ -357,7 +375,7 @@ int32 CFE_PSP_InitResetArea(uint32 RestartType)
         exit(-1);
    }
 
-   if ( RestartType == CFE_ES_POWERON_RESET )
+   if ( RestartType == CFE_PSP_RST_TYPE_POWERON )
    {
       OS_printf("CFE_PSP: Clearing out CFE Reset Shared memory segment.\n");
       memset(CFE_PSP_ResetAreaPtr, 0, CFE_PSP_RESET_AREA_SIZE);
@@ -417,7 +435,7 @@ void CFE_PSP_DeleteResetArea(void)
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetResetArea (void *PtrToResetArea, uint32 *SizeOfResetArea)
+int32 CFE_PSP_GetResetArea (cpuaddr *PtrToResetArea, uint32 *SizeOfResetArea)
 {
    int32 return_code;
    
@@ -427,7 +445,7 @@ int32 CFE_PSP_GetResetArea (void *PtrToResetArea, uint32 *SizeOfResetArea)
    }
    else
    {
-      memcpy(PtrToResetArea,&(CFE_PSP_ResetAreaPtr),sizeof(PtrToResetArea));
+      *PtrToResetArea = (cpuaddr)CFE_PSP_ResetAreaPtr;
       *SizeOfResetArea = CFE_PSP_RESET_AREA_SIZE;
       return_code = CFE_PSP_SUCCESS;
    }
@@ -487,7 +505,7 @@ int32 CFE_PSP_InitUserReservedArea(uint32 RestartType )
         exit(-1);
    }
 
-   if ( RestartType == CFE_ES_POWERON_RESET )
+   if ( RestartType == CFE_PSP_RST_TYPE_POWERON )
    {
       OS_printf("CFE_PSP: Clearing out CFE User Reserved Shared memory segment.\n");
       memset(CFE_PSP_UserReservedAreaPtr, 0, CFE_PSP_USER_RESERVED_SIZE);
@@ -542,7 +560,7 @@ void CFE_PSP_DeleteUserReservedArea(void)
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetUserReservedArea(void *PtrToUserArea, uint32 *SizeOfUserArea )
+int32 CFE_PSP_GetUserReservedArea(cpuaddr *PtrToUserArea, uint32 *SizeOfUserArea )
 {
    int32 return_code;
    
@@ -552,7 +570,7 @@ int32 CFE_PSP_GetUserReservedArea(void *PtrToUserArea, uint32 *SizeOfUserArea )
    }
    else
    {
-      memcpy(PtrToUserArea,&(CFE_PSP_UserReservedAreaPtr),sizeof(PtrToUserArea));
+      *PtrToUserArea = (cpuaddr)(&CFE_PSP_UserReservedAreaPtr);
       *SizeOfUserArea = CFE_PSP_USER_RESERVED_SIZE;
       return_code = CFE_PSP_SUCCESS;
    }
@@ -607,7 +625,7 @@ int32 CFE_PSP_InitVolatileDiskMem(uint32 RestartType )
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetVolatileDiskMem(void *PtrToVolDisk, uint32 *SizeOfVolDisk )
+int32 CFE_PSP_GetVolatileDiskMem(cpuaddr *PtrToVolDisk, uint32 *SizeOfVolDisk )
 {
    int32 return_code;
    
@@ -617,7 +635,7 @@ int32 CFE_PSP_GetVolatileDiskMem(void *PtrToVolDisk, uint32 *SizeOfVolDisk )
    }
    else
    {
-      memset(&(PtrToVolDisk),0,sizeof(PtrToVolDisk));
+      *PtrToVolDisk = 0;
       *SizeOfVolDisk = 0;
       return_code = CFE_PSP_SUCCESS;
    }
@@ -660,19 +678,19 @@ int32 CFE_PSP_InitProcessorReservedMemory( uint32 RestartType )
    tempFd = open(CFE_PSP_RESERVED_KEY_FILE, O_RDONLY | O_CREAT, S_IRWXU );
    close(tempFd);
       
-   if ( RestartType == CFE_ES_PROCESSOR_RESET )
+   if ( RestartType == CFE_PSP_RST_TYPE_PROCESSOR )
    {
-      return_code = CFE_PSP_InitCDS( CFE_ES_PROCESSOR_RESET );
-      return_code = CFE_PSP_InitResetArea( CFE_ES_PROCESSOR_RESET );
-      return_code = CFE_PSP_InitVolatileDiskMem( CFE_ES_PROCESSOR_RESET );
-      return_code = CFE_PSP_InitUserReservedArea( CFE_ES_PROCESSOR_RESET );
+      return_code = CFE_PSP_InitCDS( CFE_PSP_RST_TYPE_PROCESSOR );
+      return_code = CFE_PSP_InitResetArea( CFE_PSP_RST_TYPE_PROCESSOR );
+      return_code = CFE_PSP_InitVolatileDiskMem( CFE_PSP_RST_TYPE_PROCESSOR );
+      return_code = CFE_PSP_InitUserReservedArea( CFE_PSP_RST_TYPE_PROCESSOR );
    }
    else 
    {
-      return_code = CFE_PSP_InitCDS( CFE_ES_POWERON_RESET );
-      return_code = CFE_PSP_InitResetArea( CFE_ES_POWERON_RESET );
-      return_code = CFE_PSP_InitVolatileDiskMem( CFE_ES_POWERON_RESET );
-      return_code = CFE_PSP_InitUserReservedArea( CFE_ES_POWERON_RESET );
+      return_code = CFE_PSP_InitCDS( CFE_PSP_RST_TYPE_POWERON );
+      return_code = CFE_PSP_InitResetArea( CFE_PSP_RST_TYPE_POWERON );
+      return_code = CFE_PSP_InitVolatileDiskMem( CFE_PSP_RST_TYPE_POWERON );
+      return_code = CFE_PSP_InitUserReservedArea( CFE_PSP_RST_TYPE_POWERON );
    }
 
    return(return_code);
@@ -718,7 +736,7 @@ void CFE_PSP_DeleteProcessorReservedMemory(void)
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetKernelTextSegmentInfo(void *PtrToKernelSegment, uint32 *SizeOfKernelSegment)
+int32 CFE_PSP_GetKernelTextSegmentInfo(cpuaddr *PtrToKernelSegment, uint32 *SizeOfKernelSegment)
 {
    /*
    ** Prevent warnings by referencing parameters
@@ -746,10 +764,9 @@ int32 CFE_PSP_GetKernelTextSegmentInfo(void *PtrToKernelSegment, uint32 *SizeOfK
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetCFETextSegmentInfo(void *PtrToCFESegment, uint32 *SizeOfCFESegment)
+int32 CFE_PSP_GetCFETextSegmentInfo(cpuaddr *PtrToCFESegment, uint32 *SizeOfCFESegment)
 {
    int32 return_code;
-   uint32 Address;
    
    if ( SizeOfCFESegment == NULL )
    {
@@ -757,9 +774,8 @@ int32 CFE_PSP_GetCFETextSegmentInfo(void *PtrToCFESegment, uint32 *SizeOfCFESegm
    }
    else
    {
-      Address = (uint32) (&_init);
-      memcpy(PtrToCFESegment,&Address,sizeof(PtrToCFESegment));
-      *SizeOfCFESegment = (uint32) ((uint32) &_fini - (uint32) &_init);
+      *PtrToCFESegment = (cpuaddr)(&_init);
+      *SizeOfCFESegment = (uint32) (((cpuaddr) &_fini) - ((cpuaddr) &_init));
       
       return_code = CFE_PSP_SUCCESS;
    }

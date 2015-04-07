@@ -2,34 +2,34 @@
 ** File:  cfe_psp_support.c
 **
 **
-**      Copyright (c) 2004-2006, United States government as represented by the
+**      Copyright (c) 2004-2012, United States government as represented by the
 **      administrator of the National Aeronautics Space Administration.
 **      All rights reserved. This software(cFE) was created at NASA Goddard
 **      Space Flight Center pursuant to government contracts.
 **
-**      This software may be used only pursuant to a United States government
-**      sponsored project and the United States government may not be charged
-**      for use thereof.
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
 **
 **
-
+**
 ** Purpose:
 **   This file contains glue routines between the cFE and the OS Board Support Package ( BSP ).
 **   The functions here allow the cFE to interface functions that are board and OS specific
 **   and usually dont fit well in the OS abstraction layer.
 **
 ** History:
-**  $ Log: cfe_psp_support.c $
+**   2005/06/05  Alan Cudmore    | Initial version,
 **
 ******************************************************************************/
+
 
 /*
 **  Include Files
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
+
 
 /*
 ** cFE includes
@@ -41,13 +41,35 @@
 ** Types and prototypes for this module
 */
 #include "cfe_psp.h"
+#include "cfe_psp_memory.h"
+
+#ifdef _ENHANCED_BUILD_
 
 /*
-** External Variables
-*/
-extern uint32  CFE_PSP_SpacecraftId;
-extern uint32  CFE_PSP_CpuId;
+ * The preferred way to obtain the CFE tunable values at runtime is via
+ * the dynamically generated configuration object.  This allows a single build
+ * of the PSP to be completely CFE-independent.
+ */
+#include <target_config.h>
 
+#define CFE_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
+#define CFE_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
+#define CFE_SPACECRAFT_ID           (GLOBAL_CONFIGDATA.Default_SpacecraftId)
+
+#else
+
+/*
+ * cfe_platform_cfg.h needed for CFE_ES_NONVOL_STARTUP_FILE, CFE_CPU_ID/CPU_NAME/SPACECRAFT_ID
+ *
+ *  - this should NOT be included here -
+ *
+ * it is only for compatibility with the old makefiles.  Including this makes the PSP build
+ * ONLY compatible with a CFE build using this exact same CFE platform config.
+ */
+
+#include "cfe_platform_cfg.h"
+
+#endif
 
 /******************************************************************************
 **  Function:  CFE_PSP_Restart()
@@ -67,18 +89,19 @@ void CFE_PSP_Restart(uint32 reset_type)
 
    if ( reset_type == CFE_PSP_RST_TYPE_POWERON )
    {
-       OS_printf("CFE_PSP: Exiting cFE with POWERON Reset status.\n");
-       OS_printf("CFE_PSP: Start the cFE Core with the PO parameter to complete the Power On Reset\n");
-       OS_printf("CFE_PSP: When the Power On Reset is completed, the Shared Memroy segments will be CLEARED\n");
-       exit(CFE_PSP_RST_TYPE_POWERON);
+      CFE_PSP_ReservedMemoryMap.FixedInfo->bsp_reset_type = CFE_PSP_RST_TYPE_POWERON;
+      CFE_PSP_FlushCaches(1, (cpuaddr)CFE_PSP_ReservedMemoryMap.FixedInfo, CFE_PSP_ReservedMemoryMap.TotalSize);
+      /* reboot(BOOT_CLEAR); Need RTEMS equiv. */
    }
    else
    {
-       OS_printf("CFE_PSP: Exiting cFE with PROCESSOR Reset status.\n");
-       OS_printf("CFE_PSP: Shared Memory segments have been PRESERVED.\n");
-       OS_printf("CFE_PSP: Restart the cFE with the PR parameter to complete the Processor Reset.\n");
-       exit(CFE_PSP_RST_TYPE_PROCESSOR);
+      CFE_PSP_ReservedMemoryMap.FixedInfo->bsp_reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
+      CFE_PSP_FlushCaches(1, (cpuaddr)CFE_PSP_ReservedMemoryMap.FixedInfo, CFE_PSP_ReservedMemoryMap.TotalSize);
+      /* reboot(BOOT_NORMAL); Need RTEMS Equiv */
    }
+
+   OS_printf("CFE_PSP_Restart is not implemented on this platform ( yet ! )\n");
+   exit(-1);
 
 }
 
@@ -98,14 +121,12 @@ void CFE_PSP_Restart(uint32 reset_type)
 
 void CFE_PSP_Panic(int32 ErrorCode)
 {
-   OS_printf("CFE_PSP_Panic Called with error code = 0x%08X. Exiting.\n",(unsigned int)ErrorCode);
-   OS_printf("The cFE could not start.\n");
-   exit(-1);
+   printf("CFE_PSP_Panic Called with error code = 0x%08X. Exiting.\n",(unsigned int )ErrorCode);
+   exit(-1); /* Need to improve this */
 }
 
-
 /******************************************************************************
-**  Function:  CFE_PSP_FlushCaches)
+**  Function:  CFE_PSP_FlushCaches()
 **
 **  Purpose:
 **    Provides a common interface to flush the processor caches. This routine
@@ -117,9 +138,14 @@ void CFE_PSP_Panic(int32 ErrorCode)
 **  Return:
 **    (none)
 */
+
 void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 {
-   printf("CFE_PSP_FlushCaches called -- Currently no Linux/OSX/Cygwin implementation\n");
+   if ( type == 1 )
+   {
+      /* cacheTextUpdate((void *)address, size); */
+   }
+
 }
 
 /*
@@ -141,7 +167,7 @@ void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 */
 uint32 CFE_PSP_GetProcessorId    (void)
 {
-    return(CFE_PSP_CpuId);
+    return(CFE_CPU_ID);
 }
 
 
@@ -162,5 +188,6 @@ uint32 CFE_PSP_GetProcessorId    (void)
 */
 uint32 CFE_PSP_GetSpacecraftId   (void)
 {
-   return(CFE_PSP_SpacecraftId);
+   return(CFE_SPACECRAFT_ID);
 }
+

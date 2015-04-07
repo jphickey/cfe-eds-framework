@@ -111,32 +111,32 @@ void CFE_PSP_Main(  int ModeId, char *StartupFilePath )
    if ( reset_register & SYS_REG_BLRR_PWRON )
    {    
       OS_printf("CFE_PSP: POWERON Reset: Power Switch ON.\n");
-      reset_type = CFE_ES_POWERON_RESET;
-      reset_subtype = CFE_ES_POWER_CYCLE;
+      reset_type = CFE_PSP_RST_TYPE_POWERON;
+      reset_subtype = CFE_PSP_RST_SUBTYPE_POWER_CYCLE;
    }
    else if ( reset_register & SYS_REG_BLRR_PBRST )
    {    
       OS_printf("CFE_PSP: POWERON Reset: CPCI Push Button Reset.\n");
-      reset_type = CFE_ES_POWERON_RESET;
-      reset_subtype = CFE_ES_PUSH_BUTTON;
+      reset_type = CFE_PSP_RST_TYPE_POWERON;
+      reset_subtype = CFE_PSP_RST_SUBTYPE_PUSH_BUTTON;
    }
    else if ( reset_register & SYS_REG_BLRR_FBTN )
    {    
       OS_printf("CFE_PSP: POWERON Reset: Front Panel Push Button Reset.\n");
-      reset_type = CFE_ES_PUSH_BUTTON;
+      reset_type = CFE_PSP_RST_SUBTYPE_PUSH_BUTTON;
       reset_subtype = 3;
    }
    else if ( reset_register & SYS_REG_BLRR_WDT2 )
    {    
       OS_printf("CFE_PSP: PROCESSOR Reset: Watchdog level 2 Reset.\n");
-      reset_type = CFE_ES_PROCESSOR_RESET;
-      reset_subtype = CFE_ES_HW_WATCHDOG;
+      reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
+      reset_subtype = CFE_PSP_RST_SUBTYPE_HW_WATCHDOG;
    }
    else if ( reset_register & SYS_REG_BLRR_SWSRST )
    {    
       OS_printf("CFE_PSP: PROCESSOR Reset: Software Soft Reset.\n");
-      reset_type = CFE_ES_PROCESSOR_RESET;
-      reset_subtype = CFE_ES_RESET_COMMAND;
+      reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
+      reset_subtype = CFE_PSP_RST_SUBTYPE_RESET_COMMAND;
    }
    else if ( reset_register & SYS_REG_BLRR_SWHRST )
    {
@@ -148,24 +148,24 @@ void CFE_PSP_Main(  int ModeId, char *StartupFilePath )
       ** reboot functions use this reset type, we want to use this for a software
       ** commanded processor or Power on reset.
       */
-      if ( CFE_PSP_ReservedMemoryPtr->bsp_reset_type == CFE_ES_POWERON_RESET)
+      if ( CFE_PSP_ReservedMemoryPtr->bsp_reset_type == CFE_PSP_RST_TYPE_POWERON)
       {
          OS_printf("CFE_PSP: POWERON Reset: Software Hard Reset.\n");
-         reset_type = CFE_ES_POWERON_RESET;
-         reset_subtype = CFE_ES_RESET_COMMAND;
+         reset_type = CFE_PSP_RST_TYPE_POWERON;
+         reset_subtype = CFE_PSP_RST_SUBTYPE_RESET_COMMAND;
       }
       else
       {
          OS_printf("CFE_PSP: PROCESSOR Reset: Software Hard Reset.\n");
-         reset_type = CFE_ES_PROCESSOR_RESET;
-         reset_subtype = CFE_ES_RESET_COMMAND;
+         reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
+         reset_subtype = CFE_PSP_RST_SUBTYPE_RESET_COMMAND;
       }
    }
    else 
    {
       OS_printf("CFE_PSP: POWERON Reset: UNKNOWN Reset.\n");
-      reset_type = CFE_ES_POWERON_RESET;
-      reset_subtype = CFE_ES_UNDEFINED_RESET; 
+      reset_type = CFE_PSP_RST_TYPE_POWERON;
+      reset_subtype = CFE_PSP_RST_SUBTYPE_UNDEFINED_RESET; 
    }   
 
    /*

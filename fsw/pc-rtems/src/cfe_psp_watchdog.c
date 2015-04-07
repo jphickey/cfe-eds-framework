@@ -2,14 +2,14 @@
 ** File:  cfe_psp_watchdog.c
 **
 **
-**      Copyright (c) 2004-2006, United States government as represented by the
+**      Copyright (c) 2004-2012, United States government as represented by the
 **      administrator of the National Aeronautics Space Administration.
 **      All rights reserved. This software(cFE) was created at NASA Goddard
 **      Space Flight Center pursuant to government contracts.
 **
-**      This software may be used only pursuant to a United States government
-**      sponsored project and the United States government may not be charged
-**      for use thereof.
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
+**
 **
 **
 ** Purpose:
@@ -52,7 +52,7 @@
 /*
 ** The watchdog time in milliseconds
 */
-uint32 CFE_PSP_WatchdogValue = CFE_PSP_WATCHDOG_MAX;
+uint32 CFE_PSP_WatchdogValue = 0;
 
 /*  Function:  CFE_PSP_WatchdogInit()
 **

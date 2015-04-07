@@ -162,8 +162,8 @@ void CFE_PSP_SysInit(uint32* psp_reset_type, uint32* psp_reset_subtype, uint32 l
 
    /* Assign the reset cause */
    /* for now always start up in a power on reset */
-   *psp_reset_type    = CFE_ES_POWERON_RESET;
-   *psp_reset_subtype = CFE_ES_POWER_CYCLE;
+   *psp_reset_type    = CFE_PSP_RST_TYPE_POWERON;
+   *psp_reset_subtype = CFE_PSP_RST_SUBTYPE_POWER_CYCLE;
 
    ResetType = *psp_reset_type;
    ResetSubtype = *psp_reset_subtype;
