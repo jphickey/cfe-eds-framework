@@ -40,8 +40,15 @@
 
 #include "common_types.h"
 #include "osapi.h"
+
+/*
+ * These internal header files should not be used in application code
+ * They will not be accessible when using the newest build scripts
+ */
+#if !defined(_ENHANCED_BUILD_) || defined(_CFE_PSP_)
 #include "cfe_psp_config.h"
 #include "psp_version.h"
+#endif
 
 /*
 ** Macro Definitions
@@ -133,6 +140,19 @@
 #define CFE_PSP_RST_SUBTYPE_BANKSWITCH_RESET      9   /**< \brief  Reset reverted to a cFE POWERON due to a boot bank switch */
 #define CFE_PSP_RST_SUBTYPE_MAX                   10  /**< \brief  Placeholder to indicate 1+ the maximum value that the PSP will ever use. */
 /** \} */
+
+/* Replacements for the "version" macros */
+#ifdef _ENHANCED_BUILD_
+
+#define CFE_PSP_MAJOR_VERSION          (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.MajorVersion)
+#define CFE_PSP_MINOR_VERSION          (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.MinorVersion)
+#define CFE_PSP_REVISION               (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.Revision)
+#define CFE_PSP_MISSION_REV            (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.MissionRev)
+
+/* For backwards compatibility */
+#define CFE_PSP_SUBMINOR_VERSION       CFE_PSP_REVISION
+
+#endif
 
 /*
 ** Type Definitions

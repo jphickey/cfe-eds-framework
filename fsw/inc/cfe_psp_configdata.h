@@ -29,6 +29,20 @@ typedef const struct
    CFE_PSP_IoDriverApi_t *Api;
 } CFE_PSP_IoDriverLoadEntry_t;
 
+/*
+** PSP software version record
+** (replaces PSP_*_VERSION macros)
+*/
+typedef const struct
+{
+   uint8 MajorVersion;
+   uint8 MinorVersion;
+   uint8 Revision;
+   uint8 MissionRev;
+} CFE_PSP_VersionInfo_t;
+
+
+
 /**
  * PSP/Hardware configuration parameters
  * This structure should be instantiated by the PSP according
@@ -58,6 +72,8 @@ typedef const struct
     */
    uint32 HW_NumEepromBanks;
 
+   CFE_PSP_VersionInfo_t   PSP_VersionInfo;
+
 } Target_PspConfigData;
 
 /**
@@ -71,6 +87,18 @@ extern Target_PspConfigData GLOBAL_PSP_CONFIGDATA;
  * Allows the actual instantiation to be done outside this module
  */
 extern CFE_PSP_IoDriverLoadEntry_t TARGET_IODRIVER_PRELOADLISTDATA[];
+
+/**
+ * Extern reference to the psp memory table
+ * Allows the actual instantiation to be done outside this module
+ */
+extern CFE_PSP_MemTable_t CFE_PSP_MemoryTable[];
+
+/**
+ * Extern reference to the psp volume table
+ * Allows the actual instantiation to be done outside this module
+ */
+extern OS_VolumeInfo_t OS_VolumeTable[];
 
 
 #endif /* CFE_PSP_CONFIG_H_ */
