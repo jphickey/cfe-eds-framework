@@ -54,8 +54,6 @@ extern rtems_status_code rtems_ide_part_table_initialize (const char* );
 #define RTEMS_NUMBER_OF_RAMDISKS 1
 
 
-#ifdef _ENHANCED_BUILD_
-
 /*
  * The preferred way to obtain the CFE tunable values at runtime is via
  * the dynamically generated configuration object.  This allows a single build
@@ -64,32 +62,10 @@ extern rtems_status_code rtems_ide_part_table_initialize (const char* );
 #include <target_config.h>
 
 #define CFE_ES_MAIN_FUNCTION        (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
-#define CFE_TIME_1HZ_FUNCTION       (*GLOBAL_CONFIGDATA.CfeConfig->System1HzISR)
 #define CFE_ES_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
 #define CFE_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
 #define CFE_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
 #define CFE_SPACECRAFT_ID           (GLOBAL_CONFIGDATA.Default_SpacecraftId)
-
-#else
-
-/*
- * cfe_platform_cfg.h needed for CFE_ES_NONVOL_STARTUP_FILE, CFE_CPU_ID/CPU_NAME/SPACECRAFT_ID
- *
- *  - this should NOT be included here -
- *
- * it is only for compatibility with the old makefiles.  Including this makes the PSP build
- * ONLY compatible with a CFE build using this exact same CFE platform config.
- */
-
-#include "cfe_platform_cfg.h"
-
-extern void CFE_ES_Main(uint32 StartType, uint32 StartSubtype, uint32 ModeId, const char *StartFilePath );
-extern void CFE_TIME_Local1HzISR(void);
-
-#define CFE_ES_MAIN_FUNCTION     CFE_ES_Main
-#define CFE_TIME_1HZ_FUNCTION    CFE_TIME_Local1HzISR
-
-#endif
 
 /*
 ** Global variables
@@ -110,12 +86,12 @@ size_t rtems_ramdisk_configuration_size = RTEMS_NUMBER_OF_RAMDISKS;
 */
 rtems_driver_address_table rtems_ramdisk_io_ops =
 {
-  initialization_entry: ramdisk_initialize,
-  open_entry:           rtems_blkdev_generic_open,
-  close_entry:          rtems_blkdev_generic_close,
-  read_entry:           rtems_blkdev_generic_read,
-  write_entry:          rtems_blkdev_generic_write,
-  control_entry:        rtems_blkdev_generic_ioctl
+  .initialization_entry = ramdisk_initialize,
+  .open_entry =           rtems_blkdev_generic_open,
+  .close_entry =          rtems_blkdev_generic_close,
+  .read_entry =           rtems_blkdev_generic_read,
+  .write_entry =          rtems_blkdev_generic_write,
+  .control_entry =        rtems_blkdev_generic_ioctl
 };
 
 rtems_id          RtemsTimerId;
@@ -188,54 +164,6 @@ void CFE_PSP_Setup(void)
 
 }
 
-/*
-** A simple entry point to start from the loader
-*/
-rtems_task Init(
-  rtems_task_argument ignored
-)
-{
-   CFE_PSP_Setup();
-
-   /*
-   ** Initialize the OS API
-   */
-   OS_API_Init();
-
-
-   /*
-   ** Run the PSP Main - this will return when init is complete
-   */
-   CFE_PSP_Main(1, "/cf/cfe_es_startup.scr");
-
-
-   /*
-   ** Run the RTEMS shell.
-   */
-   while (1)
-   {
-      if (rtems_shell_init("SHLL", RTEMS_MINIMUM_STACK_SIZE * 4, 100, "/dev/console", false, true, CFE_PSP_Login_Check) < 0)
-      {
-        OS_printf ("shell init failed: %s\n", strerror (errno));
-        OS_TaskDelay(1000);
-      }
-   }
-}
-
-/******************************************************************************
-**  Function:  CFE_PSP_1HzTimerTick
-**
-**  Purpose:
-**    Simple wrapper function to call the CFE 1Hz ISR function
-**
-*/
-void CFE_PSP_1HzTimerTick(uint32 timer_id, void *arg)
-{
-   CFE_TIME_1HZ_FUNCTION();
-}
-
-
-
 /******************************************************************************
 **  Function:  CFE_PSP_SetupSystemTimer
 **
@@ -263,43 +191,64 @@ void CFE_PSP_1HzTimerTick(uint32 timer_id, void *arg)
 void CFE_PSP_SetupSystemTimer(void)
 {
     uint32 SystemTimebase;
-    uint32 SystemTimer;
     int32  Status;
 
-#if OSAL_API_VERSION >= 40200
-    Status = OS_TimeBaseCreate(&SystemTimebase, "System Timebase", NULL);
-    if (Status != OS_SUCCESS)
+    Status = OS_TimeBaseCreate(&SystemTimebase, "cFS-Master", NULL);
+    if (Status == OS_SUCCESS)
     {
-        OS_printf("CFE_PSP: Error Creating System Timebase: %d\n", (int)Status);
-        return;
+        Status = OS_TimeBaseSet(SystemTimebase, 250000, 250000);
     }
 
-    Status = OS_TimeBaseSet(SystemTimebase, 250000, 250000);
+
+    /*
+     * If anything failed, cFE/cFS will not run properly, so a panic is appropriate
+     */
     if (Status != OS_SUCCESS)
     {
-       OS_printf("CFE_PSP: Error Setting System Timebase: %d\n", (int)Status);
-       return;
+        OS_printf("CFE_PSP: Error configuring cFS timing: %d\n", (int)Status);
+        CFE_PSP_Panic(Status);
     }
-
-    Status = OS_TimerAdd(&SystemTimer, "System 1Hz", SystemTimebase, CFE_PSP_1HzTimerTick, NULL);
-    if (Status != OS_SUCCESS)
-    {
-       OS_printf("CFE_PSP: Error Adding System Timer: %d\n", (int)Status);
-       return;
-    }
-
-    Status = OS_TimerSet(SystemTimer, 500000, 1000000);
-    if (Status != OS_SUCCESS)
-    {
-       OS_printf("CFE_PSP: Error Starting System Timer: %d\n", (int)Status);
-       return;
-    }
-#endif
-
-
-    OS_printf("CFE_PSP: OS Timer object created successfully\n");
 }
 
+
+/*
+** A simple entry point to start from the loader
+*/
+rtems_task Init(
+  rtems_task_argument ignored
+)
+{
+   CFE_PSP_Setup();
+
+   /*
+   ** Start the shell early, so it can be be used in case a problem occurs
+   */
+   if (rtems_shell_init("SHLL", RTEMS_MINIMUM_STACK_SIZE * 4, 100, "/dev/console", false, false, CFE_PSP_Login_Check) < 0)
+   {
+     OS_printf ("shell init failed: %s\n", strerror (errno));
+   }
+
+   /*
+   ** Initialize the OS API
+   */
+   OS_API_Init();
+
+
+   /* Prepare the system timing resources */
+   CFE_PSP_SetupSystemTimer();
+
+   /*
+   ** Run the PSP Main - this will return when init is complete
+   */
+   CFE_PSP_Main(1, "/cf/cfe_es_startup.scr");
+
+
+   /*
+   ** Wait for anything interesting to happen
+   **  (any real work should be done by threads spawned during startup)
+   */
+   OS_IdleLoop();
+}
 
 /******************************************************************************
 **  Function:  CFE_PSP_Main()
@@ -337,11 +286,6 @@ void CFE_PSP_Main(  int ModeId, char *StartupFilePath )
    */
    CFE_ES_MAIN_FUNCTION(reset_type,reset_subtype, 1, CFE_ES_NONVOL_STARTUP_FILE);
 
-   /*
-   ** Setup the timer to fire at 1hz 
-   */  
-   CFE_PSP_SetupSystemTimer();
-
 }
 
 /* configuration information */
@@ -355,10 +299,14 @@ void CFE_PSP_Main(  int ModeId, char *StartupFilePath )
 #define CONFIGURE_INIT_TASK_STACK_SIZE  (20*1024)
 #define CONFIGURE_INIT_TASK_PRIORITY    120
 
-#define CONFIGURE_MAXIMUM_TASKS                      64
-#define CONFIGURE_MAXIMUM_TIMERS                     10
-#define CONFIGURE_MAXIMUM_SEMAPHORES                 64
-#define CONFIGURE_MAXIMUM_MESSAGE_QUEUES             64
+/*
+ * Note that these resources are shared with RTEMS itself (e.g. the init task, the shell)
+ * so they should be allocated slightly higher than the user limits in osconfig.h
+ */
+#define CONFIGURE_MAXIMUM_TASKS                      (OS_MAX_TASKS + 4)
+#define CONFIGURE_MAXIMUM_TIMERS                     (OS_MAX_TIMERS + 2)
+#define CONFIGURE_MAXIMUM_SEMAPHORES                 (OS_MAX_BIN_SEMAPHORES + OS_MAX_COUNT_SEMAPHORES + OS_MAX_MUTEXES + 4)
+#define CONFIGURE_MAXIMUM_MESSAGE_QUEUES             (OS_MAX_QUEUES + 4)
 
 #define CONFIGURE_EXECUTIVE_RAM_SIZE    (1024*1024)
 
