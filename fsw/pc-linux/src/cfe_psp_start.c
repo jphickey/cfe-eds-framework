@@ -124,7 +124,6 @@ typedef struct
 */
 void CFE_PSP_SigintHandler (int signal);
 void CFE_PSP_TimerHandler (int signum);
-void CFE_PSP_DeleteOSResources (void);
 void CFE_PSP_DisplayUsage(char *Name );
 void CFE_PSP_ProcessArgumentDefaults(CFE_PSP_CommandData_t *CommandData);
 
@@ -184,10 +183,6 @@ int main(int argc, char *argv[])
    struct             itimerval timer;
    int                opt = 0;
    int                longIndex = 0;
-   sigset_t           mask;
-   pthread_t          thread_id;
-   struct sched_param thread_params;
-   int                ret;
 
 #ifdef CFE_PSP_EEPROM_SUPPORT
    int32  Status;
@@ -373,27 +368,6 @@ int main(int argc, char *argv[])
    }
 #endif
 
-   /*
-   ** Disable Signals to parent thread and therefore all
-   ** child threads create will block all signals
-   ** Note: Timers will not work in the application unless
-   **       threads are spawned in OS_Application_Startup.
-   */
-   sigfillset(&mask);
-   sigdelset(&mask, SIGINT); /* Needed to kill program */
-   sigprocmask(SIG_SETMASK, &mask, NULL);
-
-
-   /*
-   ** Raise the priority of the main thread so ES Main completes  
-   */
-   thread_id = pthread_self(); 
-   thread_params.sched_priority = sched_get_priority_max(SCHED_FIFO);
-   ret = pthread_setschedparam(thread_id, SCHED_FIFO, &thread_params);
-   if ( ret != 0 )
-   {
-      OS_printf("Unable to set main thread priority to max\n");
-   }
 
    /*
    ** Call cFE entry point.
@@ -401,36 +375,28 @@ int main(int argc, char *argv[])
    CFE_ES_MAIN_FUNCTION(reset_type, reset_subtype, 1, CFE_ES_NONVOL_STARTUP_FILE);
 
    /*
-   ** Re-enable Signals to current thread so that
-   ** any signals will interrupt in this threads context
-   ** ... this is needed for timers
+   ** Let the main thread sleep.
+   **
+   ** OS_IdleLoop() will wait forever and return if
+   ** someone calls OS_ApplicationShutdown(TRUE)
    */
-   sigprocmask(SIG_UNBLOCK, &mask, NULL);
+   OS_IdleLoop();
 
    /*
-   ** Lower the thread priority to before entering the sleep loop
-   */
-   thread_params.sched_priority = sched_get_priority_min(SCHED_FIFO);
-   ret = pthread_setschedparam(thread_id, SCHED_FIFO, &thread_params);
-   if ( ret != 0 )
-   {
-      OS_printf("Unable to set main thread priority to minimum\n");
-   }
+    * The only way OS_IdleLoop() will return is if SIGINT is captured
+    * Handle cleanup duties.
+    */
+   OS_printf("\nCFE_PSP: Control-C Captured - Exiting cFE\n");
 
-   /*
-   ** Let the main thread sleep 
-   */     
-   for ( ;; )
-   {
-      /* 
-      ** Even though this sleep call is for 1 second,
-      ** the sigalarm timer for the 1hz will keep waking
-      ** it up. Keep that in mind when setting the timer down
-      ** to something very small.
-      */
-      sleep(1);
-   }
-                 
+   /* Deleting these memories will unlink them, but active references should still work */
+   CFE_PSP_DeleteProcessorReservedMemory();
+
+   OS_printf("CFE_PSP: NOTE: After quitting the cFE with a Control-C signal, it MUST be started next time\n");
+   OS_printf("     with a Poweron Reset ( --reset PO ). \n");
+
+   OS_DeleteAllObjects();
+
+
    return(0);
 }
 
@@ -449,10 +415,7 @@ int main(int argc, char *argv[])
 
 void CFE_PSP_SigintHandler (int signal)
 {
-      OS_printf("\nCFE_PSP: Control-C Captured - Exiting cFE\n");
-      CFE_PSP_DeleteProcessorReservedMemory();
-      CFE_PSP_DeleteOSResources();
-      exit(0);
+    OS_ApplicationShutdown(TRUE);
 }
 
 /******************************************************************************
@@ -479,51 +442,6 @@ void CFE_PSP_TimerHandler (int signum)
 	  TimerCounter++;
 }
 
-
-/******************************************************************************
-**  Function:  CFE_PSP_DeleteOSResources()
-**
-**  Purpose:
-**    Clean up any OS resources when exiting from the cFE
-**
-**  Arguments:
-**    (none)
-**
-**  Return:
-**    (none)
-*/
-void CFE_PSP_DeleteOSResources (void)
-{
-   uint32          i;
-
-   for ( i = 0; i < OS_MAX_TASKS; i++)
-      OS_TaskDelete(i);
-   printf("CFE_PSP: Deleted all Tasks in system\n");
-   
-   for ( i = 0; i < OS_MAX_BIN_SEMAPHORES; i++ )
-      OS_BinSemDelete(i);
-   printf("CFE_PSP: Deleted all Binary Semaphores in system\n");
-      
-   for ( i = 0; i < OS_MAX_COUNT_SEMAPHORES; i++ )
-      OS_CountSemDelete(i);
-   printf("CFE_PSP: Deleted all Counting Semaphores in system\n");
-   
-   for ( i = 0; i < OS_MAX_MUTEXES; i++ )
-      OS_MutSemDelete(i);
-   printf("CFE_PSP: Deleted all Mutexes in system\n");
-
-   for ( i = 0; i < OS_MAX_QUEUES; i++ )
-      OS_QueueDelete(i);
-   printf("CFE_PSP: Deleted all Queues in system\n");
-  
-   for ( i = 0; i < OS_MAX_TIMERS; i++ )
-      OS_TimerDelete(i);
-   printf("CFE_PSP: Deleted all Timers in system\n");
- 
-   printf("CFE_PSP: NOTE: After quitting the cFE with a Control-C signal, it MUST be started next time\n");
-   printf("     with a Poweron Reset ( --reset PO ). \n");
-   
-}
 /******************************************************************************
 **  Function:  CFE_PSP_DisplayUsage
 **
