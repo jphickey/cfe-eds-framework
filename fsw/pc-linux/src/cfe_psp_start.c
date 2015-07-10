@@ -35,6 +35,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <sched.h>
+#include <errno.h>
 
 /*
 ** cFE includes 
@@ -54,8 +55,8 @@
 #include <target_config.h>
 #include "cfe_psp_module.h"
 
-#define CFE_ES_MAIN_FUNCTION        (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
-#define CFE_TIME_1HZ_FUNCTION       (*GLOBAL_CONFIGDATA.CfeConfig->System1HzISR)
+#define CFE_ES_MAIN_FUNCTION        (GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
+#define CFE_TIME_1HZ_FUNCTION       (GLOBAL_CONFIGDATA.CfeConfig->System1HzISR)
 #define CFE_ES_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
 #define CFE_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
 #define CFE_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
@@ -130,6 +131,7 @@ void CFE_PSP_SigintHandler (int signal);
 void CFE_PSP_TimerHandler (int signum);
 void CFE_PSP_DisplayUsage(char *Name );
 void CFE_PSP_ProcessArgumentDefaults(CFE_PSP_CommandData_t *CommandData);
+void CFE_PSP_SetupSystemTimer(void);
 
 /*
 **  External Declarations
@@ -180,8 +182,6 @@ int main(int argc, char *argv[])
 {
    uint32             reset_type;
    uint32             reset_subtype;
-   struct             sigaction sa;
-   struct             itimerval timer;
    int                opt = 0;
    int                longIndex = 0;
 
@@ -290,38 +290,37 @@ int main(int argc, char *argv[])
    reset_subtype = CommandData.SubType;
 
    /*
+    * If _ENHANCED_BUILD_ is set, confirm that the GLOBAL_CONFIGDATA
+    * structure pointers are not null.  These are used later, and it
+    * simplifies conditional logic.
+    *
+    * If these pointers are null then it indicates a build system failure
+    * or link issue.  (These are constant structures populated at compile time).
+    */
+#ifdef _ENHANCED_BUILD_
+   if (GLOBAL_CONFIGDATA.CfeConfig == NULL ||
+           GLOBAL_CONFIGDATA.PspConfig == NULL)
+   {
+       OS_printf("CFE_PSP: Panic due to NULL configuration pointer\n");
+       CFE_PSP_Panic(CFE_PSP_INVALID_POINTER);
+   }
+#endif
+
+   /*
    ** Install sigint_handler as the signal handler for SIGINT.
    */
    signal(SIGINT, CFE_PSP_SigintHandler);
 
    /*
-   ** Init timer counter
-   */
-   TimerCounter = 0;
-
-   /*
-   ** Install timer_handler as the signal handler for SIGVTALRM.
-   */
-   memset (&sa, 0, sizeof (sa));
-   sa.sa_handler = &CFE_PSP_TimerHandler;
-   sigaction (SIGALRM, &sa, NULL);
-
-   /*
-   ** Configure the timer to expire after 250ms
-   */
-   timer.it_value.tv_sec  = 0;
-   timer.it_value.tv_usec = 250000;
-
-   /*
-   **  and every 500ms after that.
-   */
-   timer.it_interval.tv_sec  = 0;
-   timer.it_interval.tv_usec = 250000;
-
-   /*
    ** Initialize the OS API data structures
    */
    OS_API_Init();
+
+   /*
+   ** Start the timer
+   ** Done here so that the modules can also use it, if desired
+   */
+   CFE_PSP_SetupSystemTimer();
 
    /*
    ** Initialize the statically linked modules (if any)
@@ -336,12 +335,6 @@ int main(int argc, char *argv[])
    ** Initialize the reserved memory 
    */
    CFE_PSP_InitProcessorReservedMemory(reset_type);
-
-
-   /*
-   ** Start the timer
-   */
-   setitimer (ITIMER_REAL, &timer, NULL);
 
 
    /*
@@ -515,3 +508,130 @@ void CFE_PSP_ProcessArgumentDefaults(CFE_PSP_CommandData_t *CommandData)
    }
 
 }
+
+/******************************************************************************
+**  Function:  CFE_PSP_1HzTimerTick
+**
+**  Purpose:
+**    Simple wrapper function to call the CFE 1Hz ISR function
+**
+*/
+void CFE_PSP_1HzTimerTick(uint32 timer_id, void *arg)
+{
+    CFE_TIME_1HZ_FUNCTION();
+}
+
+
+/******************************************************************************
+**  Function:  CFE_PSP_SetupSystemTimer
+**
+**  Purpose:
+**    BSP system time base and timer object setup.
+**    This does the necessary work to start the 1Hz time tick required by CFE
+**
+**  Arguments:
+**    (none)
+**
+**  Return:
+**    (none)
+**
+** NOTE:
+**      The handles to the timebase/timer objects are "start and forget"
+**      as they are supposed to run forever as long as CFE runs.
+**
+**      If needed for e.g. additional timer creation, they can be recovered
+**      using an OSAL GetIdByName() call.
+**
+**      This is preferred anyway -- far cleaner than trying to pass the uint32 value
+**      up to the application somehow.
+*/
+
+void CFE_PSP_SetupSystemTimer(void)
+{
+    uint32 SystemTimebase;
+    int32  Status;
+    struct sigaction    sa;
+    struct itimerval    timer;
+    int ret;
+
+    /*
+    ** Init timer counter
+    */
+    TimerCounter = 0;
+
+    /* Create the cFS master timebase that will be the default clock for all
+     * of the cFS components (individual apps could still use a different clock).
+     * This will just operate from the CPU realtime clock - sync function is NULL. */
+    Status = OS_TimeBaseCreate(&SystemTimebase, "cFS-Master", NULL);
+    if (Status == OS_SUCCESS)
+    {
+        /* Set the clock to trigger with 50ms resolution - slow enough that
+         * it will not hog CPU resources but fast enough to have sufficient resolution
+         * for most timing purposes.
+         * (It may be better to move this to the mission config file)
+         */
+        Status = OS_TimeBaseSet(SystemTimebase, 50000, 50000);
+    }
+    else if (Status == OS_ERR_NOT_IMPLEMENTED &&
+#ifdef	_ENHANCED_BUILD_
+            GLOBAL_CONFIGDATA.CfeConfig != NULL &&
+#endif/*_ENHANCED_BUILD_*/
+            &CFE_TIME_1HZ_FUNCTION != NULL)
+    {
+        /* If NOT_IMPLEMENTED, then setup timers directly right here */
+        Status = OS_SUCCESS;
+
+        /*
+         * NOTE - there is a race condition here, as time services are not yet running,
+         * the data structures used in the 1Hz ISR callback are not yet initialize nor
+         * is the semaphore created yet.  If this timer fires before that happens, the
+         * result is undetermined.
+         */
+        OS_printf("CFE_PSP: Compatibility mode - Setting up Local 1Hz Interrupt\n");
+
+        /*
+        ** Install timer_handler as the signal handler for SIGALRM.
+        */
+        memset (&sa, 0, sizeof (sa));
+        sa.sa_handler = &CFE_PSP_TimerHandler;
+
+        /*
+        ** Configure the timer to expire after 250ms
+        */
+        timer.it_value.tv_sec  = 0;
+        timer.it_value.tv_usec = 250000;
+        timer.it_interval.tv_sec  = 0;
+        timer.it_interval.tv_usec = 250000;
+
+        ret = sigaction (SIGALRM, &sa, NULL);
+
+        if (ret < 0)
+        {
+            OS_printf("CFE_PSP: sigaction() error %d: %s \n", ret, strerror(errno));
+            Status = OS_ERROR;
+        }
+        else
+        {
+            ret = setitimer (ITIMER_REAL, &timer, NULL);
+            if (ret < 0)
+            {
+                OS_printf("CFE_PSP: setitimer() error %d: %s \n", ret, strerror(errno));
+                Status = OS_ERROR;
+            }
+        }
+    }
+
+    /*
+     * If anything failed, cFE/cFS timing (1Hz function) will not run properly
+     *
+     * During the 2015-08-11 CCB it was decided that we should not panic for this
+     * condition, as other functions of the CFE may still work.  Since the CFE syslog
+     * is not available to the PSP, our only notification facility is OS_printf.
+     */
+    if (Status != OS_SUCCESS)
+    {
+        OS_printf("CFE_PSP: Error configuring cFS timing: %d\n", (int)Status);
+    }
+
+}
+
