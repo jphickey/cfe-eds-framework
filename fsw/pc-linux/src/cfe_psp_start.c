@@ -99,9 +99,6 @@ void CFE_PSP_ModuleInit(void)
 #define CFE_PSP_CPU_NAME_LENGTH  32
 #define CFE_PSP_RESET_NAME_LENGTH 10
 
-/* Uncomment this define to enable simulated EEPROM support on the desktop machine */
-/* #define CFE_PSP_EEPROM_SUPPORT */
-
 /*
 ** Typedefs for this module
 */
@@ -140,9 +137,6 @@ void CFE_PSP_ProcessArgumentDefaults(CFE_PSP_CommandData_t *CommandData);
 **  External Declarations
 */
 extern void CFE_PSP_DeleteProcessorReservedMemory(void);
-#ifdef CFE_PSP_EEPROM_SUPPORT
-extern int32 CFE_PSP_SetupEEPROM(uint32 EEPROMSize, uint32 *EEPROMAddress);
-#endif
 
 /*
 ** Global variables
@@ -193,12 +187,6 @@ int main(int argc, char *argv[])
    int                opt = 0;
    int                longIndex = 0;
 
-#ifdef CFE_PSP_EEPROM_SUPPORT
-   int32  Status;
-   uint32 eeprom_address;
-   uint32 eeprom_size;
-#endif
-   
    /*
    ** Initialize the CommandData struct 
    */
@@ -356,33 +344,6 @@ int main(int argc, char *argv[])
    ** Start the timer
    */
    setitimer (ITIMER_REAL, &timer, NULL);
-
-
-#ifdef CFE_PSP_EEPROM_SUPPORT
-   /*
-   ** Create the simulated EEPROM segment by mapping a memory segment to a file. 
-   ** Since the file will be saved, the "EEPROM" contents will be preserved.
-   ** Set up 512Kbytes of EEPROM
-   */
-   eeprom_size = 0x80000;
-   Status = CFE_PSP_SetupEEPROM(eeprom_size, &eeprom_address);
-   
-   if ( Status == 0 )
-   {
-      uint32 Dword;
-      /*
-      ** Install the 2nd memory range as the mapped file ( EEPROM )
-      */  
-      Status = CFE_PSP_MemRangeSet (1, CFE_PSP_MEM_EEPROM, eeprom_address, 
-                                    eeprom_size, CFE_PSP_MEM_SIZE_DWORD, 0 ); 
-      OS_printf("CFE_PSP: EEPROM Range (2) created: Start Address = %08X, Size = %08X\n", eeprom_address, eeprom_size);  
-      
-   }
-   else
-   {
-      OS_printf("CFE_PSP: Cannot create EEPROM Range from Memory Mapped file.\n");
-   }
-#endif
 
 
    /*
