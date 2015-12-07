@@ -190,7 +190,7 @@ uint32 CFE_PSP_MemRanges(void)
 **
 ** Parameters: 
 **    RangeNum --   A 32 bit integer ( starting with 0 ) specifying the MemoryTable entry.
-**    MemoryType -- The memory type to validate: CFE_PSP_MEM_RAM, CFE_PSP_MRM_EEPROM, or CFE_PSP_MEM_ANY
+**    MemoryType -- The memory type to validate: CFE_PSP_MEM_RAM or CFE_PSP_MRM_EEPROM.
 **    Address --    A 32 bit starting address of the memory range
 **    Size    --    A 32 bit size of the memory range ( Address + Size = End Address )
 **    WordSize --   The minimum addressable size of the range:
