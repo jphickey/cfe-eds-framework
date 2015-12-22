@@ -53,7 +53,9 @@ extern CFE_PSP_MemTable_t CFE_PSP_MemoryTable[CFE_PSP_MEM_TABLE_SIZE];
 ** Parameters: 
 **    Address -- A 32 bit starting address of the memory range
 **    Size    -- A 32 bit size of the memory range ( Address + Size = End Address )
-**    MemoryType -- The memory type to validate: CFE_PSP_MEM_RAM, CFE_PSP_MRM_EEPROM, or CFE_PSP_MEM_ANY
+**    MemoryType -- The memory type to validate, including but not limited to:
+**              CFE_PSP_MEM_RAM, CFE_PSP_MEM_EEPROM, or CFE_PSP_MEM_ANY
+**              Any defined CFE_PSP_MEM_* enumeration can be specified
 **
 ** Global Inputs: None
 **
@@ -185,12 +187,14 @@ uint32 CFE_PSP_MemRanges(void)
 **		This function populates one of the records in the CFE_PSP_MemoryTable.
 **
 ** Assumptions and Notes:
-**    Becasue the table is fixed size, the entries are set by using the integer index.
+**    Because the table is fixed size, the entries are set by using the integer index.
 **    No validation is done with the address or size. 
 **
 ** Parameters: 
 **    RangeNum --   A 32 bit integer ( starting with 0 ) specifying the MemoryTable entry.
-**    MemoryType -- The memory type to validate: CFE_PSP_MEM_RAM, CFE_PSP_MRM_EEPROM, or CFE_PSP_MEM_ANY
+**    MemoryType -- The memory type to validate, including but not limited to:
+**              CFE_PSP_MEM_RAM, CFE_PSP_MEM_EEPROM, or CFE_PSP_MEM_ANY
+**              Any defined CFE_PSP_MEM_* enumeration can be specified
 **    Address --    A 32 bit starting address of the memory range
 **    Size    --    A 32 bit size of the memory range ( Address + Size = End Address )
 **    WordSize --   The minimum addressable size of the range:
@@ -262,7 +266,7 @@ int32  CFE_PSP_MemRangeSet      (uint32 RangeNum, uint32 MemoryType, cpuaddr Sta
 ** Parameters: 
 **    RangeNum --   A 32 bit integer ( starting with 0 ) specifying the MemoryTable entry.
 **    *MemoryType -- A pointer to the 32 bit integer where the Memory Type is stored.
-**                   ( CFE_PSP_MEM_TYPE_RAM, CFE_PSP_MEM_TYPE_EEPROM, CFE_PSP_MEM_TYPE_INVALID )
+**                   Any defined CFE_PSP_MEM_* enumeration can be specified
 **    *Address --    A pointer to the 32 bit integer where the 32 bit starting address of the memory range
 **                   is stored.
 **    *Size    --    A pointer to the 32 bit integer where the 32 bit size of the memory range 
