@@ -2,9 +2,13 @@
 ** File   :	cfe_psp_memtab.c
 **
 **
-**      Copyright (c) 2004-2006, United States government as represented by the 
-**      administrator of the National Aeronautics Space Administration.  
-**      All rights reserved. 
+**      Copyright (c) 2004-2011, United States Government as represented by 
+**      Administrator for The National Aeronautics and Space Administration. 
+**      All Rights Reserved.
+**
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
+** 
 **
 ** Author : Alan Cudmore	
 **
