@@ -2,12 +2,11 @@
 ** File   : cfe_psp_voltab.c
 ** Author : Nicholas Yanchik / GSFC Code 582
 **
-**      Copyright (c) 2004-2012, United States government as represented by the 
-**      administrator of the National Aeronautics Space Administration.  
-**      All rights reserved. This software(cFE) was created at NASA Goddard 
-**      Space Flight Center pursuant to government contracts.
+**      Copyright (c) 2004-2011, United States Government as represented by 
+**      Administrator for The National Aeronautics and Space Administration. 
+**      All Rights Reserved.
 **
-**      This is governed by the NASA Open Source Agreement and may be used, 
+**      This is governed by the NASA Open Source Agreement and may be used,
 **      distributed and modified only pursuant to the terms of that agreement.
 ** 
 **

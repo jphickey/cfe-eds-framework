@@ -1,6 +1,13 @@
 /*
 ** cFE Support routines
 **
+**      Copyright (c) 2004-2011, United States Government as represented by 
+**      Administrator for The National Aeronautics and Space Administration. 
+**      All Rights Reserved.
+**
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
+**
 ** This module is a collection of support routines needed to run the cFE on vxWorks.
 ** 
 */
