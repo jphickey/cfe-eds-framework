@@ -2,7 +2,7 @@
 **
 ** File:  cfe_psp_exception.c
 **
-**      RAD750 vxWorks 6.x Version
+ **      ut699 SPARC LEON3 VxWorks 6.7 Version
 **
 **      Copyright (c) 2004-2011, United States Government as represented by 
 **      Administrator for The National Aeronautics and Space Administration. 
@@ -17,7 +17,7 @@
 **
 ** History:
 **   2007/05/29  A. Cudmore      | vxWorks 6.2 MCP750 version
-**   2014/08/08  S. Duran   | Modified for ut699 SPARC LEON3 board -- TODO
+ **   2014/08/08  S. Duran        | Modified for ut699 SPARC LEON3 board
 **
 ******************************************************************************/
 
@@ -66,17 +66,15 @@
 ** Global variables
 */
 
-CFE_PSP_ExceptionContext_t CFE_PSP_ExceptionContext;
-char                       CFE_PSP_ExceptionReasonString[256];
-
+static CFE_PSP_ExceptionContext_t CFE_PSP_ExceptionContext;
+static char CFE_PSP_ExceptionReasonString[256];
 
 /*
-**
-** LOCAL FUNCTION PROTOTYPES
-**
-*/
-void CFE_PSP_ExceptionHook ( int task_id, int vector, uint8* pEsf );
-
+ **
+ ** LOCAL FUNCTION PROTOTYPES
+ **
+ */
+static void CFE_PSP_ExceptionHook(int task_id, int vector, uint8* pEsf);
 
 /***************************************************************************
  **                        FUNCTIONS DEFINITIONS
@@ -124,7 +122,7 @@ void CFE_PSP_AttachExceptions(void)
 **                      then it will be valid.
 **
 */
-void CFE_PSP_ExceptionHook (int task_id, int vector, uint8* pEsf )
+static void CFE_PSP_ExceptionHook (int task_id, int vector, uint8* pEsf )
 {
     char *TaskName;
     
@@ -150,11 +148,13 @@ void CFE_PSP_ExceptionHook (int task_id, int vector, uint8* pEsf )
     fppSave(&CFE_PSP_ExceptionContext.fp);
 
     /*
-    ** Call the Generic cFE routine to finish processing the exception and 
-    ** restart the cFE
-    */
-    CFE_ES_ProcessCoreException((uint32)task_id, (uint8 *)CFE_PSP_ExceptionReasonString, 
-                                (uint32 *)&CFE_PSP_ExceptionContext, sizeof(CFE_PSP_ExceptionContext_t));
+     ** Call the Generic cFE routine to finish processing the exception and
+     ** restart the cFE
+     */
+    CFE_ES_ProcessCoreException((uint32) task_id,
+            (char *) CFE_PSP_ExceptionReasonString,
+            (uint32 *) &CFE_PSP_ExceptionContext,
+            sizeof(CFE_PSP_ExceptionContext_t));
 
     /*
     ** No return to here 
@@ -164,19 +164,27 @@ void CFE_PSP_ExceptionHook (int task_id, int vector, uint8* pEsf )
 
 
 /*
-**
-**   Name: CFE_PSP_SetDefaultExceptionEnvironment
-**
-**   Purpose: This function sets a default exception environment that can be used
-**
-**   Notes: The exception environment is local to each task Therefore this must be
-**          called for each task that that wants to do floating point and catch exceptions
-**          Currently, this is automaticall called from OS_TaskRegister for every task
-*/
+ **
+ **   Name: CFE_PSP_SetDefaultExceptionEnvironment
+ **
+ **   Purpose: This function sets a default exception environment that can be used
+ **
+ **   Notes: The exception environment is local to each task Therefore this must be
+ **          called for each task that that wants to do floating point and catch exceptions
+ **          Currently, this is automatically called from OS_TaskRegister for every task
+ */
 void CFE_PSP_SetDefaultExceptionEnvironment(void)
 {
-   /*
-   ** Fix Later
-   */
+    /*
+     ** Nothing to do here - BSP sets it up, From
+     ** http://www.gaisler.com/doc/vxworks-bsps-6.7.pdf, section 6.2 Exception
+     ** handling, Rev 1.0.11, March 2015
+     ** The trap table is defined by the BSP in sysALib.s. The default action of
+     ** unknown or unhandled traps is to enter excEnt().  The traps 0x02-0x04,
+     ** 0x07-0x10 and 0x20-0x7f will cause a fatal exception - includes floating
+     ** point and alignment exceptions.  It is possible to modify the the fatal
+     ** exception handlers in target/config/comps/src/ edrStubs.c to change
+     **  the default behavior.
+     */
 }
 

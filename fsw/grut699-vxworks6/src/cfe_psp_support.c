@@ -197,12 +197,15 @@ void CFE_PSP_Restart(uint32 reset_type)
 */
 void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 {
-
-   if ( type == 1 )
-   {
-      cacheTextUpdate((void *)address, size);
-   }
-
+/* implement cache flush function if needed.  It is commented out, but
+ * kept as an example in case another PSP is made from this one
+ * It is not currently used or implemented in this PSP or CFS build
+ * on this target
+    if (type == 1)
+    {
+        cacheTextUpdate((void *)address, size);
+    }
+*/
 }
 
 /*
@@ -222,7 +225,7 @@ void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 **
 ** Return Values: Processor ID
 */
-uint32 CFE_PSP_GetProcessorId    (void)
+uint32 CFE_PSP_GetProcessorId(void)
 {
     return(CFE_CPU_ID);
 }
@@ -247,7 +250,7 @@ uint32 CFE_PSP_GetProcessorId    (void)
 **
 ** Return Values: Process ID
 */
-uint32 CFE_PSP_GetProcessId    (void)
+uint32 CFE_PSP_GetProcessId(void)
 {
     return(0);
 }
@@ -269,7 +272,7 @@ uint32 CFE_PSP_GetProcessId    (void)
 **
 ** Return Values: Spacecraft ID
 */
-uint32 CFE_PSP_GetSpacecraftId   (void)
+uint32 CFE_PSP_GetSpacecraftId(void)
 {
    return(CFE_SPACECRAFT_ID);
 }
