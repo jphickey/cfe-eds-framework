@@ -195,7 +195,7 @@ void CFE_PSP_Restart(uint32 reset_type)
 **  Return:
 **    (none)
 */
-void CFE_PSP_FlushCaches(uint32 type, uint32 address, uint32 size)
+void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 {
 
    if ( type == 1 )

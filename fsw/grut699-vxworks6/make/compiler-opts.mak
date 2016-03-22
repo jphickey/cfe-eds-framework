@@ -38,7 +38,8 @@ SYSINCS = $(VXINCDIR:%=-I%)
 ## Target Defines for the OS, Hardware Arch, etc..
 ##
 TARGET_DEFS += -D_VXWORKS_OS_ -D__SPARC__ $(CFE_SB_NET) -D$(OS) -D_EMBED_ \
-	     -DTOOL_FAMILY=gnu -DTOOL=gnuv8 -D_WRS_KERNEL -DCPU=SPARC
+	     -DTOOL_FAMILY=gnu -DTOOL=gnuv8 -D_WRS_KERNEL -DCPU=SPARC \
+	     "-D_VSB_CONFIG_FILE=<../lib/h/config/vsbConfig.h>"
 
 # IF SMP Mode, Append SMP Compiler Directives (Kernel mode is not binary compatible, user-mode is)
 ifeq (${OS_MODE},SMP)
@@ -114,4 +115,4 @@ LINKER     = sparc-wrs-vxworks-ld
 AR         = sparc-wrs-vxworks-ar
 NM         = sparc-wrs-vxworks-nm
 OBJCPY     = sparc-wrs-vxworks-objcopy
-TABLE_BIN=$(CFE_TOOLS)/elf2cfetbl/elf2cfetbl
+TABLE_BIN  = elf2cfetbl

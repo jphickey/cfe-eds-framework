@@ -69,15 +69,6 @@
 CFE_PSP_ExceptionContext_t CFE_PSP_ExceptionContext;
 char                       CFE_PSP_ExceptionReasonString[256];
 
-/*
-**
-** IMPORTED FUNCTIONS
-**
-*/
-
-void CFE_ES_ProcessCoreException(uint32  HostTaskId,     uint8 *ReasonString, 
-                                 uint32 *ContextPointer, uint32 ContextSize);                                   
-                                   
 
 /*
 **
