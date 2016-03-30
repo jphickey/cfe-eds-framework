@@ -9,7 +9,7 @@
 ## 
 ## Warning Level Configuration
 ##
-WARNINGS=-Wall -ansi -pedantic -Wstrict-prototypes
+WARNINGS=-Wall -std=c99 -pedantic -Wstrict-prototypes
 
 ## 
 ## Host OS Include Paths ( be sure to put the -I switch in front of each directory )
