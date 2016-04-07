@@ -17,6 +17,7 @@
 **   2004/09/23  J.P. Swinski    | Initial version,
 **   2004/10/01  P.Kutt          | Replaced OS API task delay with VxWorks functions
 **                                 since OS API is initialized later.
+**   2016/04/07  M.Grubb         | Updated for PSP version 1.3
 **
 ******************************************************************************/
 
@@ -69,7 +70,7 @@ IMPORT void sysPciWrite32 (UINT32, UINT32);
 **    (none)
 */
 
-void CFE_PSP_Main(  int ModeId, char *StartupFilePath )
+void CFE_PSP_Main(  uint32 ModeId, char *StartupFilePath )
 {
    int    TicksPerSecond;
    uint32 reset_type;

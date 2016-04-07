@@ -19,6 +19,7 @@
 **
 ** History:
 **   2006/09/29  A. Cudmore      | vxWorks 6.2 MCP750 version
+**   2016/04/07  M.Grubb         | Updated for PSP version 1.3
 **
 ******************************************************************************/
 
@@ -205,7 +206,7 @@ int32 CFE_PSP_ReadFromCDS(void *PtrToDataToRead, uint32 CDSOffset, uint32 NumByt
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetResetArea (void *PtrToResetArea, uint32 *SizeOfResetArea)
+int32 CFE_PSP_GetResetArea (cpuaddr *PtrToResetArea, uint32 *SizeOfResetArea)
 {
    int32   return_code;
    uint32 *TempPointer;
@@ -244,7 +245,7 @@ int32 CFE_PSP_GetResetArea (void *PtrToResetArea, uint32 *SizeOfResetArea)
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetUserReservedArea(void *PtrToUserArea, uint32 *SizeOfUserArea )
+int32 CFE_PSP_GetUserReservedArea(cpuaddr *PtrToUserArea, uint32 *SizeOfUserArea )
 {
    int32   return_code;
    uint32 *TempPointer;
@@ -283,7 +284,7 @@ int32 CFE_PSP_GetUserReservedArea(void *PtrToUserArea, uint32 *SizeOfUserArea )
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetVolatileDiskMem(void *PtrToVolDisk, uint32 *SizeOfVolDisk )
+int32 CFE_PSP_GetVolatileDiskMem(cpuaddr *PtrToVolDisk, uint32 *SizeOfVolDisk )
 {
    int32   return_code;
    uint32 *TempPointer;
@@ -363,7 +364,7 @@ int32 CFE_PSP_InitProcessorReservedMemory( uint32 RestartType )
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetKernelTextSegmentInfo(void *PtrToKernelSegment, uint32 *SizeOfKernelSegment)
+int32 CFE_PSP_GetKernelTextSegmentInfo(cpuaddr *PtrToKernelSegment, uint32 *SizeOfKernelSegment)
 {
    int32 return_code;
    uint32 StartAddress;
@@ -405,7 +406,7 @@ int32 CFE_PSP_GetKernelTextSegmentInfo(void *PtrToKernelSegment, uint32 *SizeOfK
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_GetCFETextSegmentInfo(void *PtrToCFESegment, uint32 *SizeOfCFESegment)
+int32 CFE_PSP_GetCFETextSegmentInfo(cpuaddr *PtrToCFESegment, uint32 *SizeOfCFESegment)
 {
    int32       return_code;
    uint32      Address;
