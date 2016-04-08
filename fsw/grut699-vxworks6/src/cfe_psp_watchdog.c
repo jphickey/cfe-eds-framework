@@ -213,6 +213,8 @@ void CFE_PSP_WatchdogSet(uint32 WatchdogValue)
     uint32 newValue = 0;
 
     /* convert WD time in millisec to timer ticks */
+#warning "need to find the cppcheck keyword to suppress the warning here."
+    /* cppcheck-suppress unsignedPositive */
     if (WatchdogValue <= (CFE_PSP_WATCHDOG_MIN / CFE_PSP_WATCHDOG_CTR_TICKS_PER_MILLISEC))
     {
         newValue = CFE_PSP_WATCHDOG_MIN;
@@ -248,12 +250,12 @@ void CFE_PSP_WDT_Reg(const char *str)
 {
     printf("%s\n", str);
 
-    printf("  Scaler: %08X\n", timerReg->scaler);
-    printf("  Scaler Reload: %08X\n", timerReg->scalerReload);
-    printf("  Config: %08X\n\n", timerReg->config);
+    printf("  Scaler: %08lX\n", (unsigned long)timerReg->scaler);
+    printf("  Scaler Reload: %08lX\n", (unsigned long)timerReg->scalerReload);
+    printf("  Config: %08lX\n\n", (unsigned long)timerReg->config);
 
-    printf("  Counter: %08X\n", timerReg->timer[TIMER4_ID].counter);
-    printf("  Reload:  %08X\n", timerReg->timer[TIMER4_ID].reload);
-    printf("  Ctrl:    %08X\n", timerReg->timer[TIMER4_ID].control);
+    printf("  Counter: %08lX\n", (unsigned long)timerReg->timer[TIMER4_ID].counter);
+    printf("  Reload:  %08lX\n", (unsigned long)timerReg->timer[TIMER4_ID].reload);
+    printf("  Ctrl:    %08lX\n", (unsigned long)timerReg->timer[TIMER4_ID].control);
 }
 

@@ -223,7 +223,7 @@ static void CFE_PSP_Start(uint32 ModeId, char *StartupFilePath)
    status = OS_API_Init();
    if(status != OS_SUCCESS)
    {
-     printf("CFE_PSP_Start() - OS_API_Init() fail, RC = 0x%x\n", status);
+     printf("CFE_PSP_Start() - OS_API_Init() fail, RC = 0x%lx\n", (unsigned long)status);
    }
  
    /*
@@ -316,11 +316,11 @@ uint32 CFE_PSP_GetRestartType(uint32 *restartSubType)
  */
 static void SetTaskPrio(char* tName, const int32 tgtPrio)
 {
-    int32 tid = 0;
-    int32 curPrio = 0;
-    int32 newPrio = 0;
+    int tid = 0;
+    int curPrio = 0;
+    int newPrio = 0;
 
-    if ((tName != NULL) && (strlen((const char*) tName) > 0))
+    if ((tName != NULL) && (strlen(tName) > 0))
     {
         newPrio = tgtPrio;
         if (newPrio < 0)
@@ -335,10 +335,10 @@ static void SetTaskPrio(char* tName, const int32 tgtPrio)
         tid = taskNameToId(tName);
         if (tid != ERROR)
         {
-            if (taskPriorityGet(tid, (int *) &curPrio) != ERROR)
+            if (taskPriorityGet(tid, &curPrio) != ERROR)
             {
-                printf("Setting %s priority from %d to %d\n", tName, curPrio,
-                        newPrio);
+                printf("Setting %s priority from %d to %d\n", tName,
+                       curPrio, newPrio);
                 taskPrioritySet(tid, newPrio);
             }
         }
