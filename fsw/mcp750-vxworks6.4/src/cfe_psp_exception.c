@@ -17,6 +17,7 @@
 **
 ** History:
 **   2007/05/29  A. Cudmore      | vxWorks 6.2 MCP750 version
+**   2016/04/07  M.Grubb         | Updated for PSP version 1.3
 **
 ******************************************************************************/
 
@@ -63,15 +64,6 @@
 
 CFE_PSP_ExceptionContext_t CFE_PSP_ExceptionContext;
 char                  CFE_PSP_ExceptionReasonString[256];
-
-/*
-**
-** IMPORTED FUNCTIONS
-**
-*/
-
-void CFE_ES_EXCEPTION_FUNCTION(uint32  HostTaskId,     uint8 *ReasonString,
-                                 uint32 *ContextPointer, uint32 ContextSize);
 
 /*
 **
@@ -160,9 +152,10 @@ void CFE_PSP_ExceptionHook (int task_id, int vector, ESFPPC* pEsf )
     ** Call the Generic cFE routine to finish processing the exception and
     ** restart the cFE
     */
-    CFE_ES_EXCEPTION_FUNCTION((uint32 )task_id, (uint8 *)CFE_PSP_ExceptionReasonString,
-                                (uint32 *)&CFE_PSP_ExceptionContext, sizeof(CFE_PSP_ExceptionContext_t));
-
+    CFE_ES_ProcessCoreException((uint32) task_id,
+            (char *) CFE_PSP_ExceptionReasonString,
+            (uint32 *) &CFE_PSP_ExceptionContext,
+            sizeof(CFE_PSP_ExceptionContext_t));
     /*
     ** No return to here
     */
