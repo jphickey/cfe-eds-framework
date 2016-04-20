@@ -209,16 +209,14 @@ int32 CFE_PSP_ReadFromCDS(void *PtrToDataToRead, uint32 CDSOffset, uint32 NumByt
 int32 CFE_PSP_GetResetArea (cpuaddr *PtrToResetArea, uint32 *SizeOfResetArea)
 {
    int32   return_code;
-   uint32 *TempPointer;
    
-   if ( SizeOfResetArea == NULL )
+   if ((PtrToResetArea == NULL) || (SizeOfResetArea == NULL))
    {
       return_code = CFE_PSP_ERROR;
    }
    else
    {
-      TempPointer = (uint32 *)&(CFE_PSP_ReservedMemoryPtr->ResetMemory[0]);
-      memcpy(PtrToResetArea,&(TempPointer),sizeof(PtrToResetArea));
+      *PtrToResetArea = (cpuaddr)&(CFE_PSP_ReservedMemoryPtr->ResetMemory[0]);
       *SizeOfResetArea = CFE_PSP_RESET_AREA_SIZE;
       return_code = CFE_PSP_SUCCESS;
    }
@@ -248,16 +246,14 @@ int32 CFE_PSP_GetResetArea (cpuaddr *PtrToResetArea, uint32 *SizeOfResetArea)
 int32 CFE_PSP_GetUserReservedArea(cpuaddr *PtrToUserArea, uint32 *SizeOfUserArea )
 {
    int32   return_code;
-   uint32 *TempPointer;
    
-   if ( SizeOfUserArea == NULL )
+   if ((PtrToUserArea == NULL) || (SizeOfUserArea == NULL))
    {
       return_code = CFE_PSP_ERROR;
    }
    else
    {
-      TempPointer = (uint32 *)&(CFE_PSP_ReservedMemoryPtr->UserReservedMemory[0]);
-      memcpy(PtrToUserArea,&(TempPointer),sizeof(PtrToUserArea));
+      *PtrToUserArea = (cpuaddr)&(CFE_PSP_ReservedMemoryPtr->UserReservedMemory[0]);
       *SizeOfUserArea = CFE_PSP_USER_RESERVED_SIZE;
       return_code = CFE_PSP_SUCCESS;
    }
@@ -287,16 +283,14 @@ int32 CFE_PSP_GetUserReservedArea(cpuaddr *PtrToUserArea, uint32 *SizeOfUserArea
 int32 CFE_PSP_GetVolatileDiskMem(cpuaddr *PtrToVolDisk, uint32 *SizeOfVolDisk )
 {
    int32   return_code;
-   uint32 *TempPointer;
    
-   if ( SizeOfVolDisk == NULL )
+   if ((PtrToVolDisk == NULL) || (SizeOfVolDisk == NULL))
    {
       return_code = CFE_PSP_ERROR;
    }
    else
    {
-      TempPointer = (uint32 *)&(CFE_PSP_ReservedMemoryPtr->VolatileDiskMemory[0]);
-      memcpy(PtrToVolDisk,&(TempPointer),sizeof(PtrToVolDisk));
+      *PtrToVolDisk = (cpuaddr)&(CFE_PSP_ReservedMemoryPtr->VolatileDiskMemory[0]);
       *SizeOfVolDisk = CFE_PSP_VOLATILE_DISK_SIZE;
       return_code = CFE_PSP_SUCCESS;
 
@@ -367,8 +361,8 @@ int32 CFE_PSP_InitProcessorReservedMemory( uint32 RestartType )
 int32 CFE_PSP_GetKernelTextSegmentInfo(cpuaddr *PtrToKernelSegment, uint32 *SizeOfKernelSegment)
 {
    int32 return_code;
-   uint32 StartAddress;
-   uint32 EndAddress;
+   cpuaddr StartAddress;
+   cpuaddr EndAddress;
    
    if ( SizeOfKernelSegment == NULL )
    {
@@ -381,10 +375,10 @@ int32 CFE_PSP_GetKernelTextSegmentInfo(cpuaddr *PtrToKernelSegment, uint32 *Size
       ** addresses from the BSP, because the 
       ** symbol table does not contain the symbls we need for this
       */
-      StartAddress = (uint32) GetWrsKernelTextStart();
-      EndAddress = (uint32) GetWrsKernelTextEnd();
+      StartAddress = (cpuaddr) GetWrsKernelTextStart();
+      EndAddress = (cpuaddr) GetWrsKernelTextEnd();
 
-      memcpy(PtrToKernelSegment,&StartAddress,sizeof(PtrToKernelSegment));
+      *PtrToKernelSegment = StartAddress;
       *SizeOfKernelSegment = (uint32) (EndAddress - StartAddress);
       
       return_code = CFE_PSP_SUCCESS;
@@ -409,7 +403,6 @@ int32 CFE_PSP_GetKernelTextSegmentInfo(cpuaddr *PtrToKernelSegment, uint32 *Size
 int32 CFE_PSP_GetCFETextSegmentInfo(cpuaddr *PtrToCFESegment, uint32 *SizeOfCFESegment)
 {
    int32       return_code;
-   uint32      Address;
    STATUS      status;
    MODULE_ID   cFEModuleId;
    MODULE_INFO cFEModuleInfo;
@@ -431,9 +424,8 @@ int32 CFE_PSP_GetCFETextSegmentInfo(cpuaddr *PtrToCFESegment, uint32 *SizeOfCFES
          status = moduleInfoGet(cFEModuleId, &cFEModuleInfo);
          if ( status != ERROR )
          {
-            Address = (uint32)(cFEModuleInfo.segInfo.textAddr);
-            memcpy(PtrToCFESegment,&Address,sizeof(PtrToCFESegment));
-            *SizeOfCFESegment = (uint32)(cFEModuleInfo.segInfo.textSize);
+            *PtrToCFESegment = (cpuaddr) (cFEModuleInfo.segInfo.textAddr);
+            *SizeOfCFESegment = (uint32) (cFEModuleInfo.segInfo.textSize);
             return_code = CFE_PSP_SUCCESS;
          }
          else
