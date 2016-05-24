@@ -25,7 +25,7 @@
 */
 #define CFE_PSP_MAJOR_VERSION          1
 #define CFE_PSP_MINOR_VERSION          3
-#define CFE_PSP_REVISION               0
+#define CFE_PSP_REVISION               90
 #define CFE_PSP_MISSION_REV            0
 
 /* For backwards compatibility */
