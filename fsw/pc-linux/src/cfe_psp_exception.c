@@ -4,14 +4,12 @@ S
 **
 **      POSIX ( Mac OS X, Linux, Cygwin ) version
 **
-**      Copyright (c) 2004-2007, United States government as represented by the
-**      administrator of the National Aeronautics Space Administration.
-**      All rights reserved. This software(cFE) was created at NASA's Goddard
-**      Space Flight Center pursuant to government contracts.
+**      Copyright (c) 2004-2011, United States Government as represented by 
+**      Administrator for The National Aeronautics and Space Administration. 
+**      All Rights Reserved.
 **
-**      This software may be used only pursuant to a United States government
-**      sponsored project and the United States government may not be charged
-**      for use thereof.
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
 **
 **
 ** Purpose:
@@ -33,9 +31,29 @@ S
 */
 #include "common_types.h"
 #include "osapi.h"
+#include "cfe_psp.h"
+
+
+#ifdef _ENHANCED_BUILD_
+
+#include <target_config.h>
+
+#define CFE_ES_EXCEPTION_FUNCTION   (*GLOBAL_CONFIGDATA.CfeConfig->SystemExceptionISR)
+
+#else
 #include "cfe_es.h"            /* For reset types */
 #include "cfe_platform_cfg.h"  /* for processor ID */
-#include "cfe_psp.h"
+
+/*
+**
+** Imported Functions
+**
+*/
+
+extern void CFE_ES_EXCEPTION_FUNCTION (uint32  HostTaskId,     const char *ReasonString,
+                                 const uint32 *ContextPointer, uint32 ContextSize);
+
+#endif
 
 /*
 ** Types and prototypes for this module
@@ -55,15 +73,6 @@ S
 
 CFE_PSP_ExceptionContext_t CFE_PSP_ExceptionContext;
 char                       CFE_PSP_ExceptionReasonString[256];
-
-/*
-**
-** Imported Functions
-**
-*/
-
-void CFE_ES_EXCEPTION_FUNCTION(uint32  HostTaskId,     uint8 *ReasonString,
-                                 uint32 *ContextPointer, uint32 ContextSize);
 
 /*
 **
@@ -115,7 +124,7 @@ void CFE_PSP_ExceptionHook (int task_id, int vector, uint8 *pEsf )
     ** Call the Generic cFE routine to finish processing the exception and
     ** restart the cFE
     */
-    CFE_ES_EXCEPTION_FUNCTION((uint32)task_id, (uint8 *)CFE_PSP_ExceptionReasonString,
+    CFE_ES_EXCEPTION_FUNCTION((uint32)task_id, CFE_PSP_ExceptionReasonString,
                                 (uint32 *)&CFE_PSP_ExceptionContext, sizeof(CFE_PSP_ExceptionContext_t));
 
     /*

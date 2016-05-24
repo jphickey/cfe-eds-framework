@@ -2,14 +2,12 @@
 ** File:  cfe_psp_start.c
 **
 **
-**      Copyright (c) 2004-2006, United States government as represented by the 
-**      administrator of the National Aeronautics Space Administration.  
-**      All rights reserved. This software(cFE) was created at NASA Goddard 
-**      Space Flight Center pursuant to government contracts.
+**      Copyright (c) 2004-2011, United States Government as represented by 
+**      Administrator for The National Aeronautics and Space Administration. 
+**      All Rights Reserved.
 **
-**      This software may be used only pursuant to a United States government 
-**      sponsored project and the United States government may not be charged
-**      for use thereof. 
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement. 
 **
 **
 ** Purpose:
@@ -57,9 +55,6 @@
 #define CFE_PSP_TASK_PRIORITY    (30)
 #define CFE_PSP_TASK_STACK_SIZE  (20 * 1024)
 
-
-void CFE_PSP_Start( int ModeId, char *StartupFilePath );
-
 /*
 **  External Declarations
 */
@@ -67,38 +62,49 @@ extern void CFE_PSP_InitLocalTime(void);
 extern void CFE_PSP_Init1HzTimer(void);
 extern void CFE_TIME_SetState(int16);
 
-uint32 ResetType;
-uint32 ResetSubtype;
+extern CFE_PSP_ReservedMemory_t *CFE_PSP_ReservedMemoryPtr;
 
-extern CFE_PSP_ReservedMemory_t *CFE_PSP_ReservedMemoryPtr; 
+void CFE_PSP_Main(uint32 ModeId, char *StartupFilePath);
+uint32 CFE_PSP_GetRestartType(uint32 *restartSubType);
 
+/*
+ **  Local Declarations
+ */
+static uint32 ResetType;
+static uint32 ResetSubtype;
+
+static void CFE_PSP_Start(uint32 ModeId, char *StartupFilePath);
+static void CFE_PSP_SysInit(uint32* psp_reset_type, uint32* psp_reset_subtype,
+        uint32 last_bsp_reset_type);
+static void SetSysTasksPrio(void);
+static void ResetSysTasksPrio(void);
+static void SetTaskPrio(char* tName, const int32 tgtPrio);
 
 /******************************************************************************
-**  Function:  CFE_PSP_Main()
-**
-**  Purpose:
-**    vxWorks/PSP Application entry point.
-**
-**  Arguments:
-**    ModeId          - not currently used
-**    StartupFilePath - path to cFE startup file to use 
-**
-**  Return:
-**    (none)
-*/
-void CFE_PSP_Main( int ModeId, char *StartupFilePath )
+ **  Function:  CFE_PSP_Main()
+ **
+ **  Purpose:
+ **    vxWorks/PSP Application entry point.
+ **
+ **  Arguments:
+ **    ModeId          - not currently used
+ **    StartupFilePath - path to cFE startup file to use
+ **
+ **  Return:
+ **    (none)
+ */
+void CFE_PSP_Main(uint32 ModeId, char *StartupFilePath)
 {
-  int root_task_id;  
-  
-  root_task_id = taskSpawn("PSP_START", CFE_PSP_TASK_PRIORITY, 
-                            0, CFE_PSP_TASK_STACK_SIZE,
-                            (FUNCPTR) (void *)CFE_PSP_Start, ModeId,
-                            (int)StartupFilePath,0,0,0,0,0,0,0,0);
+    int32 root_task_id;
 
-  if ( root_task_id == ERROR )
-  {
-     printf("CFE_PSP_Main: ERROR - unable to spawn PSP_START task");
-  }
+    root_task_id = taskSpawn("PSP_START", CFE_PSP_TASK_PRIORITY, 0,
+    CFE_PSP_TASK_STACK_SIZE, (FUNCPTR) (void *) CFE_PSP_Start, ModeId,
+            (int) StartupFilePath, 0, 0, 0, 0, 0, 0, 0, 0);
+
+    if (root_task_id == ERROR)
+    {
+        printf("CFE_PSP_Main: ERROR - unable to spawn PSP_START task\n");
+    }
 
 }
 
@@ -120,9 +126,9 @@ void CFE_PSP_Main( int ModeId, char *StartupFilePath )
 **    (none)
 **
 */
-void CFE_PSP_SysInit(uint32* psp_reset_type, uint32* psp_reset_subtype, uint32 last_bsp_reset_type)
+static void CFE_PSP_SysInit(uint32* psp_reset_type, uint32* psp_reset_subtype, uint32 last_bsp_reset_type)
 {
-   int TicksPerSecond = 0;
+   int32 TicksPerSecond = 0;
    uint32 mcfg2 = 0;
 
    /* 
@@ -142,16 +148,21 @@ void CFE_PSP_SysInit(uint32* psp_reset_type, uint32* psp_reset_subtype, uint32 l
    ** Brute force...  Make sure the read-modify-write bit is set in mcfg2 register
    ** The bit is 0x00000040 in mcfg2 reg, and should probably always be set.  If there
    ** is a performance hit, that's still better than random crashes.
+   ** 
+   ** NOTE: There is no syselm level #def for the mcfg2 address and the bit
+   ** to set.  These addresses are tied to the ut699 SPARC Leon3.  This
+   ** PSP is for the ut699 SPARC Leon3.  They are only set/used here,
+   ** so they are hardcoded.
    */
-   mcfg2 = *(uint32*)0x80000004;
+   mcfg2 = *(uint32*)0x80000004U;
    
-   if(!(mcfg2 & 0x00000040))
+   if(!(mcfg2 & 0x00000040U))
    {
       /*
       ** Set the rmw bit now and print something saying you did so...
       */
       
-      mcfg2 = *(uint32*)0x80000004 = mcfg2 | 0x00000040;
+      mcfg2 = *(uint32*)0x80000004U = mcfg2 | 0x00000040U;
       
       OS_printf("\nNOTE: Set the rmw bit MCFG2 reg. Current value = %08X\n\n", mcfg2);
    }
@@ -162,8 +173,8 @@ void CFE_PSP_SysInit(uint32* psp_reset_type, uint32* psp_reset_subtype, uint32 l
 
    /* Assign the reset cause */
    /* for now always start up in a power on reset */
-   *psp_reset_type    = CFE_ES_POWERON_RESET;
-   *psp_reset_subtype = CFE_ES_POWER_CYCLE;
+   *psp_reset_type    = CFE_PSP_RST_TYPE_POWERON;
+   *psp_reset_subtype = CFE_PSP_RST_SUBTYPE_POWER_CYCLE;
 
    ResetType = *psp_reset_type;
    ResetSubtype = *psp_reset_subtype;
@@ -173,22 +184,22 @@ void CFE_PSP_SysInit(uint32* psp_reset_type, uint32* psp_reset_subtype, uint32 l
 
 
 /******************************************************************************
-**  Function:  CFE_PSP_Start()
-**
-**  Purpose:
-**    Initialize the PSP and start cFE
-**
-**  Arguments:
-**    ModeId          - Used to indicate which bank of non-volatile memory
-**                      was used to boot.  If the bank used to boot this time
-**                      is different from the previous boot, then we re-initialize
-**                      reserved memory.
-**    StartupFilePath - path to cFE startup file to use 
-**
-**  Return:
-**    (none)
-*/
-void CFE_PSP_Start( int ModeId, char *StartupFilePath )
+ **  Function:  CFE_PSP_Start()
+ **
+ **  Purpose:
+ **    Initialize the PSP and start cFE
+ **
+ **  Arguments:
+ **    ModeId          - Used to indicate which bank of non-volatile memory
+ **                      was used to boot.  If the bank used to boot this time
+ **                      is different from the previous boot, then we re-initialize
+ **                      reserved memory.
+ **    StartupFilePath - path to cFE startup file to use
+ **
+ **  Return:
+ **    (none)
+ */
+static void CFE_PSP_Start(uint32 ModeId, char *StartupFilePath)
 {
    uint32 reset_type = 0;
    uint32 reset_subtype = 0;
@@ -212,7 +223,7 @@ void CFE_PSP_Start( int ModeId, char *StartupFilePath )
    status = OS_API_Init();
    if(status != OS_SUCCESS)
    {
-     printf("CFE_PSP_Start() - OS_API_Init() fail, RC = 0x%x\n", status);
+     printf("CFE_PSP_Start() - OS_API_Init() fail, RC = 0x%lx\n", (unsigned long)status);
    }
  
    /*
@@ -271,27 +282,43 @@ void CFE_PSP_Start( int ModeId, char *StartupFilePath )
 
 
 /******************************************************************************
-**  Function:  CFE_PSP_GetRestartType()
-**
-**  Purpose:
-**    Retrieve the CFE PSP reset type and subtype.
-**
-**  Arguments:
-**    restartSubType [out] Reset Sub Type 
-**
-**  Return:
-**    Reset Type
-*/
-uint32        CFE_PSP_GetRestartType(uint32 *restartSubType )
+ **  Function:  CFE_PSP_GetRestartType()
+ **
+ **  Purpose:
+ **    Retrieve the CFE PSP reset type and subtype.
+ **
+ **  Arguments:
+ **    restartSubType [out] Reset Sub Type
+ **
+ **  Return:
+ **    Reset Type
+ */
+uint32 CFE_PSP_GetRestartType(uint32 *restartSubType)
 {
-  *restartSubType = ResetSubtype;
-  return ResetType;
+    if (restartSubType != NULL)
+    {
+        *restartSubType = ResetSubtype;
+    }
+    return (ResetType);
 }
 
-/* default priority adjustment functions */
-void SetTaskPrio(const char* tName, const int tgtPrio)
+/******************************************************************************
+ **  Function:  SetTaskPrio()
+ **
+ **  Purpose:
+ **    change default task priority to a given priority
+ **
+ **  Arguments:
+ **    tName: task name
+ **    tgtPrio: new priority to set task to
+ **
+ **  Return: none
+ */
+static void SetTaskPrio(char* tName, const int32 tgtPrio)
 {
-    int tid=0, curPrio=0, newPrio=0;
+    int tid = 0;
+    int curPrio = 0;
+    int newPrio = 0;
 
     if ((tName != NULL) && (strlen(tName) > 0))
     {
@@ -310,14 +337,26 @@ void SetTaskPrio(const char* tName, const int tgtPrio)
         {
             if (taskPriorityGet(tid, &curPrio) != ERROR)
             {
-                printf("Setting %s priority from %d to %d\n", tName, curPrio, newPrio);
+                printf("Setting %s priority from %d to %d\n", tName,
+                       curPrio, newPrio);
                 taskPrioritySet(tid, newPrio);
             }
         }
     }
 }
 
-void ResetSysTasksPrio(void)
+/******************************************************************************
+ **  Function:  ResetSysTasksPrio()
+ **
+ **  Purpose:
+ **    reset changed task priorities back to defaults
+ **
+ **  Arguments: none
+ **
+ **  Return: none
+ **
+ */
+static void ResetSysTasksPrio(void)
 {
     printf("\nResetting system tasks' priority to default\n");
     SetTaskPrio("tLogTask", 0);
@@ -331,9 +370,24 @@ void ResetSysTasksPrio(void)
     SetTaskPrio("tWvrBuffMgr", 100);
 }
 
-void SetSysTasksPrio(void)
+/******************************************************************************
+ **  Function:  SetSysTasksPrio()
+ **
+ **  Purpose:
+ **    change system task prioritiesso that they are lower than CFS system
+ **    task priorities
+ **
+ **    NOTE: tNet0 priority should be adjusted to be right below what ever
+ **    gets defined for ci/to in your system if using the network interface
+ **    CCSDS/UDP for ci/to.
+ **
+ **  Arguments: none
+ **
+ **  Return: none
+ */
+static void SetSysTasksPrio(void)
 {
-    printf("\Setting system tasks' priorities\n");
+    printf("\nSetting system tasks' priorities\n");
     SetTaskPrio("tLogTask", 0);
     SetTaskPrio("tShell0", 201);
     SetTaskPrio("tWdbTask", 203);

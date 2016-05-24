@@ -4,14 +4,12 @@
 **
 **      MCP750 vxWorks 6.2 Version
 **
-**      Copyright (c) 2004-2006, United States government as represented by the
-**      administrator of the National Aeronautics Space Administration.
-**      All rights reserved. This software(cFE) was created at NASA's Goddard
-**      Space Flight Center pursuant to government contracts.
+**      Copyright (c) 2004-2011, United States Government as represented by 
+**      Administrator for The National Aeronautics and Space Administration. 
+**      All Rights Reserved.
 **
-**      This software may be used only pursuant to a United States government
-**      sponsored project and the United States government may not be charged
-**      for use thereof.
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
 **
 **
 ** Purpose:
@@ -19,6 +17,7 @@
 **
 ** History:
 **   2007/05/29  A. Cudmore      | vxWorks 6.2 MCP750 version
+**   2016/04/07  M.Grubb         | Updated for PSP version 1.3
 **
 ******************************************************************************/
 
@@ -65,15 +64,6 @@
 
 CFE_PSP_ExceptionContext_t CFE_PSP_ExceptionContext;
 char                  CFE_PSP_ExceptionReasonString[256];
-
-/*
-**
-** IMPORTED FUNCTIONS
-**
-*/
-
-void CFE_ES_EXCEPTION_FUNCTION(uint32  HostTaskId,     uint8 *ReasonString,
-                                 uint32 *ContextPointer, uint32 ContextSize);
 
 /*
 **
@@ -162,9 +152,10 @@ void CFE_PSP_ExceptionHook (int task_id, int vector, ESFPPC* pEsf )
     ** Call the Generic cFE routine to finish processing the exception and
     ** restart the cFE
     */
-    CFE_ES_EXCEPTION_FUNCTION((uint32 )task_id, (uint8 *)CFE_PSP_ExceptionReasonString,
-                                (uint32 *)&CFE_PSP_ExceptionContext, sizeof(CFE_PSP_ExceptionContext_t));
-
+    CFE_ES_ProcessCoreException((uint32) task_id,
+            (char *) CFE_PSP_ExceptionReasonString,
+            (uint32 *) &CFE_PSP_ExceptionContext,
+            sizeof(CFE_PSP_ExceptionContext_t));
     /*
     ** No return to here
     */

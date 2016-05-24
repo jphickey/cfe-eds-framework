@@ -2,14 +2,12 @@
 ** File:  cfe_psp_support.c
 **
 **
-**      Copyright (c) 2004-2006, United States government as represented by the
-**      administrator of the National Aeronautics Space Administration.
-**      All rights reserved. This software(cFE) was created at NASA Goddard
-**      Space Flight Center pursuant to government contracts.
+**      Copyright (c) 2004-2011, United States Government as represented by 
+**      Administrator for The National Aeronautics and Space Administration. 
+**      All Rights Reserved.
 **
-**      This software may be used only pursuant to a United States government
-**      sponsored project and the United States government may not be charged
-**      for use thereof.
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
 **
 **
 
@@ -36,9 +34,6 @@
 */
 #include "common_types.h"
 #include "osapi.h"
-#include "cfe_es.h"            /* For reset types */
-#include "cfe_platform_cfg.h"  /* for processor ID */
-#include "cfe_mission_cfg.h"   /* for spacecraft ID */
 
 /*
 ** Types and prototypes for this module
@@ -68,19 +63,19 @@ extern uint32  CFE_PSP_CpuId;
 void CFE_PSP_Restart(uint32 reset_type)
 {
 
-   if ( reset_type == CFE_ES_POWERON_RESET )
+   if ( reset_type == CFE_PSP_RST_TYPE_POWERON )
    {
        OS_printf("CFE_PSP: Exiting cFE with POWERON Reset status.\n");
        OS_printf("CFE_PSP: Start the cFE Core with the PO parameter to complete the Power On Reset\n");
        OS_printf("CFE_PSP: When the Power On Reset is completed, the Shared Memroy segments will be CLEARED\n");
-       exit(CFE_ES_POWERON_RESET);
+       exit(CFE_PSP_RST_TYPE_POWERON);
    }
    else
    {
        OS_printf("CFE_PSP: Exiting cFE with PROCESSOR Reset status.\n");
        OS_printf("CFE_PSP: Shared Memory segments have been PRESERVED.\n");
        OS_printf("CFE_PSP: Restart the cFE with the PR parameter to complete the Processor Reset.\n");
-       exit(CFE_ES_PROCESSOR_RESET);
+       exit(CFE_PSP_RST_TYPE_PROCESSOR);
    }
 
 }
@@ -120,7 +115,7 @@ void CFE_PSP_Panic(int32 ErrorCode)
 **  Return:
 **    (none)
 */
-void CFE_PSP_FlushCaches(uint32 type, uint32 address, uint32 size)
+void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 {
    printf("CFE_PSP_FlushCaches called -- Currently no Linux/OSX/Cygwin implementation\n");
 }

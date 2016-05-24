@@ -1,14 +1,12 @@
 /*
 **  File Name:  cfe_psp.h
 **
-**      Copyright (c) 2004-2006, United States government as represented by the
-**      administrator of the National Aeronautics Space Administration.
-**      All rights reserved. This software(cFE) was created at NASA's Goddard
-**      Space Flight Center pursuant to government contracts.
+**      Copyright (c) 2004-2011, United States Government as represented by 
+**      Administrator for The National Aeronautics and Space Administration. 
+**      All Rights Reserved.
 **
-**      This software may be used only pursuant to a United States government
-**      sponsored project and the United States government may not be charged
-**      for use thereof.
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
 **
 **  Author:  A. Cudmore
 **
@@ -40,8 +38,15 @@
 
 #include "common_types.h"
 #include "osapi.h"
+
+/*
+ * These internal header files should not be used in application code
+ * They will not be accessible when using the newest build scripts
+ */
+#if !defined(_ENHANCED_BUILD_) || defined(_CFE_PSP_)
 #include "cfe_psp_config.h"
 #include "psp_version.h"
+#endif
 
 /*
 ** Macro Definitions
@@ -63,6 +68,8 @@
 #define CFE_PSP_INVALID_MEM_SIZE            (-25)
 #define CFE_PSP_INVALID_MEM_ATTR            (-26)
 #define CFE_PSP_ERROR_NOT_IMPLEMENTED       (-27)
+#define CFE_PSP_INVALID_MODULE_NAME         (-28)
+#define CFE_PSP_INVALID_MODULE_ID           (-29)
 
 
 
@@ -108,6 +115,46 @@
 #define CFE_PSP_MEM_SIZE_DWORD    0x04
 
 /*
+ * Common definition for reset types at the PSP layer
+ */
+/** \name Reset Types */
+/** \{ */
+#define CFE_PSP_RST_TYPE_PROCESSOR   1       /**< Volatile disk, Critical Data Store and User Reserved memory could still be valid */
+#define CFE_PSP_RST_TYPE_POWERON     2       /**< All memory has been cleared */
+#define CFE_PSP_RST_TYPE_MAX         3       /**< Placeholder to indicate 1+ the maximum value that the PSP will ever use. */
+/** \} */
+
+/*
+** Reset Sub-Types
+*/
+/** \name Reset Sub-Types */
+/** \{ */
+#define CFE_PSP_RST_SUBTYPE_POWER_CYCLE           1   /**< \brief  Reset caused by power having been removed and restored */
+#define CFE_PSP_RST_SUBTYPE_PUSH_BUTTON           2   /**< \brief  Reset caused by reset button on the board having been pressed */
+#define CFE_PSP_RST_SUBTYPE_HW_SPECIAL_COMMAND    3   /**< \brief  Reset was caused by a reset line having been stimulated by a hardware special command */
+#define CFE_PSP_RST_SUBTYPE_HW_WATCHDOG           4   /**< \brief  Reset was caused by a watchdog timer expiring */
+#define CFE_PSP_RST_SUBTYPE_RESET_COMMAND         5   /**< \brief  Reset was caused by cFE ES processing a \link #CFE_ES_RESTART_CC Reset Command \endlink */
+#define CFE_PSP_RST_SUBTYPE_EXCEPTION             6   /**< \brief  Reset was caused by a Processor Exception */
+#define CFE_PSP_RST_SUBTYPE_UNDEFINED_RESET       7   /**< \brief  Reset was caused in an unknown manner */
+#define CFE_PSP_RST_SUBTYPE_HWDEBUG_RESET         8   /**< \brief  Reset was caused by a JTAG or BDM connection */
+#define CFE_PSP_RST_SUBTYPE_BANKSWITCH_RESET      9   /**< \brief  Reset reverted to a cFE POWERON due to a boot bank switch */
+#define CFE_PSP_RST_SUBTYPE_MAX                   10  /**< \brief  Placeholder to indicate 1+ the maximum value that the PSP will ever use. */
+/** \} */
+
+/* Replacements for the "version" macros */
+#ifdef _ENHANCED_BUILD_
+
+#define CFE_PSP_MAJOR_VERSION          (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.MajorVersion)
+#define CFE_PSP_MINOR_VERSION          (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.MinorVersion)
+#define CFE_PSP_REVISION               (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.Revision)
+#define CFE_PSP_MISSION_REV            (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.MissionRev)
+
+/* For backwards compatibility */
+#define CFE_PSP_SUBMINOR_VERSION       CFE_PSP_REVISION
+
+#endif
+
+/*
 ** Type Definitions
 */
 
@@ -118,7 +165,7 @@ typedef struct
 {
    uint32 MemoryType;
    uint32 WordSize;
-   uint32 StartAddr;
+   cpuaddr StartAddr;
    uint32 Size;
    uint32 Attributes;
 } CFE_PSP_MemTable_t;
@@ -130,7 +177,7 @@ typedef struct
 /*
 ** PSP entry point and reset routines
 */
-extern void          CFE_PSP_Main(int ModeId, char *StartupFilePath);
+extern void          CFE_PSP_Main(uint32 ModeId, char *StartupFilePath);
 
 /*
 ** CFE_PSP_Main is the entry point that the real time OS calls to start our
@@ -161,7 +208,7 @@ extern uint32        CFE_PSP_GetRestartType(uint32 *restartSubType );
 */
 
 
-extern void          CFE_PSP_FlushCaches(uint32 type, uint32 address, uint32 size);
+extern void          CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size);
 /*
 ** This is a BSP specific cache flush routine
 */
@@ -237,31 +284,31 @@ extern int32 CFE_PSP_ReadFromCDS(void *PtrToDataToRead, uint32 CDSOffset, uint32
 ** CFE_PSP_ReadFromCDS reads from the CDS Block
 */
 
-extern int32 CFE_PSP_GetResetArea (void *PtrToResetArea, uint32 *SizeOfResetArea);
+extern int32 CFE_PSP_GetResetArea (cpuaddr *PtrToResetArea, uint32 *SizeOfResetArea);
 /*
 ** CFE_PSP_GetResetArea returns the location and size of the ES Reset information area.
 ** This area is preserved during a processor reset and is used to store the
 ** ER Log, System Log and reset related variables
 */
 
-extern int32 CFE_PSP_GetUserReservedArea(void *PtrToUserArea, uint32 *SizeOfUserArea );
+extern int32 CFE_PSP_GetUserReservedArea(cpuaddr *PtrToUserArea, uint32 *SizeOfUserArea );
 /*
 ** CFE_PSP_GetUserReservedArea returns the location and size of the memory used for the cFE
 ** User reserved area.
 */
 
-extern int32 CFE_PSP_GetVolatileDiskMem(void *PtrToVolDisk, uint32 *SizeOfVolDisk );
+extern int32 CFE_PSP_GetVolatileDiskMem(cpuaddr *PtrToVolDisk, uint32 *SizeOfVolDisk );
 /*
 ** CFE_PSP_GetVolatileDiskMem returns the location and size of the memory used for the cFE
 ** volatile disk.
 */
 
-extern int32 CFE_PSP_GetKernelTextSegmentInfo(void *PtrToKernelSegment, uint32 *SizeOfKernelSegment);
+extern int32 CFE_PSP_GetKernelTextSegmentInfo(cpuaddr *PtrToKernelSegment, uint32 *SizeOfKernelSegment);
 /*
 ** CFE_PSP_GetKernelTextSegmentInfo returns the location and size of the kernel memory.
 */
 
-extern int32 CFE_PSP_GetCFETextSegmentInfo(void *PtrToCFESegment, uint32 *SizeOfCFESegment);
+extern int32 CFE_PSP_GetCFETextSegmentInfo(cpuaddr *PtrToCFESegment, uint32 *SizeOfCFESegment);
 /*
 ** CFE_PSP_GetCFETextSegmentInfo returns the location and size of the kernel memory.
 */
@@ -336,36 +383,36 @@ extern void CFE_PSP_SetDefaultExceptionEnvironment(void);
 /*
 ** I/O Port API
 */
-int32 CFE_PSP_PortRead8         (uint32 PortAddress, uint8 *ByteValue);
-int32 CFE_PSP_PortWrite8        (uint32 PortAddress, uint8 ByteValue);
-int32 CFE_PSP_PortRead16        (uint32 PortAddress, uint16 *uint16Value);
-int32 CFE_PSP_PortWrite16       (uint32 PortAddress, uint16 uint16Value);
-int32 CFE_PSP_PortRead32        (uint32 PortAddress, uint32 *uint32Value);
-int32 CFE_PSP_PortWrite32       (uint32 PortAddress, uint32 uint32Value);
+int32 CFE_PSP_PortRead8         (cpuaddr PortAddress, uint8 *ByteValue);
+int32 CFE_PSP_PortWrite8        (cpuaddr PortAddress, uint8 ByteValue);
+int32 CFE_PSP_PortRead16        (cpuaddr PortAddress, uint16 *uint16Value);
+int32 CFE_PSP_PortWrite16       (cpuaddr PortAddress, uint16 uint16Value);
+int32 CFE_PSP_PortRead32        (cpuaddr PortAddress, uint32 *uint32Value);
+int32 CFE_PSP_PortWrite32       (cpuaddr PortAddress, uint32 uint32Value);
 
 /*
 ** Memory API
 */
-int32 CFE_PSP_MemRead8          (uint32 MemoryAddress, uint8 *ByteValue);
-int32 CFE_PSP_MemWrite8         (uint32 MemoryAddress, uint8 ByteValue);
-int32 CFE_PSP_MemRead16         (uint32 MemoryAddress, uint16 *uint16Value);
-int32 CFE_PSP_MemWrite16        (uint32 MemoryAddress, uint16 uint16Value);
-int32 CFE_PSP_MemRead32         (uint32 MemoryAddress, uint32 *uint32Value);
-int32 CFE_PSP_MemWrite32        (uint32 MemoryAddress, uint32 uint32Value);
+int32 CFE_PSP_MemRead8          (cpuaddr MemoryAddress, uint8 *ByteValue);
+int32 CFE_PSP_MemWrite8         (cpuaddr MemoryAddress, uint8 ByteValue);
+int32 CFE_PSP_MemRead16         (cpuaddr MemoryAddress, uint16 *uint16Value);
+int32 CFE_PSP_MemWrite16        (cpuaddr MemoryAddress, uint16 uint16Value);
+int32 CFE_PSP_MemRead32         (cpuaddr MemoryAddress, uint32 *uint32Value);
+int32 CFE_PSP_MemWrite32        (cpuaddr MemoryAddress, uint32 uint32Value);
 
 int32 CFE_PSP_MemCpy            (void *dest, void *src, uint32 n);
 int32 CFE_PSP_MemSet            (void *dest, uint8 value, uint32 n);
 
-int32  CFE_PSP_MemValidateRange (uint32 Address, uint32 Size, uint32 MemoryType);
+int32  CFE_PSP_MemValidateRange (cpuaddr Address, uint32 Size, uint32 MemoryType);
 uint32 CFE_PSP_MemRanges        (void);
-int32  CFE_PSP_MemRangeSet      (uint32 RangeNum, uint32 MemoryType, uint32 StartAddr, 
+int32  CFE_PSP_MemRangeSet      (uint32 RangeNum, uint32 MemoryType, cpuaddr StartAddr,
                                  uint32 Size,     uint32 WordSize,   uint32 Attributes);
-int32  CFE_PSP_MemRangeGet      (uint32 RangeNum, uint32 *MemoryType, uint32 *StartAddr, 
+int32  CFE_PSP_MemRangeGet      (uint32 RangeNum, uint32 *MemoryType, cpuaddr *StartAddr,
                                  uint32 *Size,    uint32 *WordSize,   uint32 *Attributes);
 
-int32 CFE_PSP_EepromWrite8      (uint32 MemoryAddress, uint8 ByteValue);
-int32 CFE_PSP_EepromWrite16     (uint32 MemoryAddress, uint16 uint16Value);
-int32 CFE_PSP_EepromWrite32     (uint32 MemoryAddress, uint32 uint32Value);
+int32 CFE_PSP_EepromWrite8      (cpuaddr MemoryAddress, uint8 ByteValue);
+int32 CFE_PSP_EepromWrite16     (cpuaddr MemoryAddress, uint16 uint16Value);
+int32 CFE_PSP_EepromWrite32     (cpuaddr MemoryAddress, uint32 uint32Value);
 
 int32 CFE_PSP_EepromWriteEnable (uint32 Bank);
 int32 CFE_PSP_EepromWriteDisable(uint32 Bank);

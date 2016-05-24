@@ -2,14 +2,12 @@
 ** File:  cfe_psp_support.c
 **
 **
-**      Copyright (c) 2004-2006, United States government as represented by the
-**      administrator of the National Aeronautics Space Administration.
-**      All rights reserved. This software(cFE) was created at NASA Goddard
-**      Space Flight Center pursuant to government contracts.
+**      Copyright (c) 2004-2011, United States Government as represented by 
+**      Administrator for The National Aeronautics and Space Administration. 
+**      All Rights Reserved.
 **
-**      This software may be used only pursuant to a United States government
-**      sponsored project and the United States government may not be charged
-**      for use thereof.
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement.
 **
 ** Purpose:
 **   This file contains glue routines between the cFE and the OS Board Support Package ( BSP ).
@@ -90,7 +88,7 @@ void CFE_PSP_Panic(int32 ErrorCode)
    /*
    ** Debug Switch is not set, do a processor Reset
    */
-   CFE_PSP_Restart(CFE_ES_PROCESSOR_RESET);
+   CFE_PSP_Restart(CFE_PSP_RST_TYPE_PROCESSOR);
 }
 
 /******************************************************************************
@@ -128,9 +126,9 @@ void CFE_PSP_Restart(uint32 reset_type)
    intCpuLock();
 #endif
    
-   if ( reset_type == CFE_ES_POWERON_RESET )
+   if ( reset_type == CFE_PSP_RST_TYPE_POWERON )
    {
-      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_ES_POWERON_RESET;
+      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_PSP_RST_TYPE_POWERON;
       /*
       ** The sysToMonitor function flushes caches for us
       *
@@ -158,7 +156,7 @@ void CFE_PSP_Restart(uint32 reset_type)
    }
    else
    {
-      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_ES_PROCESSOR_RESET;
+      CFE_PSP_ReservedMemoryPtr->bsp_reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
       /*
       ** The sysToMonitor function flushes caches for us
       *
@@ -197,14 +195,17 @@ void CFE_PSP_Restart(uint32 reset_type)
 **  Return:
 **    (none)
 */
-void CFE_PSP_FlushCaches(uint32 type, uint32 address, uint32 size)
+void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 {
-
-   if ( type == 1 )
-   {
-      cacheTextUpdate((void *)address, size);
-   }
-
+/* implement cache flush function if needed.  It is commented out, but
+ * kept as an example in case another PSP is made from this one
+ * It is not currently used or implemented in this PSP or CFS build
+ * on this target
+    if (type == 1)
+    {
+        cacheTextUpdate((void *)address, size);
+    }
+*/
 }
 
 /*
@@ -224,7 +225,7 @@ void CFE_PSP_FlushCaches(uint32 type, uint32 address, uint32 size)
 **
 ** Return Values: Processor ID
 */
-uint32 CFE_PSP_GetProcessorId    (void)
+uint32 CFE_PSP_GetProcessorId(void)
 {
     return(CFE_CPU_ID);
 }
@@ -249,7 +250,7 @@ uint32 CFE_PSP_GetProcessorId    (void)
 **
 ** Return Values: Process ID
 */
-uint32 CFE_PSP_GetProcessId    (void)
+uint32 CFE_PSP_GetProcessId(void)
 {
     return(0);
 }
@@ -271,7 +272,7 @@ uint32 CFE_PSP_GetProcessId    (void)
 **
 ** Return Values: Spacecraft ID
 */
-uint32 CFE_PSP_GetSpacecraftId   (void)
+uint32 CFE_PSP_GetSpacecraftId(void)
 {
    return(CFE_SPACECRAFT_ID);
 }

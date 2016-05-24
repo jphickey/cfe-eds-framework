@@ -1,14 +1,11 @@
 /*
 ** cfe_psp_config.h
 **
-**      Copyright (c) 2004-2006, United States government as represented by the 
-**      administrator of the National Aeronautics Space Administration.  
-**      All rights reserved. This software(cFE) was created at NASA Goddard 
-**      Space Flight Center pursuant to government contracts.
+**      Copyright (c) 2004-2011, United States Government as represented by Administrator 
+**      for The National Aeronautics and Space Administration. All Rights Reserved.
 **
-**      This software may be used only pursuant to a United States government 
-**      sponsored project and the United States government may not be charged
-**      for use thereof. 
+**      This is governed by the NASA Open Source Agreement and may be used,
+**      distributed and modified only pursuant to the terms of that agreement. 
 **
 **
 */
@@ -53,14 +50,17 @@ typedef struct
 /*
 ** Watchdog minimum and maximum values ( in milliseconds )
 */
-#define CFE_PSP_WATCHDOG_MIN                     0x00000004  /* (0) */
-#define CFE_PSP_WATCHDOG_MAX                     0xFFFFFFFE  /*2082913     * mS */
-#define CFE_PSP_WATCHDOG_CTR_TICKS_PER_MILLISEC  2062        /* derived from BAE info (66.0MHz/8)/4)*/
+#define CFE_PSP_WATCHDOG_MIN                     0x00000004U  /* */
+#define CFE_PSP_WATCHDOG_MAX                     0xFFFFFFFEU  /* ~458 sec (7:38) */
+
+/* 75MHz clk / prescaler = 8 (default in VxWorks SPARC Leon3 BSP)
+ *  = 9,375,000 ticks per second on, 9375 ticks/ms */
+#define CFE_PSP_WATCHDOG_CTR_TICKS_PER_MILLISEC  9375U
 
 /*
 ** Number of EEPROM banks on this platform
 */
-#define CFE_PSP_NUM_EEPROM_BANKS 2
+#define CFE_PSP_NUM_EEPROM_BANKS 0
 
 #endif
 
