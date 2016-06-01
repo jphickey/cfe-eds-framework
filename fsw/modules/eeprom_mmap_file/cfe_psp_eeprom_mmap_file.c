@@ -158,7 +158,7 @@ int32 CFE_PSP_EepromPowerDown(uint32 Bank)
    return(CFE_PSP_SUCCESS);
 }
 
-void eeprom_mmap_file_Init(void)
+void eeprom_mmap_file_Init(uint32 PspModuleId)
 {
     int32  Status;
     cpuaddr eeprom_address;
