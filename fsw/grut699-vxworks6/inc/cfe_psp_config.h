@@ -50,14 +50,17 @@ typedef struct
 /*
 ** Watchdog minimum and maximum values ( in milliseconds )
 */
-#define CFE_PSP_WATCHDOG_MIN                     0x00000004  /* (0) */
-#define CFE_PSP_WATCHDOG_MAX                     0xFFFFFFFE  /*2082913     * mS */
-#define CFE_PSP_WATCHDOG_CTR_TICKS_PER_MILLISEC  2062        /* derived from BAE info (66.0MHz/8)/4)*/
+#define CFE_PSP_WATCHDOG_MIN                     0x00000004U  /* */
+#define CFE_PSP_WATCHDOG_MAX                     0xFFFFFFFEU  /* ~458 sec (7:38) */
+
+/* 75MHz clk / prescaler = 8 (default in VxWorks SPARC Leon3 BSP)
+ *  = 9,375,000 ticks per second on, 9375 ticks/ms */
+#define CFE_PSP_WATCHDOG_CTR_TICKS_PER_MILLISEC  9375U
 
 /*
 ** Number of EEPROM banks on this platform
 */
-#define CFE_PSP_NUM_EEPROM_BANKS 2
+#define CFE_PSP_NUM_EEPROM_BANKS 0
 
 #endif
 

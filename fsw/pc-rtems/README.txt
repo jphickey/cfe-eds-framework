@@ -174,13 +174,17 @@ endmacro()
 2) Get RTEMS GRUB boot image
 
 RTEMS binaries cannot be directly booted by a PC BIOS...  Grub is one way to boot RTEMS.
-The RTEMS FTP site has an example pre-built GRUB image for this.
+The RTEMS FTP site has an example pre-built GRUB image for this at the following URL:
 
-$ wget http://ftp.rtems.org/pub/rtems/qemu/i386-pc/rtems-boot.img
+ftp://ftp.rtems.org/pub/rtems/archive/current_contrib/pc386_grub_image
 
 Once downloaded this file can be saved OUTSIDE the mission git tree and used forever.  It
 only serves as an intermediate to boot the binary image since the RTEMS binary cannot be
 booted directly by a PC BIOS.  Alternatively one could build a custom loader if needed.
+
+NOTE: the current grub image being distributed from the FTP site contains a grub config file.
+This configuration file would need to be replaced with the customized version containing 
+the correct boot command (see next section).
 
 
 3) Create a grub configuration file to work with the boot image
@@ -213,11 +217,23 @@ III. Building and Running CFE
 
 1) Build mission as normal and run "make install" to copy binaries to /exe (if using cmake makefile wrapper)
 
-2) A minimal QEMU boot command for reference:
+2) A minimal QEMU boot sequence for reference
 
-$ qemu-system-i386 -m 128 -boot a -fda /path/to/rtems-boot.img -hda fat:/path/to/install/exe
+First copy the "core-<TGTNAME>.exe" file and the grub configuration file into a separate directory 
+that can be mounted as /boot on the target:
+
+$ mkdir boot
+$ cp core-<TGTNAME>.exe rtems-grub.cfg boot
+
+Then boot QEMU from the boot floppy, use "boot" as the first virtual disk and "eeprom" as the second virtual disk:
+
+$ qemu-system-i386 -m 128 -boot a -fda ./rtems-boot.img -hda fat:$PWD/boot -hdb fat:$PWD/eeprom -serial stdio
 
 Note - depending on needs, that command might be different - QEMU has _lots_ of options. 
+
+Also note that the "fat" emulation used above is fairly limited, generally only useful for read-only testing.
+To get read-write operation one would have to create real filesystem images and copy files into them, then 
+use the images directly.  This is also what would need to be done to deploy on real hardware.
 
 If using the "COM1" (serial port console) variant of the boot options above, the "-serial stdio" option
 to QEMU is helpful - this connects the virtualized com1 to the standard I/O of the QEMU process.  You must

@@ -49,7 +49,6 @@
 */
 #include "cfe_psp.h"
 
-void CFE_PSP_AuxClkHandler(int arg);
 void CFE_PSP_Init1HzTimer(void);
 
 /* External Declarations
@@ -60,32 +59,40 @@ extern void CFE_TIME_Tone1HzISR(void);
 
 /******************* Macro Definitions ***********************/
 /*
-** Timer value computation:
-** The values are based on the 75.0 Mhz clock, divided by 8 
-** by the prescaler.  The divider value is set in the kernel config and the
-** default is 8.
-** This gives 9,375,000 ticks per second on the timer.
-*/
+ ** Timer value computation:
+ ** The values are based on the 75.0 Mhz clock, divided by 8
+ ** by the prescaler.  The divider value is set in the kernel config and the
+ ** default is 8.
+ ** This gives 9,375,000 ticks per second on the timer.
+ ** There is not a 64-bit TBR on the SPARC.  It has a 32-bit timer ticking
+ ** at 9.375MHz.
+ */
 
-#define CFE_PSP_TIMER_TICKS_PER_SECOND       9375000    /* Resolution of the least significant 32 bits of the 64 bit
-                                                           time stamp returned by CFE_PSP_Get_Timebase in timer ticks per second.
-                                                           The timer resolution for accuracy should not be any slower than 1000000
-                                                           ticks per second or 1 us per tick */
-#define CFE_PSP_TIMER_LOW32_ROLLOVER         0           /* The number that the least significant 32 bits of the 64 bit
-                                                           time stamp returned by CFE_PSP_Get_Timebase rolls over.  If the lower 32
-                                                           bits rolls at 1 second, then the CFE_PSP_TIMER_LOW32_ROLLOVER will be 1000000.
-                                                           if the lower 32 bits rolls at its maximum value (2^32) then
-                                                           CFE_PSP_TIMER_LOW32_ROLLOVER will be 0. */
+/* Resolution of the 32-bit time stamp returned by CFE_PSP_Get_Timebase in
+ * timer ticks per second. The timer resolution for accuracy should not be
+ * any slower than 1000000 ticks per second or 1 us per tick
+ * */
+#define CFE_PSP_TIMER_TICKS_PER_SECOND       (9375000)
+
+/* The number that the least significant 32-bits of the time stamp returned
+ * by CFE_PSP_Get_Timebase rolls over.  If the lower 32-bits rolls at 1 second,
+ * then the CFE_PSP_TIMER_LOW32_ROLLOVER will be 1000000.  If the lower 32 bits
+ * rolls at its maximum value (2^32) then CFE_PSP_TIMER_LOW32_ROLLOVER will
+ * be 0. */
+#define CFE_PSP_TIMER_LOW32_ROLLOVER         (9375000)
+
+#define CFE_PSP_TIMER_PRINT_DBG              (TRUE)
 
 #define CFE_PSP_TIMER_PRINT_DBG              TRUE
 #define CFE_PSP_TIMER_AUX_TICK_PER_SEC       100         /* The number of tics or interrupts per second */
 
 /*
-** Global variables for PSP Timer
-*/
-static boolean g_bTimerInitialized = FALSE;
-static uint32  g_nSecondsCount = 0;
+ ** local global variables for PSP Timer
+ */
+static void CFE_PSP_AuxClkHandler(int32 arg);
 
+static boolean g_bTimerInitialized = FALSE;
+static uint32 g_nSecondsCount = 0;
 
 /******************************************************************************
 **  Function:  CFE_PSP_InitLocalTime()
@@ -192,63 +199,66 @@ void CFE_PSP_GetTime(OS_time_t *LocalTime)
 {
     uint32 nTimeStamp = 0;
     uint32 nFrequency = 0;
-    uint32 nScaler = 0;
-    unsigned long long ullTimeStamp = 0;
+    uint64 ullTimeStamp = 0;
 
-   if(LocalTime == NULL)
-   {
-      return;
-   }
-   else
-   {
-      if(g_bTimerInitialized == FALSE)
-      {
-         LocalTime->seconds = 0;
-         LocalTime->microsecs = 0;
-         return;
-      }
-      else
-      {
-         /*
-         ** Get the time stamp
-         */
-         /* Lock interrupts - really should be using this one, over
-          * sysTimestamp(), according to
-          * documentation on these function calls */
-         nTimeStamp = sysTimestampLock();
-         
-         /* the default frequency is 9,375,000 Hz, which equals the PSP
-          * ticks per second value
-          * frequency = ticks per second for this counter
-          */
-         nFrequency = sysTimestampFreq();
+    if (LocalTime == NULL)
+    {
+        return;
+    }
+    else
+    {
+        if (g_bTimerInitialized == FALSE)
+        {
+            LocalTime->seconds = 0;
+            LocalTime->microsecs = 0;
+            return;
+        }
+        else
+        {
+            /*
+             ** Get the time stamp
+             */
+            /* Lock interrupts - really should be using this one, over
+             * sysTimestamp(), according to
+             * documentation on these function calls */
+            nTimeStamp = sysTimestampLock();
 
-         /* could use seconds = nTimeStamp / nFrequency if the timestamp counter
-          * was a 64-bit counter, but being a 32-bit counter, running at
-          * 9375000 Hz, it rolls over every 458.129 seconds or 7.63 minutes,
-          * so we have to increment seconds using the aux clk ISR and get
-          * the subseconds from the timestamp timer */
-         LocalTime->seconds = g_nSecondsCount;
+            /* the default frequency is 9,375,000 Hz, which equals the PSP
+             * ticks per second value
+             * frequency = ticks per second for this counter
+             */
+            nFrequency = sysTimestampFreq();
 
-         /* convert to micro sec - this conversion assumes that nTimeStamp
-          * is always less than a second, which it should be, because it is
-          * reset at the top of each second (when the seconds counter is
-          * incremented) -- this comp has to be performed as an unsigned
-          * long long, as the result of the multiply will not fit in a 32-bit
-          * var.  After dividing by the frequency(ticks per second), the result
-          * can be stored in a 32-bit value
-          */
-         ullTimeStamp = ((unsigned long long)nTimeStamp * 1000000ULL) /
-                 (unsigned long long) nFrequency;
-         LocalTime->microsecs = (uint32)ullTimeStamp;
+            /* could use seconds = nTimeStamp / nFrequency if the timestamp counter
+             * was a 64-bit counter, but being a 32-bit counter, running at
+             * 9375000 Hz, it rolls over every 458.129 seconds or 7.63 minutes,
+             * so we have to increment seconds using the aux clk ISR and get
+             * the subseconds from the timestamp timer */
+            LocalTime->seconds = g_nSecondsCount;
 
-         /*
-         logMsg("time: %u.%u ts: %u  sc: %u\n",
-                 LocalTime->seconds,LocalTime->microsecs,
-                 nTimeStamp,g_nSecondsCount,0,0);
-          */
-      }
-   }
+            /* convert to micro sec - this conversion assumes that nTimeStamp
+             * is always less than a second, which it should be, because it is
+             * reset at the top of each second (when the seconds counter is
+             * incremented) -- this comp has to be performed as an unsigned
+             * long long, as the result of the multiply will not fit in a 32-bit
+             * var.  After dividing by the frequency(ticks per second), the result
+             * can be stored in a 32-bit value
+             */
+            ullTimeStamp = ((uint64) nTimeStamp * 1000000ULL)
+                    / (uint64) nFrequency;
+            LocalTime->microsecs = (uint32) ullTimeStamp;
+
+            /* Keep this invaluable log message, it is used for troubleshooting
+             * and when creating a new PSP based on this one
+             * It must be commented out during normal usage, but can be
+             * uncommented for troubleshooting
+             *
+             logMsg("time: %u.%u ts: %u  sc: %u\n",
+                    LocalTime->seconds,LocalTime->microsecs,
+                    nTimeStamp,g_nSecondsCount,0,0);
+             */
+        }
+    }
 }/* end CFE_PSP_GetTime */
 
 
@@ -290,14 +300,7 @@ uint32 CFE_PSP_Get_Timer_Tick(void)
 */
 uint32 CFE_PSP_GetTimerTicksPerSecond(void)
 {
-   uint32 ticksPerSec = CFE_PSP_TIMER_TICKS_PER_SECOND;
-   
-   if(g_bTimerInitialized == TRUE)
-   {
-      ticksPerSec = sysTimestampFreq();
-   }
-   
-   return ticksPerSec;
+    return (CFE_PSP_TIMER_TICKS_PER_SECOND);
 }
 
 /******************************************************************************
@@ -336,73 +339,71 @@ uint32 CFE_PSP_GetTimerLow32Rollover(void)
 */
 void CFE_PSP_Get_Timebase(uint32 *Tbu, uint32* Tbl)
 {
-   uint32 upper = 0;
-   uint32 lower = 0;
-   int32  key = 0;
-   
-   /*
-   ** We don't want an interrupt to occur when the time requested.
-   ** According to notes from vxWorks, intLock does not stop reschededuling
-   ** of the calling task, so we have lock the task as well.
-   **
-   ** sysTimestampLock() automatically blocks interrupts during execution.
-   **
-   ** taskLock() is not valid on SMP systems and taskCpuLock (VxWorks 6.6+)
-   **   should be used instead.
-   */ 
-   
-   if(g_bTimerInitialized == TRUE)
-   {
+    uint32 upper = 0;
+    uint32 lower = 0;
+
+    /*
+     ** We don't want an interrupt to occur when the time requested.
+     ** According to notes from vxWorks, intLock does not stop reschededuling
+     ** of the calling task, so we have lock the task as well.
+     **
+     ** sysTimestampLock() automatically blocks interrupts during execution.
+     **
+     ** taskLock() is not valid on SMP systems and taskCpuLock (VxWorks 6.6+)
+     **   should be used instead.
+     */
+
+    if (g_bTimerInitialized == TRUE)
+    {
 #if _WRS_VXWORKS_MINOR >= 6
-      if (taskCpuLock() == OK)
+        if (taskCpuLock() == OK)
 #else
-      if (taskLock() == OK)
+        if (taskLock() == OK)
 #endif
-      {
-   
-         /*
-         ** Tbu is the upper 32 bits of a 64 bit counter.
-         ** Tbl is the lower 32 bits of a 64 bit counter.
-         ** The resolution of our timer is given by:
-         **   one timer tick = 1 / sysTimestampFreq() in seconds
-         */
-      
-         upper = g_nSecondsCount;
-         
-         lower = sysTimestampLock();
-         
-         lower /= sysTimestampFreq() / 1000000UL;
+        {
+
+            /*
+             ** Tbu is the upper 32 bits of a 64 bit counter.
+             ** Tbl is the lower 32 bits of a 64 bit counter.
+             ** The resolution of our timer is given by:
+             **   one timer tick = 1 / sysTimestampFreq() in seconds
+             */
+
+            upper = g_nSecondsCount;
+
+            lower = sysTimestampLock();
+
 
 #if _WRS_VXWORKS_MINOR >= 6
-         taskCpuUnlock();
+            taskCpuUnlock();
 #else
-         taskUnlock();
+            taskUnlock();
 #endif
 
-      }
-      else
-      {
-         /*
-         ** What if you can't lock the task
-         */
-         
-         OS_printf("CFE PSP Get Timebase: Unable to lock task!");
-      }
-   }
-   else
-   {
-      OS_printf("CFE PSP Get Timebase: Timer is not initialized!");
-   }
-      
-   if(Tbu != NULL)
-   {
-      *Tbu = upper;
-   }
-   
-   if(Tbl != NULL)
-   {
-      *Tbl = lower;
-   }
+        }
+        else
+        {
+            /*
+             ** What if you can't lock the task
+             */
+
+            printf("CFE PSP Get Timebase: Unable to lock task!\n");
+        }
+    }
+    else
+    {
+        printf("CFE PSP Get Timebase: Timer is not initialized!\n");
+    }
+
+    if (Tbu != NULL)
+    {
+        *Tbu = upper;
+    }
+
+    if (Tbl != NULL)
+    {
+        *Tbl = lower;
+    }
 }
 
 /******************************************************************************
@@ -429,18 +430,18 @@ uint32 CFE_PSP_Get_Dec(void)
 }
 
 /******************************************************************************
-**  Function:  CFE_PSP_AuxClkHandler()
-**
-**  Purpose:
-**    A timer int handler to keep track of seconds.
-**
-**  Arguments:
-**
-**  Return:
-*/
-void CFE_PSP_AuxClkHandler(int arg)
+ **  Function:  CFE_PSP_AuxClkHandler()
+ **
+ **  Purpose:
+ **    A timer int handler to keep track of seconds.
+ **
+ **  Arguments:
+ **
+ **  Return:
+ */
+static void CFE_PSP_AuxClkHandler(int32 arg)
 {
-   static int auxCount = 0;
+    static int32 auxCount = 0;
 
    if(++auxCount >= CFE_PSP_TIMER_AUX_TICK_PER_SEC)
    {
@@ -456,14 +457,17 @@ void CFE_PSP_AuxClkHandler(int arg)
 
       CFE_TIME_Local1HzISR();
 
-      /* FOR DEBUG
-      OS_time_t LocalTime;
-      CFE_PSP_GetTime(&LocalTime);
-      logMsg("aux clk handler: %u %u\n", LocalTime.seconds,LocalTime.microsecs,0,0,0,0);
-      */
-   }
-
-   return;
+        /* Keep this invaluable log message, it is used for troubleshooting
+         * and when creating a new PSP based on this one
+         * It must be commented out during normal usage, but can be
+         * uncommented for troubleshooting
+         *
+         OS_time_t LocalTime;
+         CFE_PSP_GetTime(&LocalTime);
+         logMsg("aux clk handler: %u %u  %u\n", LocalTime.seconds,
+                 LocalTime.microsecs,sysTimestampLock(),0,0,0);
+         */
+    }
 }
 
 

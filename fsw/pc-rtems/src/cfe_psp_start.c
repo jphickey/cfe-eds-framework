@@ -14,10 +14,6 @@
 ** Purpose:
 **   cFE BSP main entry point.
 **
-** History:
-**   2004/09/23  J.P. Swinski    | Initial version,
-**   2004/10/01  P.Kutt          | Replaced OS API task delay with VxWorks functions
-**                                 since OS API is initialized later.
 **
 ******************************************************************************/
 #define _USING_RTEMS_INCLUDES_
@@ -38,6 +34,7 @@
 #include <rtems/dosfs.h>
 #include <rtems/fsmount.h>
 #include <rtems/shell.h>
+#include <cexp.h>
 
 
 extern rtems_status_code rtems_ide_part_table_initialize (const char* );
@@ -105,7 +102,29 @@ bool CFE_PSP_Login_Check(const char *user, const char *passphrase)
 */
 int timer_count = 0;
 
-void CFE_PSP_Setup(void)
+/******************************************************************************
+**  Function:  CFE_PSP_Setup()
+**
+**  Purpose:
+**    Perform initial setup.
+**
+**    The root file system is created, and mount points are created and mounted:
+**     - /ram as ramdisk (RFS), read-write
+**     - /boot from /dev/hda1, read-only, contain the boot executable(s) (CFE core)
+**     - /cf from /dev/hdb1, read-write, containing loadable apps & tables (eeprom directory).
+**
+**  Arguments:
+**    (none)
+**
+**  Return:
+**    OS error code.  RTEMS_SUCCESSFUL if everything worked.
+**
+**  Note:
+**    If this fails then CFE will not run properly, so a non-success here should
+**    stop the boot so the issue can be fixed.  Trying to continue booting usually
+**    just obfuscates the issue when something does not work later on.
+*/
+int CFE_PSP_Setup(void)
 {
    int status;
    
@@ -124,6 +143,7 @@ void CFE_PSP_Setup(void)
    if (status != RTEMS_SUCCESSFUL)
    {
        OS_printf("Creating Root file system failed: %s\n",rtems_status_text(status));
+       return status;
    }
 
    /*
@@ -133,13 +153,21 @@ void CFE_PSP_Setup(void)
    if (status != RTEMS_SUCCESSFUL)
    {
        OS_printf("mkdir failed: %s\n", strerror (errno));
+       return status;
+   }
+
+   status = mkdir("/boot", S_IFDIR |S_IRWXU | S_IRWXG | S_IRWXO); /* For boot disk mountpoint */
+   if (status != RTEMS_SUCCESSFUL)
+   {
+       OS_printf("mkdir failed: %s\n", strerror (errno));
+       return status;
    }
 
    status = mkdir("/cf", S_IFDIR |S_IRWXU | S_IRWXG | S_IRWXO); /* For EEPROM mountpoint */
    if (status != RTEMS_SUCCESSFUL)
    {
        OS_printf("mkdir failed: %s\n", strerror (errno));
-       return;
+       return status;
    }
 
    /*
@@ -150,17 +178,67 @@ void CFE_PSP_Setup(void)
    {
      OS_printf ("error: ide partition table not found: %s / %s\n",
              rtems_status_text (status),strerror(errno));
+     return status;
    }
 
-   status = mount("/dev/hda1", "/cf",
+   status = rtems_ide_part_table_initialize ("/dev/hdb");
+   if (status != RTEMS_SUCCESSFUL)
+   {
+     OS_printf ("error: ide partition table not found: %s / %s\n",
+             rtems_status_text (status),strerror(errno));
+     return status;
+   }
+
+   status = mount("/dev/hda1", "/boot",
+         RTEMS_FILESYSTEM_TYPE_DOSFS,
+         RTEMS_FILESYSTEM_READ_ONLY,
+         NULL);
+   if (status < 0)
+   {
+     OS_printf ("mount failed: %s\n", strerror (errno));
+     return status;
+   }
+
+   status = mount("/dev/hdb1", "/cf",
          RTEMS_FILESYSTEM_TYPE_DOSFS,
          RTEMS_FILESYSTEM_READ_WRITE,
          NULL);
    if (status < 0)
    {
      OS_printf ("mount failed: %s\n", strerror (errno));
+     return status;
    }
 
+   return RTEMS_SUCCESSFUL;
+}
+
+/******************************************************************************
+**  Function:  CFE_PSP_SetupSymbolTable()
+**
+**  Purpose:
+**    Load the symbol table from the EXE file representing the currently running code.
+**    This is required in order to make the module loading work properly.  Without this,
+**    all symbols defined within the core executable will get flagged as undefined
+**    when loading a module that tries to reference them.
+**
+**  Arguments:
+**    (none)
+**
+**  Return:
+**    (none)
+**
+**  Note:
+**    Not calling CFE_PSP_Panic() if this doesn't work, because CFE itself will still
+**    run and any apps that are statically linked should still run.
+*/
+void CFE_PSP_SetupSymbolTable(void)
+{
+    char cfe_exec_file[OS_MAX_LOCAL_PATH_LEN];
+
+    snprintf(cfe_exec_file, sizeof(cfe_exec_file), "/boot/core-%s.exe",
+            GLOBAL_CONFIGDATA.Default_CpuName);
+    OS_printf ("CFE_PSP: Loading symbol table from: %s\n", cfe_exec_file);
+    cexpModuleLoad(cfe_exec_file, 0);
 }
 
 /******************************************************************************
@@ -217,7 +295,10 @@ rtems_task Init(
   rtems_task_argument ignored
 )
 {
-   CFE_PSP_Setup();
+   if (CFE_PSP_Setup() != RTEMS_SUCCESSFUL)
+   {
+       CFE_PSP_Panic(CFE_PSP_ERROR);
+   }
 
    /*
    ** Start the shell early, so it can be be used in case a problem occurs
@@ -232,6 +313,7 @@ rtems_task Init(
    */
    OS_API_Init();
 
+   CFE_PSP_SetupSymbolTable();
 
    /* Prepare the system timing resources */
    CFE_PSP_SetupSystemTimer();
@@ -262,7 +344,7 @@ rtems_task Init(
 **    (none)
 */
 
-void CFE_PSP_Main(  int ModeId, char *StartupFilePath )
+void CFE_PSP_Main(uint32 ModeId, char *StartupFilePath )
 {
    uint32            reset_type;
    uint32            reset_subtype;
