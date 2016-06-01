@@ -56,7 +56,7 @@ void CFE_PSP_ModuleInit(void)
                     (uint32)ApiPtr->ModuleType < CFE_PSP_MODULE_TYPE_MAX &&
                     ApiPtr->Init != NULL)
             {
-                (*ApiPtr->Init)();
+                (*ApiPtr->Init)(CFE_PSP_MODULE_BASE | CFE_PSP_ModuleCount);
             }
             ++Entry;
             ++CFE_PSP_ModuleCount;

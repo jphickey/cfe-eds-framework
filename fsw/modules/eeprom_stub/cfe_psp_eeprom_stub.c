@@ -21,7 +21,7 @@
 
 CFE_PSP_MODULE_DECLARE_SIMPLE(eeprom_stub);
 
-void eeprom_stub_Init(void)
+void eeprom_stub_Init(uint32 PspModuleId)
 {
     /* Nothing to init */
 }
