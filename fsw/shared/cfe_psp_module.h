@@ -27,6 +27,7 @@ typedef enum
     CFE_PSP_MODULE_TYPE_INVALID = 0,
     CFE_PSP_MODULE_TYPE_VALID_RANGE  = 1000,
     CFE_PSP_MODULE_TYPE_SIMPLE,
+    CFE_PSP_MODULE_TYPE_DEVICEDRIVER,
     /* May be extended in the future */
     CFE_PSP_MODULE_TYPE_MAX
 } CFE_PSP_ModuleType_t;
@@ -44,7 +45,7 @@ typedef const struct
     CFE_PSP_ModuleType_t ModuleType;
     uint32 OperationFlags;
     CFE_PSP_ModuleInitFunc_t Init;
-    /* More API calls may be added for other module types */
+    const void *ExtendedApi;
 } CFE_PSP_ModuleApi_t;
 
 /**
@@ -60,6 +61,7 @@ typedef const struct
         .ModuleType = CFE_PSP_MODULE_TYPE_SIMPLE,           \
         .OperationFlags = 0,                                \
         .Init = name##_Init,                                \
+        .ExtendedApi = NULL                                 \
     }
 
 /**
