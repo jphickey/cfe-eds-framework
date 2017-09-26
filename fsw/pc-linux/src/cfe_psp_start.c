@@ -57,15 +57,15 @@
 
 #define CFE_ES_MAIN_FUNCTION        (GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
 #define CFE_TIME_1HZ_FUNCTION       (GLOBAL_CONFIGDATA.CfeConfig->System1HzISR)
-#define CFE_ES_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
-#define CFE_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
-#define CFE_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
-#define CFE_SPACECRAFT_ID           (GLOBAL_CONFIGDATA.Default_SpacecraftId)
+#define CFE_PLATFORM_ES_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
+#define CFE_PLATFORM_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
+#define CFE_PLATFORM_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
+#define CFE_MISSION_SPACECRAFT_ID            (GLOBAL_CONFIGDATA.Default_SpacecraftId)
 
 #else
 
 /*
- * cfe_platform_cfg.h needed for CFE_ES_NONVOL_STARTUP_FILE, CFE_CPU_ID/CPU_NAME/SPACECRAFT_ID
+ * cfe_platform_cfg.h needed for CFE_PLATFORM_ES_NONVOL_STARTUP_FILE, CFE_PLATFORM_CPU_ID/CPU_NAME/SPACECRAFT_ID
  *
  *  - this should NOT be included here -
  *
@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
    /*
    ** Call cFE entry point.
    */
-   CFE_ES_MAIN_FUNCTION(reset_type, reset_subtype, 1, CFE_ES_NONVOL_STARTUP_FILE);
+   CFE_ES_MAIN_FUNCTION(reset_type, reset_subtype, 1, CFE_PLATFORM_ES_NONVOL_STARTUP_FILE);
 
    /*
    ** Let the main thread sleep.
@@ -440,11 +440,11 @@ void CFE_PSP_DisplayUsage(char *Name )
    printf("             4   for  Watchdog Reset\n");
    printf("             5   for  Reset Command\n");
    printf("        -C [ --cpuid ]   CPU ID is an integer CPU identifier.\n");
-   printf("             The default  CPU ID is from the platform configuration file: %d\n",CFE_CPU_ID);
+   printf("             The default  CPU ID is from the platform configuration file: %d\n",CFE_PLATFORM_CPU_ID);
    printf("        -N [ --cpuname ] CPU Name is a string to identify the CPU.\n");
-   printf("             The default  CPU Name is from the platform configuraitoon file: %s\n",CFE_CPU_NAME);
+   printf("             The default  CPU Name is from the platform configuration file: %s\n",CFE_PLATFORM_CPU_NAME);
    printf("        -I [ --scid ]    Spacecraft ID is an integer Spacecraft identifier.\n");
-   printf("             The default Spacecraft ID is from the mission configuration file: %d\n",CFE_SPACECRAFT_ID);
+   printf("             The default Spacecraft ID is from the mission configuration file: %d\n",CFE_MISSION_SPACECRAFT_ID);
    printf("        -h [ --help ]    This message.\n");
    printf("\n");
    printf("       Example invocation:\n");
@@ -488,22 +488,22 @@ void CFE_PSP_ProcessArgumentDefaults(CFE_PSP_CommandData_t *CommandData)
    
    if ( CommandData->GotCpuId == 0 )
    {
-      CommandData->CpuId = CFE_CPU_ID;
-      printf("CFE_PSP: Default CPU ID = %d\n",CFE_CPU_ID);
+      CommandData->CpuId = CFE_PLATFORM_CPU_ID;
+      printf("CFE_PSP: Default CPU ID = %d\n",CFE_PLATFORM_CPU_ID);
       CommandData->GotCpuId = 1;
    }
    
    if ( CommandData->GotSpacecraftId == 0 )
    {
-      CommandData->SpacecraftId = CFE_SPACECRAFT_ID;
-      printf("CFE_PSP: Default Spacecraft ID = %d\n",CFE_SPACECRAFT_ID);
+      CommandData->SpacecraftId = CFE_MISSION_SPACECRAFT_ID;
+      printf("CFE_PSP: Default Spacecraft ID = %d\n",CFE_MISSION_SPACECRAFT_ID);
       CommandData->GotSpacecraftId = 1;
    }
    
    if ( CommandData->GotCpuName == 0 )
    {
-      strncpy(CommandData->CpuName, CFE_CPU_NAME, CFE_PSP_CPU_NAME_LENGTH );
-      printf("CFE_PSP: Default CPU Name: %s\n",CFE_CPU_NAME);
+      strncpy(CommandData->CpuName, CFE_PLATFORM_CPU_NAME, CFE_PSP_CPU_NAME_LENGTH );
+      printf("CFE_PSP: Default CPU Name: %s\n",CFE_PLATFORM_CPU_NAME);
       CommandData->GotCpuName = 1;
    }
 

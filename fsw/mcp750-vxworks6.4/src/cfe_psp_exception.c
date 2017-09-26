@@ -101,7 +101,7 @@ void CFE_PSP_AttachExceptions(void)
 /*
 ** Name: CFE_PSP_ExceptionHook
 **
-** Purpose: Make the proper call to CFE_ES_EXCEPTION_FUNCTION (defined in
+** Purpose: Make the proper call to CFE_PLATFORM_ES_EXCEPTION_FUNCTION (defined in
 **          cfe_es_platform.cfg)
 **
 ** Notes:   pEsf - pointer to exception stack frame.

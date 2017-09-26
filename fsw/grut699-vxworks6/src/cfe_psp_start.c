@@ -267,7 +267,7 @@ static void CFE_PSP_Start(uint32 ModeId, char *StartupFilePath)
     * initialized.
     */
    CFE_PSP_Init1HzTimer();
-   CFE_TIME_SetState(CFE_TIME_VALID);
+   CFE_TIME_SetState(CFE_TIME_ClockState_VALID);
    
    /*
    ** Enable the watchdog

@@ -148,7 +148,7 @@ void CFE_PSP_FlushCaches(uint32 type, uint32 address, uint32 size)
 */
 uint32 CFE_PSP_GetProcessorId    (void)
 {
-    return(CFE_CPU_ID);
+    return(CFE_PLATFORM_CPU_ID);
 }
 
 
@@ -169,6 +169,6 @@ uint32 CFE_PSP_GetProcessorId    (void)
 */
 uint32 CFE_PSP_GetSpacecraftId   (void)
 {
-   return(CFE_SPACECRAFT_ID);
+   return(CFE_MISSION_SPACECRAFT_ID);
 }
 
