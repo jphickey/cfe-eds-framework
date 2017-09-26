@@ -177,7 +177,7 @@ void CFE_PSP_Main(  uint32 ModeId, char *StartupFilePath )
    ** Call cFE entry point. This will return when cFE startup
    ** is complete.
    */
-   CFE_ES_Main(reset_type,reset_subtype, 1, CFE_ES_NONVOL_STARTUP_FILE); 
+   CFE_ES_Main(reset_type,reset_subtype, 1, CFE_PLATFORM_ES_NONVOL_STARTUP_FILE); 
 
    /*
    ** Main loop for default task and simulated 1hz 

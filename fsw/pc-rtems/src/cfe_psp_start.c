@@ -58,10 +58,10 @@ extern rtems_status_code rtems_ide_part_table_initialize (const char* );
 #include <target_config.h>
 
 #define CFE_ES_MAIN_FUNCTION        (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
-#define CFE_ES_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
-#define CFE_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
-#define CFE_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
-#define CFE_SPACECRAFT_ID           (GLOBAL_CONFIGDATA.Default_SpacecraftId)
+#define CFE_PLATFORM_ES_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
+#define CFE_PLATFORM_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
+#define CFE_PLATFORM_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
+#define CFE_MISSION_SPACECRAFT_ID           (GLOBAL_CONFIGDATA.Default_SpacecraftId)
 
 /*
 ** Global variables
@@ -365,7 +365,7 @@ void CFE_PSP_Main(uint32 ModeId, char *StartupFilePath )
    ** Call cFE entry point. This will return when cFE startup
    ** is complete.
    */
-   CFE_ES_MAIN_FUNCTION(reset_type,reset_subtype, 1, CFE_ES_NONVOL_STARTUP_FILE);
+   CFE_ES_MAIN_FUNCTION(reset_type,reset_subtype, 1, CFE_PLATFORM_ES_NONVOL_STARTUP_FILE);
 
 }
 

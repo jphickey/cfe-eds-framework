@@ -51,14 +51,14 @@
  */
 #include <target_config.h>
 
-#define CFE_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
-#define CFE_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
-#define CFE_SPACECRAFT_ID           (GLOBAL_CONFIGDATA.Default_SpacecraftId)
+#define CFE_PLATFORM_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
+#define CFE_PLATFORM_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
+#define CFE_MISSION_SPACECRAFT_ID            (GLOBAL_CONFIGDATA.Default_SpacecraftId)
 
 #else
 
 /*
- * cfe_platform_cfg.h needed for CFE_ES_NONVOL_STARTUP_FILE, CFE_CPU_ID/CPU_NAME/SPACECRAFT_ID
+ * cfe_platform_cfg.h needed for CFE_PLATFORM_ES_NONVOL_STARTUP_FILE, CFE_PLATFORM_CPU_ID/CPU_NAME/SPACECRAFT_ID
  *
  *  - this should NOT be included here -
  *
@@ -166,7 +166,7 @@ void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 */
 uint32 CFE_PSP_GetProcessorId    (void)
 {
-    return(CFE_CPU_ID);
+    return(CFE_PLATFORM_CPU_ID);
 }
 
 
@@ -187,6 +187,6 @@ uint32 CFE_PSP_GetProcessorId    (void)
 */
 uint32 CFE_PSP_GetSpacecraftId   (void)
 {
-   return(CFE_SPACECRAFT_ID);
+   return(CFE_MISSION_SPACECRAFT_ID);
 }
 
