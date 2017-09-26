@@ -117,7 +117,7 @@ int32 CFE_PSP_GetCDSSize(uint32 *SizeOfCDS)
  **    CFE_PSP_SUCCESS
  **    CFE_PSP_ERROR
  */
-int32 CFE_PSP_WriteToCDS(void *PtrToDataToWrite, uint32 CDSOffset,
+int32 CFE_PSP_WriteToCDS(const void *PtrToDataToWrite, uint32 CDSOffset,
         uint32 NumBytes)
 {
     uint8 *CopyPtr = NULL;

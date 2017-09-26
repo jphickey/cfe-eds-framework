@@ -274,7 +274,7 @@ extern int32 CFE_PSP_GetCDSSize(uint32 *SizeOfCDS);
 ** CFE_PSP_GetCDSSize fetches the size of the OS Critical Data Store area.
 */
 
-extern int32 CFE_PSP_WriteToCDS(void *PtrToDataToWrite, uint32 CDSOffset, uint32 NumBytes);
+extern int32 CFE_PSP_WriteToCDS(const void *PtrToDataToWrite, uint32 CDSOffset, uint32 NumBytes);
 /*
 ** CFE_PSP_WriteToCDS writes to the CDS Block.
 */
@@ -400,7 +400,7 @@ int32 CFE_PSP_MemWrite16        (cpuaddr MemoryAddress, uint16 uint16Value);
 int32 CFE_PSP_MemRead32         (cpuaddr MemoryAddress, uint32 *uint32Value);
 int32 CFE_PSP_MemWrite32        (cpuaddr MemoryAddress, uint32 uint32Value);
 
-int32 CFE_PSP_MemCpy            (void *dest, void *src, uint32 n);
+int32 CFE_PSP_MemCpy            (void *dest, const void *src, uint32 n);
 int32 CFE_PSP_MemSet            (void *dest, uint8 value, uint32 n);
 
 int32  CFE_PSP_MemValidateRange (cpuaddr Address, uint32 Size, uint32 MemoryType);

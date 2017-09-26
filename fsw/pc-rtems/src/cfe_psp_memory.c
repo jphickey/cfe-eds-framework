@@ -132,7 +132,7 @@ int32 CFE_PSP_GetCDSSize(uint32 *SizeOfCDS)
 **  Return:
 **    (none)
 */
-int32 CFE_PSP_WriteToCDS(void *PtrToDataToWrite, uint32 CDSOffset, uint32 NumBytes)
+int32 CFE_PSP_WriteToCDS(const void *PtrToDataToWrite, uint32 CDSOffset, uint32 NumBytes)
 {
    uint8 *CopyPtr;
    int32  return_code;
