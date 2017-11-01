@@ -29,15 +29,18 @@
 #include <rtems/bdbuf.h>
 #include <rtems/blkdev.h>
 #include <rtems/diskdevs.h>
+#include <rtems/bdpart.h>
 #include <rtems/error.h>
 #include <rtems/ramdisk.h>
 #include <rtems/dosfs.h>
 #include <rtems/fsmount.h>
 #include <rtems/shell.h>
+#include <rtems/rtems_bsdnet.h>
+#include <rtems/rtems_dhcp_failsafe.h>
+#include <bsp.h>
 #include <cexp.h>
 
-
-extern rtems_status_code rtems_ide_part_table_initialize (const char* );
+extern int rtems_fxp_attach(struct rtems_bsdnet_ifconfig *config, int attaching);
 
 /*
 ** cFE includes 
@@ -91,6 +94,25 @@ rtems_driver_address_table rtems_ramdisk_io_ops =
 };
 
 rtems_id          RtemsTimerId;
+
+static unsigned char ethernet_address[6] = {0x00, 0x04, 0x9F, 0x00, 0x27, 0x61 };
+
+static struct rtems_bsdnet_ifconfig netdriver_config = {
+        .name = "fxp1" /*RTEMS_BSP_NETWORK_DRIVER_NAME*/,
+        .attach = rtems_fxp_attach /*RTEMS_BSP_NETWORK_DRIVER_ATTACH*/,
+        .next = NULL,
+        .ip_address = "10.0.2.17",
+        .ip_netmask = "255.255.255.0",
+        .hardware_address = ethernet_address
+        /* more options can follow */
+};
+
+struct rtems_bsdnet_config rtems_bsdnet_config = {
+        .ifconfig = &netdriver_config,
+        .bootp = rtems_bsdnet_do_dhcp_failsafe, /* fill if DHCP is used*/
+};
+
+
 
 bool CFE_PSP_Login_Check(const char *user, const char *passphrase)
 {
@@ -156,14 +178,7 @@ int CFE_PSP_Setup(void)
        return status;
    }
 
-   status = mkdir("/boot", S_IFDIR |S_IRWXU | S_IRWXG | S_IRWXO); /* For boot disk mountpoint */
-   if (status != RTEMS_SUCCESSFUL)
-   {
-       OS_printf("mkdir failed: %s\n", strerror (errno));
-       return status;
-   }
-
-   status = mkdir("/cf", S_IFDIR |S_IRWXU | S_IRWXG | S_IRWXO); /* For EEPROM mountpoint */
+   status = mkdir("/boot", S_IFDIR |S_IRWXU | S_IRWXG | S_IRWXO); /* For BOOT mountpoint */
    if (status != RTEMS_SUCCESSFUL)
    {
        OS_printf("mkdir failed: %s\n", strerror (errno));
@@ -173,18 +188,10 @@ int CFE_PSP_Setup(void)
    /*
     * Register the IDE partition table.
     */
-   status = rtems_ide_part_table_initialize ("/dev/hda");
+   status = rtems_bdpart_register_from_disk("/dev/hda");
    if (status != RTEMS_SUCCESSFUL)
    {
-     OS_printf ("error: ide partition table not found: %s / %s\n",
-             rtems_status_text (status),strerror(errno));
-     return status;
-   }
-
-   status = rtems_ide_part_table_initialize ("/dev/hdb");
-   if (status != RTEMS_SUCCESSFUL)
-   {
-     OS_printf ("error: ide partition table not found: %s / %s\n",
+     OS_printf ("error: hda partition table not found: %s / %s\n",
              rtems_status_text (status),strerror(errno));
      return status;
    }
@@ -195,18 +202,29 @@ int CFE_PSP_Setup(void)
          NULL);
    if (status < 0)
    {
-     OS_printf ("mount failed: %s\n", strerror (errno));
+     OS_printf ("mount /boot failed: %s\n", strerror (errno));
      return status;
    }
 
-   status = mount("/dev/hdb1", "/cf",
-         RTEMS_FILESYSTEM_TYPE_DOSFS,
-         RTEMS_FILESYSTEM_READ_WRITE,
-         NULL);
-   if (status < 0)
+   status = rtems_bsdnet_initialize_network();
+   if (status != RTEMS_SUCCESSFUL)
    {
-     OS_printf ("mount failed: %s\n", strerror (errno));
+     OS_printf ("error: init network: %s / %s\n",
+             rtems_status_text (status),strerror(errno));
      return status;
+   }
+
+   /*
+    * For EEPROM mountpoint, OSAL will look for this in /cf
+    * But for testing purposes it is easier to use just a single block device
+    * (This is friendlier for debugging in QEMU using its vvfat feature)
+    * So create a symlink to the location under /boot
+    */
+   status = symlink("/boot/eeprom", "/cf"); /* For EEPROM mountpoint */
+   if (status != RTEMS_SUCCESSFUL)
+   {
+       OS_printf("symlink failed: %s\n", strerror (errno));
+       return status;
    }
 
    return RTEMS_SUCCESSFUL;
@@ -377,7 +395,7 @@ void CFE_PSP_Main(uint32 ModeId, char *StartupFilePath )
 #define TASK_INTLEVEL 0
 #define CONFIGURE_INIT
 #define CONFIGURE_INIT_TASK_ATTRIBUTES  (RTEMS_FLOATING_POINT | RTEMS_PREEMPT | RTEMS_NO_TIMESLICE | RTEMS_ASR | RTEMS_INTERRUPT_LEVEL(TASK_INTLEVEL))
-#define CONFIGURE_INIT_TASK_STACK_SIZE  (20*1024)
+#define CONFIGURE_INIT_TASK_STACK_SIZE  (64*1024)
 #define CONFIGURE_INIT_TASK_PRIORITY    120
 
 /*
@@ -389,7 +407,7 @@ void CFE_PSP_Main(uint32 ModeId, char *StartupFilePath )
 #define CONFIGURE_MAXIMUM_SEMAPHORES                 (OS_MAX_BIN_SEMAPHORES + OS_MAX_COUNT_SEMAPHORES + OS_MAX_MUTEXES + 4)
 #define CONFIGURE_MAXIMUM_MESSAGE_QUEUES             (OS_MAX_QUEUES + 4)
 
-#define CONFIGURE_EXECUTIVE_RAM_SIZE    (1024*1024)
+#define CONFIGURE_EXECUTIVE_RAM_SIZE    (64*1024*1024)
 
 #define CONFIGURE_RTEMS_INIT_TASKS_TABLE
 #define CONFIGURE_APPLICATION_NEEDS_CONSOLE_DRIVER
