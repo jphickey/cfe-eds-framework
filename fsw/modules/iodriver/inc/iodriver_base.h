@@ -105,6 +105,7 @@ enum
     IODRIVER_DIGITAL_IO_CLASS_BASE  = 0x00020000,    /**< Opcodes implemented by gpio (digital logic) devices */
     IODRIVER_PACKET_IO_CLASS_BASE   = 0x00030000,    /**< Opcodes implemented by packet/datagram-oriented devices */
     IODRIVER_MEMORY_IO_CLASS_BASE   = 0x00040000,    /**< Opcodes implemented by memory/register oriented devices */
+    IODRIVER_STREAM_IO_CLASS_BASE   = 0x00050000,    /**< Opcodes implemented by data stream oriented devices */
 
     /**
      * Placeholder for extended opcodes that may be very specific to a single device/device type.

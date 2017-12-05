@@ -16,7 +16,7 @@
 #ifndef _IODRIVER_IMPL_H_
 #define _IODRIVER_IMPL_H_
 
-#ifndef _CFE_PSP_
+#ifndef _CFE_PSP_MODULE_
 #error "Do not include this file from outside the PSP"
 #endif
 
