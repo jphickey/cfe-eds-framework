@@ -19,6 +19,11 @@
 
 #include <common_types.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
  * Physical channel location descriptor.
  *
@@ -33,8 +38,8 @@
 typedef struct
 {
     uint32 PspModuleId;                 ///< Board driver selection
-    uint16 BoardInstance;               ///< Board instance number
-    uint16 ChannelNumber;               ///< Subchannel number - optional, set to 0 for devices that do not have multiple channels
+    uint32 BoardInstance;               ///< Board instance number
+    uint32 SubAddress;                  ///< optional, set to 0 for devices that do not have multiple channels/subaddresses
 } IODriver_Location_t;
 
 /**
@@ -118,6 +123,61 @@ enum
 
 int32 IODriver_FindByName(const char *DriverName, uint32 *PspModuleId);
 int32 IODriver_Command(const IODriver_Location_t *Location, uint32 CommandCode, IODriver_Arg_t Arg);
+
+#ifdef __cplusplus
+} /* extern "C" */
+
+class CFE_PSP_IODriver_Location
+{
+private:
+    IODriver_Location_t Loc;
+
+public:
+    CFE_PSP_IODriver_Location()
+    {
+        Loc.PspModuleId = 0;
+        Loc.BoardInstance = 0;
+        Loc.SubAddress = 0;
+    }
+    CFE_PSP_IODriver_Location(uint32 PspModuleId, uint32 BoardInstance, uint32 SubAddress)
+    {
+        Loc.PspModuleId = PspModuleId;
+        Loc.BoardInstance = BoardInstance;
+        Loc.SubAddress = SubAddress;
+    }
+    CFE_PSP_IODriver_Location(const char *DriverName, uint32 BoardInstance, uint32 SubAddress)
+    {
+        int32 Status = IODriver_FindByName(DriverName, &Loc.PspModuleId);
+        if (Status != 0)
+        {
+            throw Status;
+        }
+        Loc.BoardInstance = BoardInstance;
+        Loc.SubAddress = SubAddress;
+    }
+    void SetAddress(uint32 SubAddress)
+    {
+        Loc.SubAddress = SubAddress;
+    }
+    void SetBoard(uint32 BoardInstance)
+    {
+        Loc.BoardInstance = BoardInstance;
+    }
+    void SetModuleId(uint32 PspModuleId)
+    {
+        Loc.PspModuleId = PspModuleId;
+    }
+    void SetDriverName(const char *DriverName)
+    {
+        IODriver_FindByName(DriverName, &Loc.PspModuleId);
+    }
+    int32 Command(uint32 CommandCode, IODriver_Arg_t Arg) const
+    {
+        return IODriver_Command(&Loc, CommandCode, Arg);
+    }
+};
+
+#endif
 
 
 #endif /* _IODRIVER_BASE_H_ */

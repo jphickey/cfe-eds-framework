@@ -42,7 +42,7 @@
  * Implemented as a single API call with an extendible command code for device-specific ops.  This allows
  * a common API to be used while still allowing full freedom to handle many different device types.
  */
-typedef int32 (*IODriver_ApiFunc_t)(uint32 CommandCode, uint16 Instance, uint16 SubChannel, IODriver_Arg_t arg);
+typedef int32 (*IODriver_ApiFunc_t)(uint32 CommandCode, uint32 Instance, uint32 SubAddress, IODriver_Arg_t arg);
 
 typedef const struct
 {

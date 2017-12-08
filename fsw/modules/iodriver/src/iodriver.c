@@ -106,7 +106,7 @@ int32 IODriver_Command(const IODriver_Location_t *Location, uint32 CommandCode, 
     {
         if (API->DeviceMutex != NULL)
         {
-            MutexId = IODriver_GetMutex(Location->PspModuleId, API->DeviceMutex(CommandCode, Location->BoardInstance, Location->ChannelNumber, Arg));
+            MutexId = IODriver_GetMutex(Location->PspModuleId, API->DeviceMutex(CommandCode, Location->BoardInstance, Location->SubAddress, Arg));
         }
         else
         {
@@ -116,7 +116,7 @@ int32 IODriver_Command(const IODriver_Location_t *Location, uint32 CommandCode, 
         {
             OS_MutSemTake(MutexId);
         }
-        Result = API->DeviceCommand(CommandCode, Location->BoardInstance, Location->ChannelNumber, Arg);
+        Result = API->DeviceCommand(CommandCode, Location->BoardInstance, Location->SubAddress, Arg);
         if (MutexId != 0)
         {
             OS_MutSemGive(MutexId);

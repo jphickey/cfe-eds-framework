@@ -27,7 +27,6 @@
  */
 typedef struct
 {
-    uint32 DeviceAddress;
     uint32 BufferSize;
     const void *BufferMem;
 } IODriver_WriteMemoryBuffer_t;
@@ -39,7 +38,6 @@ typedef struct
  */
 typedef struct
 {
-    uint32 DeviceAddress;
     uint32 BufferSize;
     void *BufferMem;
 } IODriver_ReadMemoryBuffer_t;
