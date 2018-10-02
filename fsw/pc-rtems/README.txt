@@ -56,7 +56,18 @@ The "prefix" can be whatever location is preferable for installation.
 
 $ mkdir b-pc686
 $ cd b-pc686
-$ ../rtems/configure --target=i386-rtems4.11 --enable-rtemsbsp=pc686 --prefix=${HOME}/rtems-4.11
+$ ../rtems/configure --target=i386-rtems4.11 \
+    --enable-rtemsbsp=pc686 \
+    --prefix=${HOME}/rtems-4.11 \
+    --enable-networking \
+    --enable-cxx \
+    --disable-posix \
+    --disable-deprecated \
+    BSP_ENABLE_VGA=0 \
+    CLOCK_DRIVER_USE_TSC=1 \
+    USE_COM1_AS_CONSOLE=1 \
+    BSP_PRESS_KEY_FOR_RESET=0 \
+    BSP_RESET_BOARD_AT_EXIT=1    
 $ make
 $ make install
 $ cd ..
@@ -205,15 +216,20 @@ III. Building and Running CFE
 
 qemu-system-i386 -m 128 \ 
     -kernel ${INSTALL_DIR}/cpu1/core-cpu1.exe \
-    --append '--console=com1' \
-    -hda fat:${INSTALL_DIR}/cpu1 \ 
-    -nographic
+    -drive file=fat:rw:${INSTALL_DIR}/cpu1,format=raw \
+    -nographic \
+    -no-reboot
     
 where ${INSTALL_DIR} represents the filesystem location of the installed binaries from "make install"
 
 Note that the "fat" emulation used above is fairly limited, generally only useful for read-only testing.
 To get read-write operation one would have to create real filesystem images and copy files into them, then 
 use the images directly.  This is also what would need to be done to deploy on real hardware.
+
+The "-no-reboot" flag causes QEMU to exit if a panic or shutdown event occurs, rather than emulating
+an actual processor reset.  This is generally a good thing when debugging, since a bad build can
+cause a reset loop.   This flag can be omitted if one wishes to emulate the processor reset.
+
 
 3) Network-enabled boot sequence.
 
@@ -222,12 +238,38 @@ This is an example QEMU command that includes a simulated network device.  This 
 
 The "device" and "netdev" options can be tuned to your preferences (see documentation)
 
-qemu-system-i386 -m 128 \ 
+qemu-system-i386 -m 128 -nographic -no-reboot \
     -kernel ${INSTALL_DIR}/cpu1/core-cpu1.exe \
-    --append '--console=com1' \
-    -hda fat:${INSTALL_DIR}/cpu1 \ 
-    -nographic \
+    -drive file=fat:rw:${INSTALL_DIR}/cpu1,format=raw \
     -device i82557b,netdev=net0,mac=00:04:9F:00:27:61 \
-    -netdev user,id=net0,hostfwd=udp:127.0.0.1:1235-:1235
+    -netdev user,id=net0,hostfwd=udp:127.0.0.1:1235-:1235 \
+    
+One can then use the "cmdutil" and "tlm_decode" applications to interact with the CFE.
+
+    
+4) Automated/scripted Unit-testing configuration using QEMU
  
+The Unit Test BSP (utbsp) by default will start an RTEMS shell and allow
+an interactive user to query/interact with the system as part of the unit testing.
+
+The BSP also supports a "--batch-mode" option which is intended for 
+automated or script-based execution.  It can be invoked through QEMU's 
+"-append" option or through the GRUB bootloader if using real hardware.
+When using QEMU this allows for  fully scripted testing.  
+
+The basic QEMU command to execute a single unit test is:
+
+qemu-system-i386 -m 128 \
+   -kernel ${test-executable}.exe \
+   -append '--batch-mode' \
+   -nographic -no-reboot \
+       > log-${test-executable}.txt
+
+
+The entire suite of unit tests can be executed using a for loop:
+
+for i in *test.exe *UT.exe; do \
+   qemu-system-i386 -m 128 -kernel $i -append '--batch-mode' -nographic -no-reboot \
+       | tee log-${i%%.exe}.txt;  \
+done
 
