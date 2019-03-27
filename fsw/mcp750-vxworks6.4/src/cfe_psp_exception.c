@@ -175,15 +175,22 @@ void CFE_PSP_ExceptionHook (int task_id, int vector, ESFPPC* pEsf )
 */
 void CFE_PSP_SetDefaultExceptionEnvironment(void)
 {
-    vxMsrSet( _PPC_MSR_EE               |   /* enable the external interrupt */
+    vxMsrSet( vxMsrGet()                |
+              _PPC_MSR_EE               |   /* enable the external interrupt */
               _PPC_MSR_FP               |   /* enable floating point */
               _PPC_MSR_ME               |   /* major hardware failures */
+              _PPC_MSR_FE0              |   /* floating point exception 0 */
               _PPC_MSR_FE1              |   /* generate unrecoverable floating point exceptions */
               _PPC_MSR_DR               );  /* enable data address translation (dbats?) */
 
-    vxFpscrSet(  _PPC_FPSCR_VE              |       /* enable exceptions for invalid operations */
+    vxFpscrSet(  vxFpscrGet()               |
+                 _PPC_FPSCR_VE              |       /* enable exceptions for invalid operations */
                  _PPC_FPSCR_OE              |       /* enable overflow exceptions */
                  _PPC_FPSCR_NI              |       /* Non-IEEE mode for denormailized numbers */
-                 _PPC_FPSCR_ZE                  );  /* enable divide by zero exceptions */
+                 _PPC_FPSCR_ZE              );  /* enable divide by zero exceptions */
+
+    vxFpscrSet(  vxFpscrGet()               |
+                 _PPC_FPSCR_XE              |  /* fp inexact exc enable */
+                 _PPC_FPSCR_UE              ); /* fp underflow enable */
 }
 
