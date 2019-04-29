@@ -481,7 +481,7 @@ void CFE_PSP_ProcessArgumentDefaults(CFE_PSP_CommandData_t *CommandData)
 {
    if ( CommandData->GotResetType == 0 )
    {
-      strncpy(CommandData->ResetType, "PO", 2 );
+      strncpy(CommandData->ResetType, "PO", sizeof(CommandData->ResetType) );
       printf("CFE_PSP: Default Reset Type = PO\n");
       CommandData->GotResetType = 1;
    }
