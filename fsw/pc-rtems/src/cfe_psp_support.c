@@ -42,8 +42,6 @@
 #include "cfe_psp.h"
 #include "cfe_psp_memory.h"
 
-#ifdef _ENHANCED_BUILD_
-
 /*
  * The preferred way to obtain the CFE tunable values at runtime is via
  * the dynamically generated configuration object.  This allows a single build
@@ -51,24 +49,9 @@
  */
 #include <target_config.h>
 
-#define CFE_PLATFORM_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
-#define CFE_PLATFORM_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
-#define CFE_MISSION_SPACECRAFT_ID            (GLOBAL_CONFIGDATA.Default_SpacecraftId)
-
-#else
-
-/*
- * cfe_platform_cfg.h needed for CFE_PLATFORM_ES_NONVOL_STARTUP_FILE, CFE_PLATFORM_CPU_ID/CPU_NAME/SPACECRAFT_ID
- *
- *  - this should NOT be included here -
- *
- * it is only for compatibility with the old makefiles.  Including this makes the PSP build
- * ONLY compatible with a CFE build using this exact same CFE platform config.
- */
-
-#include "cfe_platform_cfg.h"
-
-#endif
+#define CFE_PSP_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
+#define CFE_PSP_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
+#define CFE_PSP_SPACECRAFT_ID           (GLOBAL_CONFIGDATA.Default_SpacecraftId)
 
 /******************************************************************************
 **  Function:  CFE_PSP_Restart()
@@ -166,7 +149,7 @@ void CFE_PSP_FlushCaches(uint32 type, cpuaddr address, uint32 size)
 */
 uint32 CFE_PSP_GetProcessorId    (void)
 {
-    return(CFE_PLATFORM_CPU_ID);
+    return(CFE_PSP_CPU_ID);
 }
 
 
@@ -187,6 +170,6 @@ uint32 CFE_PSP_GetProcessorId    (void)
 */
 uint32 CFE_PSP_GetSpacecraftId   (void)
 {
-   return(CFE_MISSION_SPACECRAFT_ID);
+   return(CFE_PSP_SPACECRAFT_ID);
 }
 

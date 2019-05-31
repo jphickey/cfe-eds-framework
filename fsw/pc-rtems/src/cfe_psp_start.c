@@ -35,6 +35,7 @@
 #include <rtems/dosfs.h>
 #include <rtems/fsmount.h>
 #include <rtems/shell.h>
+#include <rtems/untar.h>
 #include <rtems/rtems_bsdnet.h>
 #include <rtems/rtems_dhcp_failsafe.h>
 #include <rtems/rtl/dlfcn-shell.h>
@@ -49,6 +50,7 @@ extern int rtems_fxp_attach(struct rtems_bsdnet_ifconfig *config, int attaching)
 #include "osapi.h"
 #include "cfe_psp.h" 
 #include "cfe_psp_memory.h"
+#include "cfe_psp_module.h"
 
 #define RTEMS_NUMBER_OF_RAMDISKS 1
 
@@ -60,11 +62,8 @@ extern int rtems_fxp_attach(struct rtems_bsdnet_ifconfig *config, int attaching)
  */
 #include <target_config.h>
 
-#define CFE_ES_MAIN_FUNCTION                 (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
-#define CFE_PLATFORM_ES_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
-#define CFE_PLATFORM_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
-#define CFE_PLATFORM_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
-#define CFE_MISSION_SPACECRAFT_ID            (GLOBAL_CONFIGDATA.Default_SpacecraftId)
+#define CFE_PSP_MAIN_FUNCTION        (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
+#define CFE_PSP_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
 
 /*
 ** Global variables
@@ -175,7 +174,7 @@ int CFE_PSP_Setup(void)
        return status;
    }
 
-   status = mkdir("/boot", S_IFDIR |S_IRWXU | S_IRWXG | S_IRWXO); /* For BOOT mountpoint */
+   status = mkdir("/eeprom", S_IFDIR |S_IRWXU | S_IRWXG | S_IRWXO); /* For EEPROM mountpoint */
    if (status != RTEMS_SUCCESSFUL)
    {
        printf("mkdir failed: %s\n", strerror (errno));
@@ -183,32 +182,46 @@ int CFE_PSP_Setup(void)
    }
 
    /*
+   ** Initialize the statically linked modules (if any)
+   ** This is only applicable to CMake build - classic build
+   ** does not have the logic to selectively include/exclude modules
+   */
+   CFE_PSP_ModuleInit();
+
+
+   /*
     * Register the IDE partition table.
+    * This is _optional_ depending on whether a block device is present.
     */
    status = rtems_bdpart_register_from_disk("/dev/hda");
    if (status != RTEMS_SUCCESSFUL)
    {
-     printf ("error: hda partition table not found: %s / %s\n",
+     printf ("Not mounting block device /dev/hda: %s / %s\n",
              rtems_status_text (status),strerror(errno));
-     return status;
    }
-
-   status = mount("/dev/hda1", "/boot",
-         RTEMS_FILESYSTEM_TYPE_DOSFS,
-         RTEMS_FILESYSTEM_READ_ONLY,
-         NULL);
-   if (status < 0)
+   else
    {
-     printf ("mount /boot failed: %s\n", strerror (errno));
-     return status;
+       printf ("Mounting block device /dev/hda1 on /eeprom\n");
+       status = mount("/dev/hda1", "/eeprom",
+             RTEMS_FILESYSTEM_TYPE_DOSFS,
+             RTEMS_FILESYSTEM_READ_ONLY,
+             NULL);
+       if (status < 0)
+       {
+         printf ("Mount /eeprom failed: %s\n", strerror (errno));
+         return status;
+       }
    }
 
+   /*
+    * Initialize the network.  This is also optional and only
+    * works if an appropriate network device is present.
+    */
    status = rtems_bsdnet_initialize_network();
    if (status != RTEMS_SUCCESSFUL)
    {
-     printf ("error: init network: %s / %s\n",
+     printf ("Network init not successful: %s / %s (continuing)\n",
              rtems_status_text (status),strerror(errno));
-     return status;
    }
 
    return RTEMS_SUCCESSFUL;
@@ -343,7 +356,7 @@ void CFE_PSP_Main(uint32 ModeId, char *StartupFilePath )
    ** Call cFE entry point. This will return when cFE startup
    ** is complete.
    */
-   CFE_ES_MAIN_FUNCTION(reset_type,reset_subtype, 1, CFE_PLATFORM_ES_NONVOL_STARTUP_FILE);
+   CFE_PSP_MAIN_FUNCTION(reset_type,reset_subtype, 1, CFE_PSP_NONVOL_STARTUP_FILE);
 
 }
 

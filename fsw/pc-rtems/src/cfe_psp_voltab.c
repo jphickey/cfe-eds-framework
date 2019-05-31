@@ -32,7 +32,7 @@ OS_VolumeInfo_t OS_VolumeTable [NUM_TABLE_ENTRIES] =
 { "/ramdev0", "/ram",  FS_BASED,     TRUE,      TRUE,     FALSE,     " ",   " ",     512        },
 
 /* cFE non-volatile Disk -- Auto-Mapped to an existing CF disk */
-{"/eedev0",  "/boot/eeprom",  FS_BASED,  FALSE,     FALSE,  TRUE,  "CF",  "/cf",        512   },
+{"/eedev0",  "/eeprom",  FS_BASED,  FALSE,     FALSE,  TRUE,  "CF",  "/cf",        512   },
 
 {"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
 {"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },

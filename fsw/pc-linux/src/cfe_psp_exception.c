@@ -38,7 +38,7 @@ S
 
 #include <target_config.h>
 
-#define CFE_PLATFORM_ES_EXCEPTION_FUNCTION   (*GLOBAL_CONFIGDATA.CfeConfig->SystemExceptionISR)
+#define CFE_PSP_ES_EXCEPTION_FUNCTION   (*GLOBAL_CONFIGDATA.CfeConfig->SystemExceptionISR)
 
 #else
 #include "cfe_es.h"            /* For reset types */
@@ -50,6 +50,7 @@ S
 **
 */
 
+#define CFE_PSP_ES_EXCEPTION_FUNCTION   CFE_PLATFORM_ES_EXCEPTION_FUNCTION
 extern void CFE_PLATFORM_ES_EXCEPTION_FUNCTION (uint32  HostTaskId,     const char *ReasonString,
                                  const uint32 *ContextPointer, uint32 ContextSize);
 
@@ -106,7 +107,7 @@ void CFE_PSP_AttachExceptions(void)
 /*
 ** Name: CFE_PSP_ExceptionHook
 **
-** Purpose: Make the proper call to CFE_PLATFORM_ES_EXCEPTION_FUNCTION (defined in
+** Purpose: Make the proper call to CFE_PSP_ES_EXCEPTION_FUNCTION (defined in
 **          cfe_es_platform.cfg)
 **
 */
@@ -124,7 +125,7 @@ void CFE_PSP_ExceptionHook (int task_id, int vector, uint8 *pEsf )
     ** Call the Generic cFE routine to finish processing the exception and
     ** restart the cFE
     */
-    CFE_PLATFORM_ES_EXCEPTION_FUNCTION((uint32)task_id, CFE_PSP_ExceptionReasonString,
+    CFE_PSP_ES_EXCEPTION_FUNCTION((uint32)task_id, CFE_PSP_ExceptionReasonString,
                                 (uint32 *)&CFE_PSP_ExceptionContext, sizeof(CFE_PSP_ExceptionContext_t));
 
     /*
