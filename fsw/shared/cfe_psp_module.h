@@ -34,7 +34,7 @@ typedef enum
 /**
  * Protoype for a PSP module initialization function
  */
-typedef void (*CFE_PSP_ModuleInitFunc_t)(void);
+typedef void (*CFE_PSP_ModuleInitFunc_t)(uint32 PspModuleId);
 
 /**
  * Concrete version of the abstract API definition structure
@@ -54,7 +54,7 @@ typedef const struct
  * The "name" argument should match the name of the module object file
  */
 #define CFE_PSP_MODULE_DECLARE_SIMPLE(name)                 \
-    static void name##_Init(void);                          \
+    static void name##_Init(uint32 PspModuleId);            \
     CFE_PSP_ModuleApi_t CFE_PSP_##name##_API =              \
     {                                                       \
         .ModuleType = CFE_PSP_MODULE_TYPE_SIMPLE,           \

@@ -72,9 +72,9 @@
 #include "cfe_es.h"            /* For memory sizes */
 #include "cfe_platform_cfg.h"  /* for processor ID */
 
-#define CFE_PSP_CDS_SIZE            CFE_ES_CDS_SIZE
-#define CFE_PSP_RESET_AREA_SIZE     CFE_ES_RESET_AREA_SIZE
-#define CFE_PSP_USER_RESERVED_SIZE  CFE_ES_USER_RESERVED_SIZE
+#define CFE_PSP_CDS_SIZE            CFE_PLATFORM_ES_CDS_SIZE
+#define CFE_PSP_RESET_AREA_SIZE     CFE_PLATFORM_ES_RESET_AREA_SIZE
+#define CFE_PSP_USER_RESERVED_SIZE  CFE_PLATFORM_ES_USER_RESERVED_SIZE
 
 #endif
 

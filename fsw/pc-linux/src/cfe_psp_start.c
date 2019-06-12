@@ -35,6 +35,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <sched.h>
+#include <errno.h>
 
 /*
 ** cFE includes 
@@ -54,17 +55,17 @@
 #include <target_config.h>
 #include "cfe_psp_module.h"
 
-#define CFE_ES_MAIN_FUNCTION        (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
-#define CFE_TIME_1HZ_FUNCTION       (*GLOBAL_CONFIGDATA.CfeConfig->System1HzISR)
-#define CFE_ES_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
-#define CFE_CPU_ID                  (GLOBAL_CONFIGDATA.Default_CpuId)
-#define CFE_CPU_NAME                (GLOBAL_CONFIGDATA.Default_CpuName)
-#define CFE_SPACECRAFT_ID           (GLOBAL_CONFIGDATA.Default_SpacecraftId)
+#define CFE_PSP_MAIN_FUNCTION        (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
+#define CFE_PSP_1HZ_FUNCTION         (*GLOBAL_CONFIGDATA.CfeConfig->System1HzISR)
+#define CFE_PSP_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
+#define CFE_PSP_CPU_ID               (GLOBAL_CONFIGDATA.Default_CpuId)
+#define CFE_PSP_CPU_NAME             (GLOBAL_CONFIGDATA.Default_CpuName)
+#define CFE_PSP_SPACECRAFT_ID        (GLOBAL_CONFIGDATA.Default_SpacecraftId)
 
 #else
 
 /*
- * cfe_platform_cfg.h needed for CFE_ES_NONVOL_STARTUP_FILE, CFE_CPU_ID/CPU_NAME/SPACECRAFT_ID
+ * cfe_platform_cfg.h needed for CFE_PLATFORM_ES_NONVOL_STARTUP_FILE, CFE_PLATFORM_CPU_ID/CPU_NAME/SPACECRAFT_ID
  *
  *  - this should NOT be included here -
  *
@@ -77,8 +78,12 @@
 extern void CFE_ES_Main(uint32 StartType, uint32 StartSubtype, uint32 ModeId, const char *StartFilePath );
 extern void CFE_TIME_Local1HzISR(void);
 
-#define CFE_ES_MAIN_FUNCTION     CFE_ES_Main
-#define CFE_TIME_1HZ_FUNCTION    CFE_TIME_Local1HzISR
+#define CFE_PSP_MAIN_FUNCTION        CFE_ES_Main
+#define CFE_PSP_1HZ_FUNCTION         CFE_TIME_Local1HzISR
+#define CFE_PSP_NONVOL_STARTUP_FILE  CFE_PLATFORM_ES_NONVOL_STARTUP_FILE
+#define CFE_PSP_CPU_ID               CFE_PLATFORM_CPU_ID
+#define CFE_PSP_CPU_NAME             CFE_PLATFORM_CPU_NAME
+#define CFE_PSP_SPACECRAFT_ID        CFE_MISSION_SPACECRAFT_ID
 
 /*
  * The classic build does not support static modules,
@@ -130,6 +135,7 @@ void CFE_PSP_SigintHandler (int signal);
 void CFE_PSP_TimerHandler (int signum);
 void CFE_PSP_DisplayUsage(char *Name );
 void CFE_PSP_ProcessArgumentDefaults(CFE_PSP_CommandData_t *CommandData);
+void CFE_PSP_SetupLocal1Hz(void);
 
 /*
 **  External Declarations
@@ -180,8 +186,8 @@ int main(int argc, char *argv[])
 {
    uint32             reset_type;
    uint32             reset_subtype;
-   struct             sigaction sa;
-   struct             itimerval timer;
+   int32              time_status;
+   uint32             sys_timebase_id;
    int                opt = 0;
    int                longIndex = 0;
 
@@ -295,33 +301,44 @@ int main(int argc, char *argv[])
    signal(SIGINT, CFE_PSP_SigintHandler);
 
    /*
-   ** Init timer counter
-   */
-   TimerCounter = 0;
-
-   /*
-   ** Install timer_handler as the signal handler for SIGVTALRM.
-   */
-   memset (&sa, 0, sizeof (sa));
-   sa.sa_handler = &CFE_PSP_TimerHandler;
-   sigaction (SIGALRM, &sa, NULL);
-
-   /*
-   ** Configure the timer to expire after 250ms
-   */
-   timer.it_value.tv_sec  = 0;
-   timer.it_value.tv_usec = 250000;
-
-   /*
-   **  and every 500ms after that.
-   */
-   timer.it_interval.tv_sec  = 0;
-   timer.it_interval.tv_usec = 250000;
-
-   /*
    ** Initialize the OS API data structures
    */
    OS_API_Init();
+
+   /*
+   ** Set up the timebase, if OSAL supports it
+   ** Done here so that the modules can also use it, if desired
+   **
+   ** This is a clock named "cFS-Master" that will serve to drive
+   ** all time-related CFE functions including the 1Hz signal.
+   **
+   ** Note the timebase is only prepared here; the application is
+   ** not ready to receive a callback yet, as it hasn't been started.
+   ** CFE TIME registers its own callback when it is ready to do so.
+   */
+   time_status = OS_TimeBaseCreate(&sys_timebase_id, "cFS-Master", NULL);
+   if (time_status == OS_SUCCESS)
+   {
+       /*
+        * Set the clock to trigger with 50ms resolution - slow enough that
+        * it will not hog CPU resources but fast enough to have sufficient resolution
+        * for most general timing purposes.
+        * (It may be better to move this to the mission config file)
+        */
+       time_status = OS_TimeBaseSet(sys_timebase_id, 50000, 50000);
+   }
+   else
+   {
+       /*
+        * Cannot create a timebase in OSAL.
+        *
+        * Note: Most likely this is due to building with
+        * the old/classic POSIX OSAL which does not support this.
+        *
+        * See below for workaround.
+        */
+       sys_timebase_id = 0;
+   }
 
    /*
    ** Initialize the statically linked modules (if any)
@@ -339,15 +356,18 @@ int main(int argc, char *argv[])
 
 
    /*
-   ** Start the timer
-   */
-   setitimer (ITIMER_REAL, &timer, NULL);
-
-
-   /*
    ** Call cFE entry point.
    */
-   CFE_ES_MAIN_FUNCTION(reset_type, reset_subtype, 1, CFE_ES_NONVOL_STARTUP_FILE);
+   CFE_PSP_MAIN_FUNCTION(reset_type, reset_subtype, 1, CFE_PSP_NONVOL_STARTUP_FILE);
+
+   /*
+    * Backward compatibility for old OSAL.
+    */
+   if (sys_timebase_id == 0 || time_status != OS_SUCCESS)
+   {
+       OS_printf("CFE_PSP: WARNING - Compatibility mode - using local 1Hz Interrupt\n");
+       CFE_PSP_SetupLocal1Hz();
+   }
 
    /*
    ** Let the main thread sleep.
@@ -411,7 +431,7 @@ void CFE_PSP_TimerHandler (int signum)
       /*
       ** call the CFE_TIME 1hz ISR
       */
-      if((TimerCounter % 4) == 0) CFE_TIME_1HZ_FUNCTION();
+      if((TimerCounter % 4) == 0) CFE_PSP_1HZ_FUNCTION();
 
 	  /* update timer counter */
 	  TimerCounter++;
@@ -447,11 +467,11 @@ void CFE_PSP_DisplayUsage(char *Name )
    printf("             4   for  Watchdog Reset\n");
    printf("             5   for  Reset Command\n");
    printf("        -C [ --cpuid ]   CPU ID is an integer CPU identifier.\n");
-   printf("             The default  CPU ID is from the platform configuration file: %d\n",CFE_CPU_ID);
+   printf("             The default  CPU ID is from the platform configuration file: %d\n",CFE_PSP_CPU_ID);
    printf("        -N [ --cpuname ] CPU Name is a string to identify the CPU.\n");
-   printf("             The default  CPU Name is from the platform configuraitoon file: %s\n",CFE_CPU_NAME);
+   printf("             The default  CPU Name is from the platform configuration file: %s\n",CFE_PSP_CPU_NAME);
    printf("        -I [ --scid ]    Spacecraft ID is an integer Spacecraft identifier.\n");
-   printf("             The default Spacecraft ID is from the mission configuration file: %d\n",CFE_SPACECRAFT_ID);
+   printf("             The default Spacecraft ID is from the mission configuration file: %d\n",CFE_PSP_SPACECRAFT_ID);
    printf("        -h [ --help ]    This message.\n");
    printf("\n");
    printf("       Example invocation:\n");
@@ -495,23 +515,93 @@ void CFE_PSP_ProcessArgumentDefaults(CFE_PSP_CommandData_t *CommandData)
    
    if ( CommandData->GotCpuId == 0 )
    {
-      CommandData->CpuId = CFE_CPU_ID;
-      printf("CFE_PSP: Default CPU ID = %d\n",CFE_CPU_ID);
+      CommandData->CpuId = CFE_PSP_CPU_ID;
+      printf("CFE_PSP: Default CPU ID = %d\n",CFE_PSP_CPU_ID);
       CommandData->GotCpuId = 1;
    }
    
    if ( CommandData->GotSpacecraftId == 0 )
    {
-      CommandData->SpacecraftId = CFE_SPACECRAFT_ID;
-      printf("CFE_PSP: Default Spacecraft ID = %d\n",CFE_SPACECRAFT_ID);
+      CommandData->SpacecraftId = CFE_PSP_SPACECRAFT_ID;
+      printf("CFE_PSP: Default Spacecraft ID = %d\n",CFE_PSP_SPACECRAFT_ID);
       CommandData->GotSpacecraftId = 1;
    }
    
    if ( CommandData->GotCpuName == 0 )
    {
-      strncpy(CommandData->CpuName, CFE_CPU_NAME, CFE_PSP_CPU_NAME_LENGTH );
-      printf("CFE_PSP: Default CPU Name: %s\n",CFE_CPU_NAME);
+      strncpy(CommandData->CpuName, CFE_PSP_CPU_NAME, CFE_PSP_CPU_NAME_LENGTH );
+      printf("CFE_PSP: Default CPU Name: %s\n",CFE_PSP_CPU_NAME);
       CommandData->GotCpuName = 1;
    }
 
 }
+
+/******************************************************************************
+**  Function:  CFE_PSP_SetupLocal1Hz
+**
+**  Purpose:
+**    This is a backward-compatible timer setup that is invoked when
+**    there is a failure to set up the timebase in OSAL.  It is basically
+**    the old way of doing things.
+**
+**    IMPORTANT: Note this is technically incorrect as it gives the
+**    callback directly in the context of the signal handler.  It is
+**    against spec to use most OSAL functions within a signal.
+**
+**    This is included merely to mimic the previous system behavior. It
+**    should be removed in a future version of the PSP.
+**
+**
+**  Arguments:
+**    (none)
+**
+**  Return:
+**    (none)
+**
+*/
+
+void CFE_PSP_SetupLocal1Hz(void)
+{
+    struct sigaction    sa;
+    struct itimerval    timer;
+    int ret;
+
+    /*
+    ** Init timer counter
+    */
+    TimerCounter = 0;
+
+    /*
+    ** Install timer_handler as the signal handler for SIGALRM.
+    */
+    memset (&sa, 0, sizeof (sa));
+    sa.sa_handler = &CFE_PSP_TimerHandler;
+
+    /*
+    ** Configure the timer to expire after 250ms
+    **
+    ** (this is historical; the actual callback is invoked
+    ** only on every 4th timer tick.  previous versions of the
+    ** PSP did it this way, so this is preserved here).
+    */
+    timer.it_value.tv_sec  = 0;
+    timer.it_value.tv_usec = 250000;
+    timer.it_interval.tv_sec  = 0;
+    timer.it_interval.tv_usec = 250000;
+
+    ret = sigaction (SIGALRM, &sa, NULL);
+
+    if (ret < 0)
+    {
+        OS_printf("CFE_PSP: sigaction() error %d: %s \n", ret, strerror(errno));
+    }
+    else
+    {
+        ret = setitimer (ITIMER_REAL, &timer, NULL);
+        if (ret < 0)
+        {
+            OS_printf("CFE_PSP: setitimer() error %d: %s \n", ret, strerror(errno));
+        }
+    }
+}
+
