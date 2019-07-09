@@ -274,13 +274,13 @@ int main(int argc, char *argv[])
    */
    if (strncmp("PR", CommandData.ResetType, 2 ) == 0 )
    {
-     reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
-      OS_printf("CFE_PSP: Starting the cFE with a PROCESSOR reset.\n");
+      reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
+      printf("CFE_PSP: Starting the cFE with a PROCESSOR reset.\n");
    }
    else
    {
       reset_type = CFE_PSP_RST_TYPE_POWERON;
-      OS_printf("CFE_PSP: Starting the cFE with a POWER ON reset.\n");
+      printf("CFE_PSP: Starting the cFE with a POWER ON reset.\n");
    }
 
    /*
