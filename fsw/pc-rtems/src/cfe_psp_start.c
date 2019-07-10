@@ -281,6 +281,8 @@ rtems_task Init(
   rtems_task_argument ignored
 )
 {
+   int32 Status;
+
    if (CFE_PSP_Setup() != RTEMS_SUCCESSFUL)
    {
        CFE_PSP_Panic(CFE_PSP_ERROR);
@@ -304,7 +306,15 @@ rtems_task Init(
    /*
    ** Initialize the OS API
    */
-   OS_API_Init();
+   Status = OS_API_Init();
+   if (Status != OS_SUCCESS)
+   {
+       /* irrecoverable error if OS_API_Init() fails. */
+       /* note: use printf here, as OS_printf may not work */
+       printf("CFE_PSP: OS_API_Init() failure\n");
+       CFE_PSP_Panic(Status);
+   }
+
 
    /* Prepare the system timing resources */
    CFE_PSP_SetupSystemTimer();

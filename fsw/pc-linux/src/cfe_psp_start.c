@@ -190,6 +190,7 @@ int main(int argc, char *argv[])
    uint32             sys_timebase_id;
    int                opt = 0;
    int                longIndex = 0;
+   int32              Status;
 
    /*
    ** Initialize the CommandData struct 
@@ -274,13 +275,13 @@ int main(int argc, char *argv[])
    */
    if (strncmp("PR", CommandData.ResetType, 2 ) == 0 )
    {
-     reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
-      OS_printf("CFE_PSP: Starting the cFE with a PROCESSOR reset.\n");
+      reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
+      printf("CFE_PSP: Starting the cFE with a PROCESSOR reset.\n");
    }
    else
    {
       reset_type = CFE_PSP_RST_TYPE_POWERON;
-      OS_printf("CFE_PSP: Starting the cFE with a POWER ON reset.\n");
+      printf("CFE_PSP: Starting the cFE with a POWER ON reset.\n");
    }
 
    /*
@@ -303,7 +304,14 @@ int main(int argc, char *argv[])
    /*
    ** Initialize the OS API data structures
    */
-   OS_API_Init();
+   Status = OS_API_Init();
+   if (Status != OS_SUCCESS)
+   {
+       /* irrecoverable error if OS_API_Init() fails. */
+       /* note: use printf here, as OS_printf may not work */
+       printf("CFE_PSP: OS_API_Init() failure\n");
+       CFE_PSP_Panic(Status);
+   }
 
    /*
    ** Set up the timebase, if OSAL supports it

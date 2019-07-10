@@ -75,13 +75,21 @@ void CFE_PSP_Main(  uint32 ModeId, char *StartupFilePath )
    int    TicksPerSecond;
    uint32 reset_type;
    uint32 reset_subtype;
-   char   reset_register; 
+   char   reset_register;
+   int32  Status;
 
 
    /*
    ** Initialize the OS API
    */
-   OS_API_Init();
+   Status = OS_API_Init();
+   if (Status != OS_SUCCESS)
+   {
+       /* irrecoverable error if OS_API_Init() fails. */
+       /* note: use printf here, as OS_printf may not work */
+       printf("CFE_PSP: OS_API_Init() failure\n");
+       CFE_PSP_Panic(Status);
+   }
 
    /* 
    ** Delay for one second. 
