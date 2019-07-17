@@ -7,8 +7,7 @@
 **      This is governed by the NASA Open Source Agreement and may be used, 
 **      distributed and modified only pursuant to the terms of that agreement. 
 **
-** File:
-** $Id: ut_bsp_stubs.c 1.9 2014/05/28 09:21:51GMT-05:00 wmoleski Exp  $
+** File: ut_bsp_stubs.c
 **
 ** Purpose:
 ** Unit test stubs for BSP routines

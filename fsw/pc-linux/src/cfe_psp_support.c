@@ -16,9 +16,6 @@
 **   The functions here allow the cFE to interface functions that are board and OS specific
 **   and usually dont fit well in the OS abstraction layer.
 **
-** History:
-**  $ Log: cfe_psp_support.c $
-**
 ******************************************************************************/
 
 /*

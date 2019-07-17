@@ -1,5 +1,5 @@
 /*
-**  $Id: psp_version.h 1.2.2.3 2014/10/01 15:41:26GMT-05:00 sstrege Exp  $
+**  File: psp_version.h
 **
 **
 **      Copyright (c) 2004-2011, United States Government as represented by 

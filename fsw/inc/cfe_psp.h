@@ -18,15 +18,6 @@
 **            for the cFE flight software implementation. It is possible that
 **            some of these routines could migrate into the OS AL.
 **
-**  $Log: cfe_psp.h  $
-**  Revision 1.3 2009/07/29 12:04:46GMT-05:00 acudmore 
-**  Added Bank parameter to EEPROM Power up/down and EEPROM write enable/disable functions.
-**  Revision 1.2 2009/07/22 17:34:10EDT acudmore 
-**  Added new watchdog API
-**  Revision 1.1 2009/06/10 09:28:44EDT acudmore 
-**  Initial revision
-**  Member added to project c:/MKSDATA/MKS-REPOSITORY/CFE-PSP-REPOSITORY/fsw/inc/project.pj
-**
 */
 
 #ifndef _cfe_psp_
