@@ -28,17 +28,5 @@
 #define CFE_PSP_IMPL_REVISION               90
 #define CFE_PSP_IMPL_MISSION_REV            0
 
-#ifndef _ENHANCED_BUILD_
-
-#define CFE_PSP_MAJOR_VERSION          CFE_PSP_IMPL_MAJOR_VERSION
-#define CFE_PSP_MINOR_VERSION          CFE_PSP_IMPL_MINOR_VERSION
-#define CFE_PSP_REVISION               CFE_PSP_IMPL_REVISION
-#define CFE_PSP_MISSION_REV            CFE_PSP_IMPL_MISSION_REV
-
-/* For backwards compatibility */
-#define CFE_PSP_SUBMINOR_VERSION       CFE_PSP_IMPL_REVISION 
-
-#endif
-
 #endif  /* _psp_version_ */
 

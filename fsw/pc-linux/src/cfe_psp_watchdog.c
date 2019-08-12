@@ -41,7 +41,7 @@
 ** Types and prototypes for this module
 */
 #include "cfe_psp.h"
-
+#include "cfe_psp_config.h"
 
 /*
 ** Global data

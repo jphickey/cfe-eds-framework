@@ -24,23 +24,11 @@
 
 #include "cfe_psp.h"
 
-#ifdef _ENHANCED_BUILD_
-
 /*
  * The "extern" declaration for the MemRange table is in the configdata header
  */
+#include "cfe_psp_config.h"
 #include "cfe_psp_configdata.h"
-
-#else
-
-/*
-** The CFE_PSP_MemoryTable is defined in the BSP section:
-** Example: arch/x86/pc/linux/bsp/CFE_PSP_memtab.c
-** That is where the CPU and board specific memory ranges are known.
-*/
-extern CFE_PSP_MemTable_t CFE_PSP_MemoryTable[CFE_PSP_MEM_TABLE_SIZE];
-
-#endif
 
 /*
 ** Name: CFE_PSP_MemValidateRange

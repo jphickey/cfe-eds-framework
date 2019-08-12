@@ -55,8 +55,6 @@
 #define CFE_PSP_RESET_KEY_FILE ".resetkeyfile"
 #define CFE_PSP_RESERVED_KEY_FILE ".reservedkeyfile"
 
-#ifdef _ENHANCED_BUILD_
-
 #include <target_config.h>
 
 /*
@@ -66,18 +64,6 @@
 #define CFE_PSP_CDS_SIZE            (GLOBAL_CONFIGDATA.CfeConfig->CdsSize)
 #define CFE_PSP_RESET_AREA_SIZE     (GLOBAL_CONFIGDATA.CfeConfig->ResetAreaSize)
 #define CFE_PSP_USER_RESERVED_SIZE  (GLOBAL_CONFIGDATA.CfeConfig->UserReservedSize)
-
-#else
-
-#include "cfe_es.h"            /* For memory sizes */
-#include "cfe_platform_cfg.h"  /* for processor ID */
-
-#define CFE_PSP_CDS_SIZE            CFE_PLATFORM_ES_CDS_SIZE
-#define CFE_PSP_RESET_AREA_SIZE     CFE_PLATFORM_ES_RESET_AREA_SIZE
-#define CFE_PSP_USER_RESERVED_SIZE  CFE_PLATFORM_ES_USER_RESERVED_SIZE
-
-#endif
-
 
 /*
 ** Internal prototypes for this module

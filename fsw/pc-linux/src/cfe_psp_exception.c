@@ -32,29 +32,11 @@ S
 #include "common_types.h"
 #include "osapi.h"
 #include "cfe_psp.h"
-
-
-#ifdef _ENHANCED_BUILD_
+#include "cfe_psp_config.h"
 
 #include <target_config.h>
 
 #define CFE_PSP_ES_EXCEPTION_FUNCTION   (*GLOBAL_CONFIGDATA.CfeConfig->SystemExceptionISR)
-
-#else
-#include "cfe_es.h"            /* For reset types */
-#include "cfe_platform_cfg.h"  /* for processor ID */
-
-/*
-**
-** Imported Functions
-**
-*/
-
-#define CFE_PSP_ES_EXCEPTION_FUNCTION   CFE_PLATFORM_ES_EXCEPTION_FUNCTION
-extern void CFE_PLATFORM_ES_EXCEPTION_FUNCTION (uint32  HostTaskId,     const char *ReasonString,
-                                 const uint32 *ContextPointer, uint32 ContextSize);
-
-#endif
 
 /*
 ** Types and prototypes for this module
