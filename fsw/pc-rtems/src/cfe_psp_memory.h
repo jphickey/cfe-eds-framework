@@ -26,7 +26,6 @@
 */
 
 #include "common_types.h"
-////#include "cfe_platform_cfg.h"
 #include "cfe_psp.h"
 
 

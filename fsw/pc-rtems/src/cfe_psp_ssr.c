@@ -34,9 +34,6 @@
 */
 #include "common_types.h"
 #include "osapi.h"
-//#include "cfe_es.h"            /* For reset types */
-//#include "cfe_platform_cfg.h"  /* for processor ID */
-//#include "cfe_mission_cfg.h"   /* for spacecraft ID */
 
 /*
 ** Types and prototypes for this module
