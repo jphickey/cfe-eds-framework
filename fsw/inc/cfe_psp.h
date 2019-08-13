@@ -140,9 +140,6 @@
 #define CFE_PSP_REVISION               (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.Revision)
 #define CFE_PSP_MISSION_REV            (GLOBAL_PSP_CONFIGDATA.PSP_VersionInfo.MissionRev)
 
-/* For backwards compatibility */
-#define CFE_PSP_SUBMINOR_VERSION       CFE_PSP_REVISION
-
 #endif
 
 /*
