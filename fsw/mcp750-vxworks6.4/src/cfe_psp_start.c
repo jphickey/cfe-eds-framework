@@ -45,8 +45,6 @@
 */
 #include "common_types.h"
 #include "osapi.h"
-#include "cfe_es.h"            /* For reset types */
-#include "cfe_platform_cfg.h"  /* for processor ID */
 
 #include "cfe_psp.h" 
 #include "cfe_psp_memory.h"           
@@ -54,8 +52,21 @@
 /*
 **  External Declarations
 */
-extern void CFE_TIME_Local1HzISR(void);
 IMPORT void sysPciWrite32 (UINT32, UINT32);
+
+
+/*
+ * The preferred way to obtain the CFE tunable values at runtime is via
+ * the dynamically generated configuration object.  This allows a single build
+ * of the PSP to be completely CFE-independent.
+ */
+#include <target_config.h>
+
+#define CFE_PSP_MAIN_FUNCTION        (*GLOBAL_CONFIGDATA.CfeConfig->SystemMain)
+#define CFE_PSP_NONVOL_STARTUP_FILE  (GLOBAL_CONFIGDATA.CfeConfig->NonvolStartupFile)
+#define CFE_PSP_1HZ_FUNCTION         (*GLOBAL_CONFIGDATA.CfeConfig->System1HzISR)
+
+
 
 /******************************************************************************
 **  Function:  CFE_PSP_Main()
@@ -185,7 +196,7 @@ void CFE_PSP_Main(  uint32 ModeId, char *StartupFilePath )
    ** Call cFE entry point. This will return when cFE startup
    ** is complete.
    */
-   CFE_ES_Main(reset_type,reset_subtype, 1, CFE_PLATFORM_ES_NONVOL_STARTUP_FILE); 
+   CFE_PSP_MAIN_FUNCTION(reset_type,reset_subtype, 1, CFE_PSP_NONVOL_STARTUP_FILE);
 
    /*
    ** Main loop for default task and simulated 1hz 
@@ -194,7 +205,7 @@ void CFE_PSP_Main(  uint32 ModeId, char *StartupFilePath )
    {
       TicksPerSecond = sysClkRateGet();
       (void) taskDelay( TicksPerSecond );
-      CFE_TIME_Local1HzISR();
+      CFE_PSP_1HZ_FUNCTION();
    }
 }
 
