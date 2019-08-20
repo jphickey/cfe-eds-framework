@@ -26,20 +26,20 @@
 #define VOLTAB_MACRO                                                                      \
 OS_VolumeInfo_t OS_VolumeTable [NUM_TABLE_ENTRIES] =                                      \
 {                                                                                         \
-{"/ramdev0", VOLTAB_PATH, FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     },            \
-{"/cf",      VOLTAB_PATH, FS_BASED, FALSE, FALSE, TRUE,  "CF", "/cf", 512   },            \
-{"/ramdev1", " ",                    FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"/ramdev2", " ",                    FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"/ramdev3", " ",                    FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"/ramdev4", " ",                    FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }, \
-{"unused",   "unused",               FS_BASED, TRUE,  TRUE,  FALSE, " ",  " ",   0     }  \
+{"/ramdev0", VOLTAB_PATH, FS_BASED, true,  true,  false, " ",  " ",   0     },            \
+{"/cf",      VOLTAB_PATH, FS_BASED, false, false, true,  "CF", "/cf", 512   },            \
+{"/ramdev1", " ",                    FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"/ramdev2", " ",                    FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"/ramdev3", " ",                    FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"/ramdev4", " ",                    FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, true,  true,  false, " ",  " ",   0     }, \
+{"unused",   "unused",               FS_BASED, true,  true,  false, " ",  " ",   0     }  \
 };
 
 VOLTAB_MACRO
@@ -52,25 +52,25 @@ VOLTAB_MACRO
 OS_VolumeInfo_t OS_VolumeTable [NUM_TABLE_ENTRIES] = 
 {
 /* Dev Name  Phys Dev  Vol Type        Volatile?  Free?     IsMounted? Volname  MountPt BlockSz */
-{"/ramdev0", "./ram",       FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"/ramdev1", "./ram1",      FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"/ramdev2", "./ram2",      FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"/ramdev3", "./ram3",      FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"/ramdev4", "./ram4",      FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
+{"/ramdev0", "./ram",       FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"/ramdev1", "./ram1",      FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"/ramdev2", "./ram2",      FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"/ramdev3", "./ram3",      FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"/ramdev4", "./ram4",      FS_BASED,        true,      true,     false,     " ",      " ",     0        },
 
 /*
 ** The following entry is a "pre-mounted" path to a non-volatile device
 */
-{"/eedev0",  "./cf",      FS_BASED,        FALSE,     FALSE,    TRUE,     "CF",      "/cf",     512   },
+{"/eedev0",  "./cf",      FS_BASED,        false,     false,    true,     "CF",      "/cf",     512   },
 
-{"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        },
-{"unused",   "unused",    FS_BASED,        TRUE,      TRUE,     FALSE,     " ",      " ",     0        }
+{"unused",   "unused",    FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"unused",   "unused",    FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"unused",   "unused",    FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"unused",   "unused",    FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"unused",   "unused",    FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"unused",   "unused",    FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"unused",   "unused",    FS_BASED,        true,      true,     false,     " ",      " ",     0        },
+{"unused",   "unused",    FS_BASED,        true,      true,     false,     " ",      " ",     0        }
 };
 
 

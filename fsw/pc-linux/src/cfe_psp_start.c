@@ -381,7 +381,7 @@ int main(int argc, char *argv[])
    ** Let the main thread sleep.
    **
    ** OS_IdleLoop() will wait forever and return if
-   ** someone calls OS_ApplicationShutdown(TRUE)
+   ** someone calls OS_ApplicationShutdown(true)
    */
    OS_IdleLoop();
 
@@ -418,7 +418,7 @@ int main(int argc, char *argv[])
 
 void CFE_PSP_SigintHandler (int signal)
 {
-    OS_ApplicationShutdown(TRUE);
+    OS_ApplicationShutdown(true);
 }
 
 /******************************************************************************
