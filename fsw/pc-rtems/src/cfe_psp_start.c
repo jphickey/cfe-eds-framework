@@ -182,14 +182,6 @@ int CFE_PSP_Setup(void)
    }
 
    /*
-   ** Initialize the statically linked modules (if any)
-   ** This is only applicable to CMake build - classic build
-   ** does not have the logic to selectively include/exclude modules
-   */
-   CFE_PSP_ModuleInit();
-
-
-   /*
     * Register the IDE partition table.
     * This is _optional_ depending on whether a block device is present.
     */
@@ -275,14 +267,23 @@ void CFE_PSP_SetupSystemTimer(void)
 
 
 /*
-** A simple entry point to start from the loader
+** A simple entry point to start from the BSP loader
+**
+** This entry point is used when building an RTEMS+CFE monolithic
+** image, which is a single executable containing the RTEMS
+** kernel and Core Flight Executive in one file.  In this mode
+** the RTEMS BSP invokes the "Init" function directly.
+**
+** This sets up the root fs and the shell prior to invoking CFE via
+** the CFE_PSP_Main() routine.
+**
+** In a future version this code may be moved into a separate bsp
+** integration unit to be more symmetric with the VxWorks implementation.
 */
 rtems_task Init(
   rtems_task_argument ignored
 )
 {
-   int32 Status;
-
    if (CFE_PSP_Setup() != RTEMS_SUCCESSFUL)
    {
        CFE_PSP_Panic(CFE_PSP_ERROR);
@@ -304,25 +305,9 @@ rtems_task Init(
    printf("\n\n\n\n");
 
    /*
-   ** Initialize the OS API
-   */
-   Status = OS_API_Init();
-   if (Status != OS_SUCCESS)
-   {
-       /* irrecoverable error if OS_API_Init() fails. */
-       /* note: use printf here, as OS_printf may not work */
-       printf("CFE_PSP: OS_API_Init() failure\n");
-       CFE_PSP_Panic(Status);
-   }
-
-
-   /* Prepare the system timing resources */
-   CFE_PSP_SetupSystemTimer();
-
-   /*
    ** Run the PSP Main - this will return when init is complete
    */
-   CFE_PSP_Main(1, "/cf/cfe_es_startup.scr");
+   CFE_PSP_Main();
 
 
    /*
@@ -338,6 +323,13 @@ rtems_task Init(
 **  Purpose:
 **    Application entry point.
 **
+**    The basic RTEMS system including the root FS and shell (if used) should
+**    be running prior to invoking this function.
+**
+**    This entry point is used when building a separate RTEMS kernel/platform
+**    boot image and Core Flight Executive image.  This is the type of deployment
+**    used on e.g. VxWorks platforms.
+**
 **  Arguments:
 **    (none)
 **
@@ -345,11 +337,33 @@ rtems_task Init(
 **    (none)
 */
 
-void CFE_PSP_Main(uint32 ModeId, char *StartupFilePath )
+void CFE_PSP_Main(void)
 {
    uint32            reset_type;
    uint32            reset_subtype;
+   int32 Status;
 
+
+
+   /*
+   ** Initialize the OS API
+   */
+   Status = OS_API_Init();
+   if (Status != OS_SUCCESS)
+   {
+       /* irrecoverable error if OS_API_Init() fails. */
+       /* note: use printf here, as OS_printf may not work */
+       printf("CFE_PSP: OS_API_Init() failure\n");
+       CFE_PSP_Panic(Status);
+   }
+
+   /*
+   ** Initialize the statically linked modules (if any)
+   */
+   CFE_PSP_ModuleInit();
+
+   /* Prepare the system timing resources */
+   CFE_PSP_SetupSystemTimer();
 
    /*
    ** Determine Reset type by reading the hardware reset register.

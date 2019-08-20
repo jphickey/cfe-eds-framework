@@ -168,7 +168,7 @@ typedef struct
 /*
 ** PSP entry point and reset routines
 */
-extern void          CFE_PSP_Main(uint32 ModeId, char *StartupFilePath);
+extern void          CFE_PSP_Main(void);
 
 /*
 ** CFE_PSP_Main is the entry point that the real time OS calls to start our

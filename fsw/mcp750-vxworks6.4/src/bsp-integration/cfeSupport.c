@@ -72,14 +72,14 @@ unsigned int GetWrsKernelTextEnd (void)
 ** Purpose:  This function unzips ( if needed ) , loads, and starts the cFE core.
 **
 */
-int startCfeCore ( char *cfevolume, char *cfepath, int ModeId, char *StartupFilePath )
+int startCfeCore ( char *cfevolume, char *cfepath )
 {
    int        fd;
    int        status;
    MODULE_ID  moduleID;
    SYM_TYPE   symType;
    char       *symValue;
-   void       (*cFEFuncPtr)(int ModeId, char *StartupFilePath);
+   void       (*cFEFuncPtr)(void);
    char       cfeCorePath[64];
 
    if ( cfevolume == NULL || cfepath == NULL )
@@ -149,7 +149,7 @@ int startCfeCore ( char *cfevolume, char *cfepath, int ModeId, char *StartupFile
    ** Call the cFE startup routine 
    */
     cFEFuncPtr = (void *)symValue;
-    (*cFEFuncPtr)(ModeId, StartupFilePath);
+    (*cFEFuncPtr)();
  
    /*
    ** Return to the vxWorks shell

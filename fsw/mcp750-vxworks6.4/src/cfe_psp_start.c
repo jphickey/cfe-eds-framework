@@ -70,7 +70,7 @@ IMPORT void sysPciWrite32 (UINT32, UINT32);
 **    (none)
 */
 
-void CFE_PSP_Main(  uint32 ModeId, char *StartupFilePath )
+void CFE_PSP_Main( void )
 {
    int    TicksPerSecond;
    uint32 reset_type;
