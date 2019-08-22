@@ -55,8 +55,6 @@
 
 #include "cfe_psp.h"
 
-#ifdef _ENHANCED_BUILD_
-
 /*
  * The preferred way to obtain the CFE tunable values at runtime is via
  * the dynamically generated configuration object.  This allows a single build
@@ -71,39 +69,6 @@
 #define CFE_PSP_CPU_ID               (GLOBAL_CONFIGDATA.Default_CpuId)
 #define CFE_PSP_CPU_NAME             (GLOBAL_CONFIGDATA.Default_CpuName)
 #define CFE_PSP_SPACECRAFT_ID        (GLOBAL_CONFIGDATA.Default_SpacecraftId)
-
-#else
-
-/*
- * cfe_platform_cfg.h needed for CFE_PLATFORM_ES_NONVOL_STARTUP_FILE, CFE_PLATFORM_CPU_ID/CPU_NAME/SPACECRAFT_ID
- *
- *  - this should NOT be included here -
- *
- * it is only for compatibility with the old makefiles.  Including this makes the PSP build
- * ONLY compatible with a CFE build using this exact same CFE platform config.
- */
-
-#include "cfe_platform_cfg.h"
-
-extern void CFE_ES_Main(uint32 StartType, uint32 StartSubtype, uint32 ModeId, const char *StartFilePath );
-extern void CFE_TIME_Local1HzISR(void);
-
-#define CFE_PSP_MAIN_FUNCTION        CFE_ES_Main
-#define CFE_PSP_1HZ_FUNCTION         CFE_TIME_Local1HzISR
-#define CFE_PSP_NONVOL_STARTUP_FILE  CFE_PLATFORM_ES_NONVOL_STARTUP_FILE
-#define CFE_PSP_CPU_ID               CFE_PLATFORM_CPU_ID
-#define CFE_PSP_CPU_NAME             CFE_PLATFORM_CPU_NAME
-#define CFE_PSP_SPACECRAFT_ID        CFE_MISSION_SPACECRAFT_ID
-
-/*
- * The classic build does not support static modules,
- * so stub the ModuleInit() function out right here
- */
-void CFE_PSP_ModuleInit(void)
-{
-}
-
-#endif
 
 /*
 ** Defines

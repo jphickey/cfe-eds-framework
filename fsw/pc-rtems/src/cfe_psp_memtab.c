@@ -35,6 +35,7 @@
 #include "common_types.h"
 #include "osapi.h"
 #include "cfe_psp.h"
+#include "cfe_psp_config.h"
 
 /*
 ** Valid memory map for this target.

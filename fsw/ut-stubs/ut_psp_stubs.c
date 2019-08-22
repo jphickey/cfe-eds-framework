@@ -37,8 +37,6 @@
 #include "utstubs.h"
 #include <string.h>
 
-#ifdef _ENHANCED_BUILD_
-
 #include <target_config.h>
 
 Target_PspConfigData GLOBAL_PSP_CONFIGDATA = { 0 };
@@ -66,7 +64,6 @@ Target_ConfigData GLOBAL_CONFIGDATA =
 };
 
 
-#endif
 /*
 ** Functions
 */
