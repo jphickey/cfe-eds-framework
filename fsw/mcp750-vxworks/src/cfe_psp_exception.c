@@ -51,20 +51,24 @@
 */
 #include "common_types.h"
 #include "osapi.h"
-#include "cfe_es.h"            /* For reset types */
-#include "cfe_platform_cfg.h"  /* for processor ID */
 
 #include "cfe_psp.h"
+#include "cfe_psp_config.h"
 #include "cfe_psp_memory.h"
+
+#include <target_config.h>
 
 /*
 ** Types and prototypes for this module
 */
 
+/* use the exception ISR binding from the global config data */
+#define CFE_PSP_ES_EXCEPTION_FUNCTION   (*GLOBAL_CONFIGDATA.CfeConfig->SystemExceptionISR)
 
 /*
 ** BSP Specific defines
 */
+
 
 /*
 **  External Declarations
@@ -83,7 +87,7 @@ char                  CFE_PSP_ExceptionReasonString[256];
 **
 */
 
-void CFE_PSP_ExceptionHook ( int task_id, int vector, ESFPPC* pEsf );
+void CFE_PSP_ExceptionHook ( TASK_ID task_id, int vector, void* pEsf );
 
 
 /***************************************************************************
@@ -105,7 +109,7 @@ void CFE_PSP_ExceptionHook ( int task_id, int vector, ESFPPC* pEsf );
 
 void CFE_PSP_AttachExceptions(void)
 {
-    excHookAdd((FUNCPTR)CFE_PSP_ExceptionHook);
+    excHookAdd( CFE_PSP_ExceptionHook );
     OS_printf("CFE_PSP: Attached cFE Exception Handler. Context Size = %d bytes.\n",CFE_PSP_CPU_CONTEXT_SIZE);
 }
 
@@ -129,9 +133,9 @@ void CFE_PSP_AttachExceptions(void)
 **                      then it will be valid.
 **
 */
-void CFE_PSP_ExceptionHook (int task_id, int vector, ESFPPC* pEsf )
+void CFE_PSP_ExceptionHook (TASK_ID task_id, int vector, void* vpEsf )
 {
-
+    ESFPPC *pEsf = vpEsf;
     char *TaskName;
 
     /*
@@ -164,7 +168,7 @@ void CFE_PSP_ExceptionHook (int task_id, int vector, ESFPPC* pEsf )
     ** Call the Generic cFE routine to finish processing the exception and
     ** restart the cFE
     */
-    CFE_ES_ProcessCoreException((uint32) task_id,
+    CFE_PSP_ES_EXCEPTION_FUNCTION((uint32) task_id,
             (char *) CFE_PSP_ExceptionReasonString,
             (uint32 *) &CFE_PSP_ExceptionContext,
             sizeof(CFE_PSP_ExceptionContext_t));

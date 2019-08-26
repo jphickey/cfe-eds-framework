@@ -39,19 +39,31 @@
 */
 
 #include "common_types.h"
-#include "cfe_platform_cfg.h"
+
+/*
+ * the CFE platform config is required
+ * to size the ReservedMemory structure, below
+ */
+#include <cfe_platform_cfg.h>
+
+#include <target_config.h>
 
 /*
 ** Macro Definitions
 */
-#define CFE_PSP_CDS_SIZE            CFE_PLATFORM_ES_CDS_SIZE
-#define CFE_PSP_RESET_AREA_SIZE     CFE_PLATFORM_ES_RESET_AREA_SIZE
+#define CFE_PSP_CDS_SIZE            (GLOBAL_CONFIGDATA.CfeConfig->CdsSize)
+#define CFE_PSP_RESET_AREA_SIZE     (GLOBAL_CONFIGDATA.CfeConfig->ResetAreaSize)
+#define CFE_PSP_USER_RESERVED_SIZE  (GLOBAL_CONFIGDATA.CfeConfig->UserReservedSize)
+
 #define CFE_PSP_VOLATILE_DISK_SIZE  (CFE_PLATFORM_ES_RAM_DISK_SECTOR_SIZE * CFE_PLATFORM_ES_RAM_DISK_NUM_SECTORS)
-#define CFE_PSP_USER_RESERVED_SIZE  CFE_PLATFORM_ES_USER_RESERVED_SIZE
 
 
 /*
 ** Typedef for the layout of the vxWorks USER_RESERVED_MEM
+** Note that the structure below reserves memory sizes defined
+** at compile time directly from cfe_platform_cfg.h above.
+** A future enhancement should reserve blocks based on the runtime 
+** size in GLOBAL_CONFIGDATA.
 */
 typedef struct
 {
@@ -59,10 +71,10 @@ typedef struct
    uint32 spare1;
    uint32 spare2;
    uint32 spare3;
-   uint8  ResetMemory[CFE_PSP_RESET_AREA_SIZE];
+   uint8  ResetMemory[CFE_PLATFORM_ES_RESET_AREA_SIZE];
    uint8  VolatileDiskMemory[CFE_PSP_VOLATILE_DISK_SIZE];
-   uint8  CDSMemory[CFE_PSP_CDS_SIZE];
-   uint8  UserReservedMemory[CFE_PSP_USER_RESERVED_SIZE];
+   uint8  CDSMemory[CFE_PLATFORM_ES_CDS_SIZE];
+   uint8  UserReservedMemory[CFE_PLATFORM_ES_USER_RESERVED_SIZE];
 
 } CFE_PSP_ReservedMemory_t;
 

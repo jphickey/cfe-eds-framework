@@ -41,8 +41,6 @@
 */
 #include "common_types.h"
 #include "osapi.h"
-#include "cfe_es.h"            /* For reset types */
-#include "cfe_platform_cfg.h"  /* for processor ID */
 
 /*
 **  System Include Files
@@ -66,7 +64,7 @@
 ** Types and prototypes for this module
 */
 #include "cfe_psp.h"
-
+#include "cfe_psp_config.h"
 
 IMPORT void   sysPciRead32 (UINT32, UINT32 *);
 
