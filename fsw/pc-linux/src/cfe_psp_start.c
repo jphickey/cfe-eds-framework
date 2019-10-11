@@ -1,16 +1,26 @@
+/*
+**  GSC-18128-1, "Core Flight Executive Version 6.6"
+**
+**  Copyright (c) 2006-2019 United States Government as represented by
+**  the Administrator of the National Aeronautics and Space Administration.
+**  All Rights Reserved.
+**
+**  Licensed under the Apache License, Version 2.0 (the "License");
+**  you may not use this file except in compliance with the License.
+**  You may obtain a copy of the License at
+**
+**    http://www.apache.org/licenses/LICENSE-2.0
+**
+**  Unless required by applicable law or agreed to in writing, software
+**  distributed under the License is distributed on an "AS IS" BASIS,
+**  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+**  See the License for the specific language governing permissions and
+**  limitations under the License.
+*/
+
 /******************************************************************************
 ** File:  cfe_psp_start.c
 **
-**
-**      Copyright (c) 2004-2011, United States Government as represented by 
-**      Administrator for The National Aeronautics and Space Administration. 
-**      All Rights Reserved.
-**
-**      This is governed by the NASA Open Source Agreement and may be used,
-**      distributed and modified only pursuant to the terms of that agreement. 
-**
-**
-
 ** Purpose:
 **   cFE BSP main entry point.
 **
@@ -45,8 +55,6 @@
 
 #include "cfe_psp.h"
 
-#ifdef _ENHANCED_BUILD_
-
 /*
  * The preferred way to obtain the CFE tunable values at runtime is via
  * the dynamically generated configuration object.  This allows a single build
@@ -61,39 +69,6 @@
 #define CFE_PSP_CPU_ID               (GLOBAL_CONFIGDATA.Default_CpuId)
 #define CFE_PSP_CPU_NAME             (GLOBAL_CONFIGDATA.Default_CpuName)
 #define CFE_PSP_SPACECRAFT_ID        (GLOBAL_CONFIGDATA.Default_SpacecraftId)
-
-#else
-
-/*
- * cfe_platform_cfg.h needed for CFE_PLATFORM_ES_NONVOL_STARTUP_FILE, CFE_PLATFORM_CPU_ID/CPU_NAME/SPACECRAFT_ID
- *
- *  - this should NOT be included here -
- *
- * it is only for compatibility with the old makefiles.  Including this makes the PSP build
- * ONLY compatible with a CFE build using this exact same CFE platform config.
- */
-
-#include "cfe_platform_cfg.h"
-
-extern void CFE_ES_Main(uint32 StartType, uint32 StartSubtype, uint32 ModeId, const char *StartFilePath );
-extern void CFE_TIME_Local1HzISR(void);
-
-#define CFE_PSP_MAIN_FUNCTION        CFE_ES_Main
-#define CFE_PSP_1HZ_FUNCTION         CFE_TIME_Local1HzISR
-#define CFE_PSP_NONVOL_STARTUP_FILE  CFE_PLATFORM_ES_NONVOL_STARTUP_FILE
-#define CFE_PSP_CPU_ID               CFE_PLATFORM_CPU_ID
-#define CFE_PSP_CPU_NAME             CFE_PLATFORM_CPU_NAME
-#define CFE_PSP_SPACECRAFT_ID        CFE_MISSION_SPACECRAFT_ID
-
-/*
- * The classic build does not support static modules,
- * so stub the ModuleInit() function out right here
- */
-void CFE_PSP_ModuleInit(void)
-{
-}
-
-#endif
 
 /*
 ** Defines
@@ -190,6 +165,7 @@ int main(int argc, char *argv[])
    uint32             sys_timebase_id;
    int                opt = 0;
    int                longIndex = 0;
+   int32              Status;
 
    /*
    ** Initialize the CommandData struct 
@@ -274,13 +250,13 @@ int main(int argc, char *argv[])
    */
    if (strncmp("PR", CommandData.ResetType, 2 ) == 0 )
    {
-     reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
-      OS_printf("CFE_PSP: Starting the cFE with a PROCESSOR reset.\n");
+      reset_type = CFE_PSP_RST_TYPE_PROCESSOR;
+      printf("CFE_PSP: Starting the cFE with a PROCESSOR reset.\n");
    }
    else
    {
       reset_type = CFE_PSP_RST_TYPE_POWERON;
-      OS_printf("CFE_PSP: Starting the cFE with a POWER ON reset.\n");
+      printf("CFE_PSP: Starting the cFE with a POWER ON reset.\n");
    }
 
    /*
@@ -303,7 +279,14 @@ int main(int argc, char *argv[])
    /*
    ** Initialize the OS API data structures
    */
-   OS_API_Init();
+   Status = OS_API_Init();
+   if (Status != OS_SUCCESS)
+   {
+       /* irrecoverable error if OS_API_Init() fails. */
+       /* note: use printf here, as OS_printf may not work */
+       printf("CFE_PSP: OS_API_Init() failure\n");
+       CFE_PSP_Panic(Status);
+   }
 
    /*
    ** Set up the timebase, if OSAL supports it
@@ -373,7 +356,7 @@ int main(int argc, char *argv[])
    ** Let the main thread sleep.
    **
    ** OS_IdleLoop() will wait forever and return if
-   ** someone calls OS_ApplicationShutdown(TRUE)
+   ** someone calls OS_ApplicationShutdown(true)
    */
    OS_IdleLoop();
 
@@ -410,7 +393,7 @@ int main(int argc, char *argv[])
 
 void CFE_PSP_SigintHandler (int signal)
 {
-    OS_ApplicationShutdown(TRUE);
+    OS_ApplicationShutdown(true);
 }
 
 /******************************************************************************
