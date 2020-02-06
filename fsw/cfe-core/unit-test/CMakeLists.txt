@@ -59,6 +59,10 @@ foreach(MODULE ${CFE_CORE_MODULES})
   target_link_libraries(${CFE_CORE_TARGET}_${MODULE}_UT
         ut_${CFE_CORE_TARGET}_support
         ut_cfe-core_stubs
+        ut_psp-${CFE_SYSTEM_PSPNAME}_stubs
+        ut_missionlib_stubs 
+        ut_edslib_stubs 
+        ut_osapi_stubs 
         ut_assert)
     
   # Also add the C FLAGS to the link command    

@@ -39,7 +39,29 @@
 #include "osapi.h"
 #include "cfe_error.h"
 
+#include "cfe_missionlib_runtime.h"
+#include "cfe_mission_eds_interface_parameters.h"
+
 #include <string.h>
+
+/*
+ * Helper function to obtain the header size from PubSub interface parameters
+ */
+static inline uint16 CFE_SB_GetMsgHdrSize_Impl(const CFE_SB_SoftwareBus_PubSub_Interface_t *Params)
+{
+    if (CFE_SB_PubSub_IsPublisherComponent(Params))
+    {
+        return CFE_SB_TLM_HDR_SIZE;
+    }
+
+    if (CFE_SB_PubSub_IsListenerComponent(Params))
+    {
+        return CFE_SB_CMD_HDR_SIZE;
+    }
+
+    /* fallback... */
+    return sizeof(CCSDS_PriHdr_t);
+}
 
 /******************************************************************************
 **  Function:  CFE_SB_InitMsg()
@@ -62,36 +84,30 @@ void CFE_SB_InitMsg(void           *MsgPtr,
                     uint16         Length,
                     bool        Clear )
 {
-   uint16           SeqCount;
-   CCSDS_PriHdr_t  *PktPtr;
+    CFE_SB_Msg_t   *PktPtr = MsgPtr;
+    uint16     SeqCount;
 
-   PktPtr = (CCSDS_PriHdr_t *) MsgPtr;
+    /* Zero the entire packet if needed. */
+    if (Clear)
+    {
+        memset(PktPtr->Byte, 0, Length);
+    }
+    else
+    {
+        /* Save the sequence count in case it must be preserved. */
+        SeqCount = CCSDS_RD_SEQ(PktPtr->Hdr);
+        CCSDS_CLR_PRI_HDR(PktPtr->Hdr);
+    }
 
-  /* Save the sequence count in case it must be preserved. */
-   SeqCount = CCSDS_RD_SEQ(*PktPtr);
+    /* Set the stream ID and length fields in the primary header. */
+    CFE_SB_Set_PubSub_Parameters(&PktPtr->SpacePacket, &MsgId);
+    CCSDS_WR_LEN(PktPtr->Hdr, Length);
 
-   /* Zero the entire packet if needed. */
-   if (Clear)  
-     { memset(MsgPtr, 0, Length); }
-     else    /* Clear only the primary header. */
-      {
-        CCSDS_CLR_PRI_HDR(*PktPtr);
-      }
-
-   /* Set the length fields in the primary header. */
-  CCSDS_WR_LEN(*PktPtr, Length);
-  
-  /* Always set the secondary header flag as CFS applications are required use it */
-  CCSDS_WR_SHDR(*PktPtr, 1);
-
-  CFE_SB_SetMsgId(MsgPtr, MsgId);
-  
-  /* Restore the sequence count if needed. */
-   if (!Clear)  
-      CCSDS_WR_SEQ(*PktPtr, SeqCount);
-   else
-      CCSDS_WR_SEQFLG(*PktPtr, CCSDS_INIT_SEQFLG);
-
+    /* Restore the sequence count if needed. */
+    if (!Clear)
+    {
+        CCSDS_WR_SEQ(PktPtr->Hdr, SeqCount);
+    }
 } /* end CFE_SB_InitMsg */
 
 
@@ -109,33 +125,10 @@ void CFE_SB_InitMsg(void           *MsgPtr,
 */
 uint16 CFE_SB_MsgHdrSize(const CFE_SB_Msg_t *MsgPtr)
 {
+    CFE_SB_SoftwareBus_PubSub_Interface_t Params;
+    CFE_SB_Get_PubSub_Parameters(&Params, &MsgPtr->SpacePacket);
 
-#ifdef MESSAGE_FORMAT_IS_CCSDS
-
-    uint16 size;
-    const CCSDS_PriHdr_t  *HdrPtr;
-
-    HdrPtr = (const CCSDS_PriHdr_t *) MsgPtr;
-
-    /* if secondary hdr is not present... */
-    /* Since all cFE messages must have a secondary hdr this check is not needed */
-    if(CCSDS_RD_SHDR(*HdrPtr) == 0){
-        size = sizeof(CCSDS_PriHdr_t);
-
-    }else if(CCSDS_RD_TYPE(*HdrPtr) == CCSDS_CMD){
-
-        size = CFE_SB_CMD_HDR_SIZE;
-
-    }else{
-
-        size = CFE_SB_TLM_HDR_SIZE;
-  
-    }
-
-   return size;
-
-#endif
-
+    return CFE_SB_GetMsgHdrSize_Impl(&Params);
 }/* end CFE_SB_MsgHdrSize */
 
 
@@ -153,15 +146,9 @@ uint16 CFE_SB_MsgHdrSize(const CFE_SB_Msg_t *MsgPtr)
 */
 void *CFE_SB_GetUserData(CFE_SB_MsgPtr_t MsgPtr)
 {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
-    uint8           *BytePtr;
-    uint16          HdrSize;
-
-    BytePtr = (uint8 *)MsgPtr;
-    HdrSize = CFE_SB_MsgHdrSize(MsgPtr);
-
-    return (BytePtr + HdrSize);
-#endif
+    CFE_SB_SoftwareBus_PubSub_Interface_t  Params;
+    CFE_SB_Get_PubSub_Parameters(&Params, &MsgPtr->SpacePacket);
+    return &MsgPtr->Byte[CFE_SB_GetMsgHdrSize_Impl(&Params)];
 }/* end CFE_SB_GetUserData */
 
 
@@ -182,15 +169,15 @@ void *CFE_SB_GetUserData(CFE_SB_MsgPtr_t MsgPtr)
 */
 uint16 CFE_SB_GetUserDataLength(const CFE_SB_Msg_t *MsgPtr)
 {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
+    CFE_SB_SoftwareBus_PubSub_Interface_t  Params;
     uint16 TotalMsgSize;
     uint16 HdrSize;
 
+    CFE_SB_Get_PubSub_Parameters(&Params, &MsgPtr->SpacePacket);
     TotalMsgSize = CFE_SB_GetTotalMsgLength(MsgPtr);
-    HdrSize = CFE_SB_MsgHdrSize(MsgPtr);
+    HdrSize = CFE_SB_GetMsgHdrSize_Impl(&Params);
 
     return (TotalMsgSize - HdrSize);
-#endif
 }/* end CFE_SB_GetUserDataLength */
 
 
@@ -213,12 +200,14 @@ uint16 CFE_SB_GetUserDataLength(const CFE_SB_Msg_t *MsgPtr)
 */
 void CFE_SB_SetUserDataLength(CFE_SB_MsgPtr_t MsgPtr, uint16 DataLength)
 {
+    CFE_SB_SoftwareBus_PubSub_Interface_t  Params;
+    uint16 TotalMsgSize;
+
+    CFE_SB_Get_PubSub_Parameters(&Params, &MsgPtr->SpacePacket);
+    TotalMsgSize = CFE_SB_GetMsgHdrSize_Impl(&Params) + DataLength;
+
 #ifdef MESSAGE_FORMAT_IS_CCSDS
 
-    uint32 TotalMsgSize, HdrSize;
-
-    HdrSize = CFE_SB_MsgHdrSize(MsgPtr);
-    TotalMsgSize = HdrSize + DataLength;
     CCSDS_WR_LEN(MsgPtr->Hdr,TotalMsgSize);
 
 #endif
@@ -293,44 +282,42 @@ CFE_TIME_SysTime_t CFE_SB_GetMsgTime(CFE_SB_MsgPtr_t MsgPtr)
     uint32 LocalSecs32 = 0;
     uint32 LocalSubs32 = 0;
 
-    #ifdef MESSAGE_FORMAT_IS_CCSDS
-
-    #if (CFE_MISSION_SB_PACKET_TIME_FORMAT == CFE_MISSION_SB_TIME_32_16_SUBS)
-    uint16 LocalSubs16;
-    #endif
+#ifdef MESSAGE_FORMAT_IS_CCSDS
 
     CFE_SB_TlmHdr_t *TlmHdrPtr;
 
     /* if msg type is a command or msg has no secondary hdr, time = 0 */
-    if ((CCSDS_RD_TYPE(MsgPtr->Hdr) != CCSDS_CMD) && (CCSDS_RD_SHDR(MsgPtr->Hdr) != 0)) {
-
-        /* copy time data to/from packets to eliminate alignment issues */
+    if ((CCSDS_RD_TYPE(MsgPtr->Hdr) != CCSDS_CMD) && (CCSDS_RD_SHDR(MsgPtr->Hdr) != 0))
+    {
         TlmHdrPtr = (CFE_SB_TlmHdr_t *)MsgPtr;
 
-        #if (CFE_MISSION_SB_PACKET_TIME_FORMAT == CFE_MISSION_SB_TIME_32_16_SUBS)
+        LocalSecs32 = TlmHdrPtr->Sec.Seconds;
 
-        memcpy(&LocalSecs32, &TlmHdrPtr->Sec.Time[0], 4);
-        memcpy(&LocalSubs16, &TlmHdrPtr->Sec.Time[4], 2);
-        /* convert packet data into CFE_TIME_SysTime_t format */
-        LocalSubs32 = ((uint32) LocalSubs16) << 16;
+#if (CFE_MISSION_SB_PACKET_TIME_SUBSECONDS_UNITS == CFE_MISSION_SB_TIME_SUBSECS_BASE2)
+         /*
+          * When using base2 subseconds units,
+          * Left-justify the subseconds value if less than 32 bits
+          *
+          * (note the comparison is based on two constants so when compiling
+          * with optimization enabled this comparison should go away completely)
+          */
+        LocalSubs32 = TlmHdrPtr->Sec.Subseconds;
+        if (sizeof(TlmHdrPtr->Sec.Subseconds) < sizeof(LocalSubs32))
+        {
+            LocalSubs32 <<= 8 * (sizeof(LocalSubs32) - sizeof(TlmHdrPtr->Sec.Subseconds));
+        }
+#elif (CFE_MISSION_SB_PACKET_TIME_SUBSECONDS_UNITS == CFE_MISSION_SB_TIME_SUBSECS_MICROSECONDS)
+        /*
+         * When using base10 subsecond units (millseconds, microseconds, etc)
+         * then no shift is necessary, provided the value is read from the appropriately-sized
+         * EDS definition.  Just use the appropriate conversion to bring it back to CFE subseconds.
+         */
+        LocalSubs32 = CFE_TIME_Micro2SubSecs(TlmHdrPtr->Sec.Subseconds.Micros);
+#endif
 
-        #elif (CFE_MISSION_SB_PACKET_TIME_FORMAT == CFE_MISSION_SB_TIME_32_32_SUBS)
-
-        memcpy(&LocalSecs32, &TlmHdrPtr->Sec.Time[0], 4);
-        memcpy(&LocalSubs32, &TlmHdrPtr->Sec.Time[4], 4);
-        /* no conversion necessary -- packet format = CFE_TIME_SysTime_t format */
-
-        #elif (CFE_MISSION_SB_PACKET_TIME_FORMAT == CFE_MISSION_SB_TIME_32_32_M_20)
-
-        memcpy(&LocalSecs32, &TlmHdrPtr->Sec.Time[0], 4);
-        memcpy(&LocalSubs32, &TlmHdrPtr->Sec.Time[4], 4);
-        /* convert packet data into CFE_TIME_SysTime_t format */
-        LocalSubs32 = CFE_TIME_Micro2SubSecs((LocalSubs32 >> 12));
-
-        #endif
     }
 
-    #endif
+#endif
 
     /* return the packet time converted to CFE_TIME_SysTime_t format */
     TimeFromMsg.Seconds    = LocalSecs32;
@@ -359,47 +346,33 @@ int32 CFE_SB_SetMsgTime(CFE_SB_MsgPtr_t MsgPtr, CFE_TIME_SysTime_t NewTime)
 {
     int32 Result = CFE_SB_WRONG_MSG_TYPE;
 
-    #ifdef MESSAGE_FORMAT_IS_CCSDS
+#ifdef MESSAGE_FORMAT_IS_CCSDS
 
     CFE_SB_TlmHdr_t *TlmHdrPtr;
 
-    /* declare format specific vars */
-    #if (CFE_MISSION_SB_PACKET_TIME_FORMAT == CFE_MISSION_SB_TIME_32_16_SUBS)
-    uint16 LocalSubs16;
-    #elif (CFE_MISSION_SB_PACKET_TIME_FORMAT == CFE_MISSION_SB_TIME_32_32_M_20)
-    uint32 LocalSubs32;
-    #endif
-
     /* cannot set time if msg type is a command or msg has no secondary hdr */
-    if ((CCSDS_RD_TYPE(MsgPtr->Hdr) != CCSDS_CMD) && (CCSDS_RD_SHDR(MsgPtr->Hdr) != 0)) {
+    if ((CCSDS_RD_TYPE(MsgPtr->Hdr) != CCSDS_CMD) && (CCSDS_RD_SHDR(MsgPtr->Hdr) != 0))
+    {
 
-        /* copy time data to/from packets to eliminate alignment issues */
         TlmHdrPtr = (CFE_SB_TlmHdr_t *) MsgPtr;
+        /*
+         * seconds field may be written directly (always)
+         */
+        TlmHdrPtr->Sec.Seconds = NewTime.Seconds;
 
-        #if (CFE_MISSION_SB_PACKET_TIME_FORMAT == CFE_MISSION_SB_TIME_32_16_SUBS)
-
+#if (CFE_MISSION_SB_PACKET_TIME_SUBSECONDS_UNITS == CFE_MISSION_SB_TIME_SUBSECS_BASE2)
+        uint32 LocalSubs32 = NewTime.Subseconds;
+        if (sizeof(TlmHdrPtr->Sec.Subseconds) < sizeof(LocalSubs32))
+        {
+            LocalSubs32 >>= 8 * (sizeof(LocalSubs32) - sizeof(TlmHdrPtr->Sec.Subseconds));
+        }
+        TlmHdrPtr->Sec.Subseconds = LocalSubs32;
+#elif (CFE_MISSION_SB_PACKET_TIME_SUBSECONDS_UNITS == CFE_MISSION_SB_TIME_SUBSECS_MICROSECONDS)
         /* convert time from CFE_TIME_SysTime_t format to packet format */
-        LocalSubs16 = (uint16) (NewTime.Subseconds >> 16);
-        memcpy(&TlmHdrPtr->Sec.Time[0], &NewTime.Seconds, 4);
-        memcpy(&TlmHdrPtr->Sec.Time[4], &LocalSubs16, 2);
+        TlmHdrPtr->Sec.Subseconds.Micros = CFE_TIME_Sub2MicroSecs(NewTime.Subseconds);
+#endif
+
         Result = CFE_SUCCESS;
-
-        #elif (CFE_MISSION_SB_PACKET_TIME_FORMAT == CFE_MISSION_SB_TIME_32_32_SUBS)
-
-        /* no conversion necessary -- packet format = CFE_TIME_SysTime_t format */
-        memcpy(&TlmHdrPtr->Sec.Time[0], &NewTime.Seconds, 4);
-        memcpy(&TlmHdrPtr->Sec.Time[4], &NewTime.Subseconds, 4);
-        Result = CFE_SUCCESS;
-
-        #elif (CFE_MISSION_SB_PACKET_TIME_FORMAT == CFE_MISSION_SB_TIME_32_32_M_20)
-
-        /* convert time from CFE_TIME_SysTime_t format to packet format */
-        LocalSubs32 = CFE_TIME_Sub2MicroSecs(NewTime.Subseconds) << 12;
-        memcpy(&TlmHdrPtr->Sec.Time[0], &NewTime.Seconds, 4);
-        memcpy(&TlmHdrPtr->Sec.Time[4], &LocalSubs32, 4);
-        Result = CFE_SUCCESS;
-
-        #endif
     }
 
     #endif

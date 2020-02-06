@@ -63,6 +63,7 @@
 #include "cfe_es_task.h"
 #include "cfe_es_verify.h"
 #include "cfe_es_start.h"
+#include "cfe_es_eds_interface.h"
 #include "ut_support.h"
 #include "ut_osprintf_stubs.h"
 

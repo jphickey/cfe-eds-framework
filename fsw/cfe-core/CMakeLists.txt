@@ -25,6 +25,10 @@ endif (NOT CFE_CORE_TARGET)
 # The cmake CURRENT binary include dir will have the generated platform config file (cfe_platform_cfg.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/inc)
 
+# Include the runtime edslib library headers
+include_directories(${edslib_MISSION_DIR}/fsw/inc)
+include_directories(${missionlib_MISSION_DIR}/fsw/inc)
+
 # Define the "_CFE_CORE_" macro during compilation of all CFE core sources
 add_definitions(-D_CFE_CORE_)
 

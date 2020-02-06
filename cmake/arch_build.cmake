@@ -90,6 +90,17 @@ function(add_cfe_app APP_NAME APP_SRC_FILES)
   # Create the app module
   add_library(${APP_NAME} ${APPTYPE} ${APP_SRC_FILES} ${ARGN})
   
+  # If using "DYNAMIC" EDS linkage, then link the app with the EDS library here.
+  # Note that the linker will only pull in the compilation unit that actually
+  # resolves an undefined symbol, which in this case would be the app-specific
+  # DATATYPE_DB object if one is referenced at all. 
+  #
+  # By linking with the respective application like this, the net result is that
+  # only the _referenced_ EDS DBs (i.e. those for loaded apps) are held in memory.
+  if (CFE_SYSTEM_EDSDB_DYNAMIC_LINK)
+    target_link_libraries(${APP_NAME} cfe_edsdb_static)
+  endif (CFE_SYSTEM_EDSDB_DYNAMIC_LINK)
+    
   if (APP_INSTALL_LIST)
     cfs_app_do_install(${APP_NAME} ${APP_INSTALL_LIST})
   endif (APP_INSTALL_LIST)
@@ -107,7 +118,16 @@ function(add_cfe_tables APP_NAME TBL_SRC_FILES)
   # The table source must be compiled using the same "include_directories"
   # as any other target, but it uses the "add_custom_command" so there is
   # no automatic way to do this (at least in the older cmakes)
-  get_current_cflags(TBL_CFLAGS ${CMAKE_C_FLAGS})
+  set(TBL_CFLAG_PREFIXES "-I" "-D")
+  set(TBL_CFLAGS)
+  get_current_cflags(TBL_CFLAGS_FULL ${CMAKE_C_FLAGS})
+  foreach(TBL_CFLAG ${TBL_CFLAGS_FULL})
+    foreach(TBL_CFLAG_PREFIX ${TBL_CFLAG_PREFIXES})
+        if(${TBL_CFLAG} MATCHES "^${TBL_CFLAG_PREFIX}([^ ]*)$")
+          list(APPEND TBL_CFLAGS ${TBL_CFLAG})
+        endif()
+    endforeach(TBL_CFLAG_PREFIX ${TBL_CFLAG_PREFIXES})
+  endforeach(TBL_CFLAG ${TBL_CFLAGS})
 
   # Create the intermediate table objects using the target compiler,
   # then use "elf2cfetbl" to convert to a .tbl file
@@ -133,30 +153,50 @@ function(add_cfe_tables APP_NAME TBL_SRC_FILES)
         set(TBL_SRC "${MISSION_DEFS}/tables/${TBLWE}.c")
       elseif (EXISTS "${MISSION_SOURCE_DIR}/tables/${TBLWE}.c")
         set(TBL_SRC "${MISSION_SOURCE_DIR}/tables/${TBLWE}.c")
-      elseif (IS_ABSOLUTE "${TBL}")
-        set(TBL_SRC "${TBL}")
       else()
-        set(TBL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/${TBL}")
+        set(TBL_SRC)
       endif()
 
-      if (NOT EXISTS "${TBL_SRC}")
-         message(FATAL_ERROR "ERROR: No source file for table ${TBLWE}")    
-      else()
-        message("NOTE: Selected ${TBL_SRC} as source for ${TBLWE}")
-      endif()    
+      # Check if an lua script exists at the mission level (recommended practice)
+      # This allows a mission to implement a customized table without modifying
+      # the original - this also makes for easier merging/updating if needed.
+      set(TBL_LUA)
+      if (EXISTS "${MISSION_DEFS}/tables/${TGT}_${TBLWE}.lua")
+        list(APPEND TBL_LUA "${MISSION_DEFS}/tables/${TGT}_${TBLWE}.lua")
+      endif()
+      if (EXISTS "${MISSION_SOURCE_DIR}/tables/{TGT}_${TBLWE}.lua")
+        list(APPEND TBL_LUA "${MISSION_SOURCE_DIR}/tables/${TGT}_${TBLWE}.lua")
+      endif()
+      if (EXISTS "${MISSION_DEFS}/tables/${TBLWE}.lua")
+        list(APPEND TBL_LUA "${MISSION_DEFS}/tables/${TBLWE}.lua")
+      endif()
+      if (EXISTS "${MISSION_SOURCE_DIR}/tables/${TBLWE}.lua")
+        list(APPEND TBL_LUA "${MISSION_SOURCE_DIR}/tables/${TBLWE}.lua")
+      endif()
     
-      # IMPORTANT: This rule assumes that the output filename of elf2cfetbl matches
-      # the input file name but with a different extension (.o -> .tbl)
-      # The actual output filename is embedded in the source file (.c), however
-      # this must match and if it does not the build will break.  That's just the
-      # way it is, because NO make system supports changing rules based on the
-      # current content of a dependency (rightfully so).
+      if (TBL_SRC)
+          add_custom_command(
+           OUTPUT "${TABLE_DESTDIR}/${TBLWE}.so"
+             COMMAND ${CMAKE_NATIVE_C_COMPILER} ${TBL_CFLAGS} -shared -o ${TBLWE}.so ${TBL_SRC}
+            DEPENDS ${TBL_SRC}
+            WORKING_DIRECTORY ${TABLE_DESTDIR}
+          )
+          set(TBL_SO_FILE "${TABLE_DESTDIR}/${TBLWE}.so")
+      else()
+          set(TBL_SO_FILE)
+      endif (TBL_SRC)
+    
       add_custom_command(
         OUTPUT "${TABLE_DESTDIR}/${TBLWE}.tbl"
-        COMMAND ${CMAKE_C_COMPILER} ${TBL_CFLAGS} -c -o ${TBLWE}.o ${TBL_SRC}
-        COMMAND ${MISSION_BINARY_DIR}/tools/elf2cfetbl/elf2cfetbl ${TBLWE}.o
-        DEPENDS ${MISSION_BINARY_DIR}/tools/elf2cfetbl/elf2cfetbl ${TBL_SRC}
+        COMMAND eds2cfetbl 
+            -e MISSION_DEFS=\"${MISSION_DEFS}\" 
+            -e CPUNAME=\"${TGT}\" 
+            -e APPNAME=\"${APP}\"
+            -e TABLENAME=\"${TBLWE}\"
+            ${TBL_SO_FILE} ${TBL_LUA}
+        DEPENDS eds2cfetbl ${TBL_SO_FILE} ${TBL_LUA}
         WORKING_DIRECTORY ${TABLE_DESTDIR}
+        VERBATIM
       )
       # Create the install targets for all the tables
       install(FILES ${TABLE_DESTDIR}/${TBLWE}.tbl DESTINATION ${TGT}/${INSTALL_SUBDIR})
@@ -259,6 +299,9 @@ endfunction(cfs_app_do_install)
 #
 function(prepare)
 
+  # Create a directory to hold the generated binary objects
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/obj")
+
   # Generate the "osconfig.h" wrapper file as indicated by the configuration
   # If specific system config options were not specified, use defaults
   if (NOT OSAL_SYSTEM_OSCONFIG)
@@ -339,6 +382,60 @@ function(process_arch SYSVAR)
   include_directories(${MISSION_SOURCE_DIR}/cfe/fsw/cfe-core/src/inc)
   include_directories(${MISSION_SOURCE_DIR}/cfe/cmake/target/inc)
     
+  # Import the eds2cfetbl executable target.
+  # This is built by the parent (top-level) build and used here, it is a tool
+  # that executes on the native machine so it must NOT be cross compiled.
+  add_executable(eds2cfetbl IMPORTED)
+  set_target_properties(eds2cfetbl PROPERTIES
+    IMPORTED_LOCATION "${MISSION_BINARY_DIR}/eds/cfecfs/eds2cfetbl/eds2cfetbl"
+  )
+
+  # Generated EDS files all use a generalized mission name prefix in lowercase
+  string(TOLOWER ${MISSION_NAME}_eds EDS_FILE_PREFIX)
+  
+  add_custom_target(${SYSVAR}-eds-db
+    COMMAND ${CMAKE_BUILD_TOOL} -j1
+        -f ${EDS_FILE_PREFIX}_db_objects.mk 
+        O=${SYSID_${SYSVAR}}/obj 
+        CC=${CMAKE_C_COMPILER}
+        LD=${CMAKE_LINKER}
+        AR=${CMAKE_AR}
+        CFLAGS=${CMAKE_C_FLAGS}
+	LDFLAGS=${CFE_TOOLCHAIN_LD_FLAGS}
+        "${SYSID_${SYSVAR}}/obj/${EDS_FILE_PREFIX}_db${CMAKE_STATIC_LIBRARY_SUFFIX}"
+        "${SYSID_${SYSVAR}}/obj/${EDS_FILE_PREFIX}_db${CMAKE_SHARED_MODULE_SUFFIX}"
+    WORKING_DIRECTORY
+        ${MISSION_BINARY_DIR}
+    VERBATIM
+  )
+
+  add_custom_target(${SYSVAR}-eds-interfacedb
+    COMMAND ${CMAKE_BUILD_TOOL} -j1
+        -f ${EDS_FILE_PREFIX}_interfacedb_objects.mk 
+        O=${SYSID_${SYSVAR}}/obj 
+        CC=${CMAKE_C_COMPILER} 
+        LD=${CMAKE_LINKER}
+        AR=${CMAKE_AR} 
+        CFLAGS=${CMAKE_C_FLAGS} 
+	LDFLAGS=${CFE_TOOLCHAIN_LD_FLAGS}
+        "${SYSID_${SYSVAR}}/obj/${EDS_FILE_PREFIX}_interfacedb${CMAKE_STATIC_LIBRARY_SUFFIX}"
+        "${SYSID_${SYSVAR}}/obj/${EDS_FILE_PREFIX}_interfacedb${CMAKE_SHARED_MODULE_SUFFIX}"
+    WORKING_DIRECTORY
+        ${MISSION_BINARY_DIR}
+    VERBATIM
+  )
+
+  # on target architecture builds, the "edstool-execute" target
+  # will not actually run the tool again.  Instead, it will just build all
+  # the generated make targets from the parent build for this processor by
+  # supplying the correct CC/AR tool
+  add_custom_target(edstool-execute
+    DEPENDS
+        ${SYSVAR}-eds-db
+        ${SYSVAR}-eds-interfacedb
+        missionlib-runtime-install
+  )
+  
   # Append the PSP and OSAL selections to the Doxyfile so it will be included
   # in the generated documentation automatically.
   # Also extract the "-D" options within CFLAGS and inform Doxygen about these
@@ -450,7 +547,6 @@ function(process_arch SYSVAR)
     if (NOT TARGET ${CFE_CORE_TARGET})
 
       # Generate wrapper file for the requisite cfe_platform_cfg.h file
-      generate_config_includefile("${CFE_CORE_TARGET}/inc/cfe_msgids.h" msgids.h ${TGTPLATFORM})
       generate_config_includefile("${CFE_CORE_TARGET}/inc/cfe_platform_cfg.h" platform_cfg.h ${TGTPLATFORM})
       
       # Actual core library is a subdirectory

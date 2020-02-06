@@ -45,6 +45,7 @@
 
 # Squelch a warning when building on Win32/Cygwin
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../psp/cmake/Modules" ${CMAKE_MODULE_PATH})
 
 # Add a path for any locally-supplied CMake modules
 # These would typically be a part of any custom PSPs in use.
@@ -108,6 +109,10 @@ if (IS_CFS_ARCH_BUILD)
 elseif (IS_CFS_MISSION_BUILD)
     include("${MISSION_DEFS}/mission_build_custom.cmake" OPTIONAL)
 endif (IS_CFS_ARCH_BUILD)
+
+# The CFE_EDS_ENABLED_BUILD switch indicates that any
+# compile-time EDS options should be enabled in this build
+add_definitions(-DCFE_EDS_ENABLED_BUILD)
 
 # Call the prepare function defined by the sub-script
 # This is implemented differently depending on whether this is a 

@@ -39,8 +39,6 @@
 /*
 ** Global variables
 */
-uint8  UT_Endianess;
-
 static char    UT_appname[80];
 static char    UT_subsys[5];
 static uint32  UT_AppID;
@@ -95,27 +93,6 @@ void UT_Init(const char *subsys)
     }
 
     UT_InitData();
-
-    /*
-     * NOTE: There are some UT cases in TBL that are dependent on
-     * the endianness of the local CPU.  This "endian check" exists
-     * to provide hints to the test code.
-     *
-     * All endian-specific code should be replaced with endian-neutral
-     * code in future versions.  This check will be removed in a future
-     * version once that is complete.  No new test code should use this.
-     */
-    int32 EndianCheck = 0x01020304;
-
-    if ((*(char *) &EndianCheck) == 0x04)
-    {
-        UT_Endianess = UT_LITTLE_ENDIAN;
-    }
-    else
-    {
-        UT_Endianess = UT_BIG_ENDIAN;
-    }
-
 }
 
 /*
@@ -226,21 +203,45 @@ void UT_Report(const char *file, uint32 line, bool test, const char *fun_name,
 void UT_CallTaskPipe(void (*TaskPipeFunc)(CFE_SB_MsgPtr_t), CFE_SB_MsgPtr_t Msg, uint32 MsgSize,
         UT_TaskPipeDispatchId_t DispatchId)
 {
-    /*
-     * set the fields within the buffer itself.
-     * a lot of the CFE code requires this as it uses
-     * macros (not stubs) to read this info direct from
-     * the buffer.
-     */
-    CCSDS_WR_LEN(Msg->Hdr, MsgSize);
-    CCSDS_WR_SHDR(Msg->Hdr, 1);
-    CFE_SB_SetMsgId(Msg, DispatchId.MsgId);
-    CFE_SB_SetCmdCode(Msg, DispatchId.CommandCode);
+    uint32 DispatchMap;
 
-    /*
-     * Finally, call the actual task pipe requested.
-     */
+    CCSDS_WR_LEN(Msg->Hdr, MsgSize);
+
+    if (DispatchId.DispatchOffset >= 0)
+    {
+        DispatchMap = DispatchId.DispatchOffset;
+        UT_SetDataBuffer(UT_KEY(CFE_SB_EDS_Dispatch), &DispatchMap, sizeof(DispatchMap), true);
+    }
+
+    if (DispatchId.DispatchError != 0)
+    {
+        UT_SetForceFail(UT_KEY(CFE_SB_EDS_Dispatch), DispatchId.DispatchError);
+    }
+
     TaskPipeFunc(Msg);
+}
+
+int32 UT_SoftwareBusDispatchHook(void *UserObj, int32 StubRetcode, uint32 CallCount, const UT_StubContext_t *Context)
+{
+    union
+    {
+        cpuaddr MemAddr;
+        const void* GenericPtr;
+        int32 (**DispatchFunc)(const CCSDS_PriHdr_t *);
+    } HandlerPtr;
+    const CCSDS_PriHdr_t *Msg;
+
+    HandlerPtr.GenericPtr = UserObj;
+    if (Context->ArgCount > 0)
+    {
+        Msg = Context->ArgPtr[0];
+    }
+    else
+    {
+        Msg = NULL;
+    }
+
+    return (*HandlerPtr.DispatchFunc)(Msg);
 }
 
 int32 UT_SoftwareBusSnapshotHook(void *UserObj, int32 StubRetcode, uint32 CallCount, const UT_StubContext_t *Context)
@@ -258,7 +259,7 @@ int32 UT_SoftwareBusSnapshotHook(void *UserObj, int32 StubRetcode, uint32 CallCo
     }
 
     if (MsgPtr != NULL && Snapshot != NULL &&
-            Snapshot->MsgId == CFE_SB_GetMsgId((CFE_SB_MsgPtr_t)MsgPtr))
+            Snapshot->TopicId == CFE_SB_MsgId_To_TopicId(CFE_SB_GetMsgId((CFE_SB_MsgPtr_t)MsgPtr)))
     {
         ++Snapshot->Count;
         if (Snapshot->SnapshotSize > 0 && Snapshot->SnapshotBuffer != NULL)
@@ -472,7 +473,7 @@ void UT_DisplayPkt(CFE_SB_MsgPtr_t ptr, uint32 size)
 */
 int16 UT_GetActualPktLenField(CFE_SB_MsgPtr_t MsgPtr)
 {
-    return ( ( MsgPtr->Hdr.Length[0] << 8) + MsgPtr->Hdr.Length[1] );
+    return (MsgPtr->Hdr.BaseHdr.Length);
 }
 
 /*
@@ -480,31 +481,7 @@ int16 UT_GetActualPktLenField(CFE_SB_MsgPtr_t MsgPtr)
 */
 uint8 UT_GetActualCmdCodeField(CFE_SB_MsgPtr_t MsgPtr)
 {
-    /*
-     * CFE 6.4.0 tried to make all headers big-endian.
-     * CFE 6.4.1 made secondary headers native-endian again.
-     *
-     * This function is used to "go around" the structure field
-     * definitions and access macro definitions, to look for the
-     * bits of the function code in the exact spot where we are
-     * expecting to find them.
-     *
-     * The CCSDS Command Function Code is defined as living in
-     * bits 8 through 14 (mask 0x7F00) of the 16-bit unsigned
-     * value encoded in NATIVE endianness in the two bytes
-     * stored at offsets 6 and 7 in the packet for CCSDS version 1
-     * and offsets 10 and 11 for CCSDS Version 2
-     */
-
-    uint8 CmdCodeWordFieldIndex; /* Field index (in WORDS) */
-    uint16 *w = (uint16 *)MsgPtr;
-
-#ifndef MESSAGE_FORMAT_IS_CCSDS_VER_2
-    CmdCodeWordFieldIndex = 3;
-#else
-    CmdCodeWordFieldIndex = 5;
-#endif
-    return (w[CmdCodeWordFieldIndex] & 0x7F00) >> 8;
+    return (((CFE_SB_CmdHdr_t*)MsgPtr)->Sec.Command);
 }
 
 

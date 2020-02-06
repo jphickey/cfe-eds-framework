@@ -44,7 +44,7 @@
 #include "cfe_platform_cfg.h"
 #include "cfe_sb.h"
 #include "cfe_time.h"
-#include "cfe_time_msg.h"
+#include "cfe_time_eds_interface.h"
 #include "cfe_time_utils.h"
 #include "common_types.h"
 #include "ut_support.h"

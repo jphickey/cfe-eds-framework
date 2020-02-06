@@ -40,6 +40,7 @@
 #include "cfe_error.h"
 #include "cfe_tbl_internal.h"
 #include "cfe_psp.h"
+#include "cfe_sb_eds.h"
 
 /*
 ** Local Macros
@@ -54,7 +55,8 @@
 ********************************************************************/
 int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                         const char *Name,
-                        uint32  Size,
+                        uint16  EdsAppIdx,
+                        uint16  EdsTypeIdx,
                         uint16  TblOptionFlags,
                         CFE_TBL_CallbackFuncPtr_t TblValidationFuncPtr )
 {
@@ -69,15 +71,28 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
     char                        AppName[OS_MAX_API_NAME] = {"UNKNOWN"};
     char                        TblName[CFE_TBL_MAX_FULL_NAME_LEN] = {""};
     CFE_TBL_Handle_t            AccessIndex;
+    EdsLib_Id_t                     EdsId;
+    EdsLib_DataTypeDB_TypeInfo_t    TypeInfo;
 
-    /* Check to make sure calling application is legit */
-    Status = CFE_TBL_ValidateAppID(&ThisAppId);
+    /* Assume we can't make a table and return a bad handle for now */
+    *TblHandlePtr = CFE_TBL_BAD_TABLE_HANDLE;
+
+    EdsId = EDSLIB_MAKE_ID(EdsAppIdx, EdsTypeIdx);
+    if (EdsLib_DataTypeDB_GetTypeInfo(CFE_SB_GetEds(), EdsId, &TypeInfo) != EDSLIB_SUCCESS ||
+            TypeInfo.ElemType == EDSLIB_BASICTYPE_NONE)
+    {
+        CFE_ES_WriteToSysLog("CFE_TBL:Register-EDS type %u index %u is not registered",
+                (unsigned int)EdsAppIdx, (unsigned int)EdsTypeIdx);
+        Status = CFE_TBL_ERR_INVALID_HANDLE;
+    }
+    else
+    {
+        /* Check to make sure calling application is legit */
+        Status = CFE_TBL_ValidateAppID(&ThisAppId);
+    }
 
     if (Status == CFE_SUCCESS)
     {
-        /* Assume we can't make a table and return a bad handle for now */
-        *TblHandlePtr = CFE_TBL_BAD_TABLE_HANDLE;
-
         /* Make sure specified table name is not too long or too short */
         NameLen = strlen(Name);
         if ((NameLen > CFE_MISSION_TBL_MAX_NAME_LENGTH) || (NameLen == 0))
@@ -98,27 +113,27 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
            /* Make sure the specified size is acceptable */
             /* Single buffered tables are allowed to be up to CFE_PLATFORM_TBL_MAX_SNGL_TABLE_SIZE */
             /* Double buffered tables are allowed to be up to CFE_PLATFORM_TBL_MAX_DBL_TABLE_SIZE  */
-            if (Size == 0)
+            if (TypeInfo.Size.Bytes == 0)
             {
                 Status = CFE_TBL_ERR_INVALID_SIZE;
 
                 CFE_ES_WriteToSysLog("CFE_TBL:Register-Table %s has size of zero\n", Name);
             }
-            else if ((Size > CFE_PLATFORM_TBL_MAX_SNGL_TABLE_SIZE) &&
+            else if ((TypeInfo.Size.Bytes > CFE_PLATFORM_TBL_MAX_SNGL_TABLE_SIZE) &&
                      ((TblOptionFlags & CFE_TBL_OPT_BUFFER_MSK) == CFE_TBL_OPT_SNGL_BUFFER))
             {
                 Status = CFE_TBL_ERR_INVALID_SIZE;
 
                 CFE_ES_WriteToSysLog("CFE_TBL:Register-Single Buffered Table '%s' has size %d > %d\n",
-                                     Name, (int)Size, CFE_PLATFORM_TBL_MAX_SNGL_TABLE_SIZE);
+                                     Name, (int)TypeInfo.Size.Bytes, CFE_PLATFORM_TBL_MAX_SNGL_TABLE_SIZE);
             }
-            else if ((Size > CFE_PLATFORM_TBL_MAX_DBL_TABLE_SIZE) &&
+            else if ((TypeInfo.Size.Bytes > CFE_PLATFORM_TBL_MAX_DBL_TABLE_SIZE) &&
                      ((TblOptionFlags & CFE_TBL_OPT_BUFFER_MSK) == CFE_TBL_OPT_DBL_BUFFER))
             {
                 Status = CFE_TBL_ERR_INVALID_SIZE;
 
                 CFE_ES_WriteToSysLog("CFE_TBL:Register-Dbl Buffered Table '%s' has size %d > %d\n",
-                                     Name, (int)Size, CFE_PLATFORM_TBL_MAX_DBL_TABLE_SIZE);
+                                     Name, (int)TypeInfo.Size.Bytes, CFE_PLATFORM_TBL_MAX_DBL_TABLE_SIZE);
             }
             
             /* Verify Table Option settings are legal */
@@ -174,7 +189,7 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
             if (RegRecPtr->OwnerAppId == ThisAppId)
             {
                 /* If the new table is the same size as the old, then no need to reallocate memory */
-                if (Size != RegRecPtr->Size)
+                if (TypeInfo.Size.Bytes != RegRecPtr->EdsInfo.Size.Bytes)
                 {
                     /* If the new size is different, the old table must deleted      */
                     /* but this function can't do that because it is probably shared */
@@ -183,7 +198,7 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                     Status = CFE_TBL_ERR_DUPLICATE_DIFF_SIZE;
 
                     CFE_ES_WriteToSysLog("CFE_TBL:Register-Attempt to register existing table ('%s') with different size(%d!=%d)\n",
-                                         TblName, (int)Size, (int)RegRecPtr->Size);
+                                         TblName, (int)TypeInfo.Size.Bytes, (int)RegRecPtr->EdsInfo.Size.Bytes);
                 }
                 else
                 {
@@ -259,7 +274,7 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                     /* Allocate the memory buffer(s) for the table and inactive table, if necessary */
                     Status = CFE_ES_GetPoolBuf((uint32 **)&RegRecPtr->Buffers[0].BufferPtr,
                                                CFE_TBL_TaskData.Buf.PoolHdl,                                           
-                                               Size);
+                                               TypeInfo.Size.Bytes);
                     if(Status < 0)
                     {
                         CFE_ES_WriteToSysLog("CFE_TBL:Register-1st Buf Alloc GetPool fail Stat=0x%08X MemPoolHndl=0x%08lX\n",
@@ -269,7 +284,7 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                     {
                         /* Zero the memory buffer */
                         Status = CFE_SUCCESS;
-                        memset(RegRecPtr->Buffers[0].BufferPtr, 0x0, Size);
+                        memset(RegRecPtr->Buffers[0].BufferPtr, 0x0, TypeInfo.Size.Bytes);
                     }
                 }
                 else
@@ -285,7 +300,7 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                     /* Allocate memory for the dedicated secondary buffer */
                     Status = CFE_ES_GetPoolBuf((uint32 **)&RegRecPtr->Buffers[1].BufferPtr,
                                                CFE_TBL_TaskData.Buf.PoolHdl,                                           
-                                               Size);
+                                               TypeInfo.Size.Bytes);
                     if(Status < 0)
                     {
                         CFE_ES_WriteToSysLog("CFE_TBL:Register-2nd Buf Alloc GetPool fail Stat=0x%08X MemPoolHndl=0x%08lX\n",
@@ -295,7 +310,7 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                     {
                         /* Zero the dedicated secondary buffer */
                         Status = CFE_SUCCESS;
-                        memset(RegRecPtr->Buffers[1].BufferPtr, 0x0, Size);
+                        memset(RegRecPtr->Buffers[1].BufferPtr, 0x0, TypeInfo.Size.Bytes);
                     }
 
                     RegRecPtr->ActiveBufferIndex = 0;
@@ -310,7 +325,9 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                 if ((Status & CFE_SEVERITY_BITMASK) != CFE_SEVERITY_ERROR)
                 {
                     /* Save the size of the table */
-                    RegRecPtr->Size = Size;
+                    RegRecPtr->EdsId = EdsId;
+                    RegRecPtr->EdsInfo = TypeInfo;
+                    RegRecPtr->BinaryFileSize = (TypeInfo.Size.Bits + 7) / 8;
 
                     /* Save the Callback function pointer */
                     RegRecPtr->ValidationFuncPtr = TblValidationFuncPtr;
@@ -358,7 +375,7 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                     if ((TblOptionFlags & CFE_TBL_OPT_CRITICAL_MSK) == CFE_TBL_OPT_CRITICAL)
                     {
                         /* Register a CDS under the table name and determine if the table already exists there */
-                        Status = CFE_ES_RegisterCDSEx(&RegRecPtr->CDSHandle, Size, TblName, true);
+                        Status = CFE_ES_RegisterCDSEx(&RegRecPtr->CDSHandle, TypeInfo.Size.Bytes, TblName, true);
                 
                         if (Status == CFE_ES_CDS_ALREADY_EXISTS)
                         {
@@ -410,7 +427,7 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                                     
                                     /* Compute the CRC on the specified table buffer */
                                     WorkingBufferPtr->Crc = CFE_ES_CalculateCRC(WorkingBufferPtr->BufferPtr,
-                                                                                RegRecPtr->Size,
+                                                                                RegRecPtr->EdsInfo.Size.Bytes,
                                                                                 0,
                                                                                 CFE_MISSION_ES_DEFAULT_CRC);
                                 
@@ -781,7 +798,7 @@ int32 CFE_TBL_Load( CFE_TBL_Handle_t TblHandle,
                         /* When the source is a block of memory, it is assumed to be a complete load */
                         memcpy(WorkingBufferPtr->BufferPtr,
                                   (uint8 *)SrcDataPtr,
-                                  RegRecPtr->Size);
+                                  RegRecPtr->EdsInfo.Size.Bytes);
 
                         snprintf(WorkingBufferPtr->DataSource, sizeof(WorkingBufferPtr->DataSource), "Addr 0x%08lX", (unsigned long)SrcDataPtr);
                         WorkingBufferPtr->FileCreateTimeSecs = 0;
@@ -789,7 +806,7 @@ int32 CFE_TBL_Load( CFE_TBL_Handle_t TblHandle,
                         
                         /* Compute the CRC on the specified table buffer */
                         WorkingBufferPtr->Crc = CFE_ES_CalculateCRC(WorkingBufferPtr->BufferPtr,
-                                                                    RegRecPtr->Size,
+                                                                    RegRecPtr->EdsInfo.Size.Bytes,
                                                                     0,
                                                                     CFE_MISSION_ES_DEFAULT_CRC);
                     }
@@ -818,7 +835,7 @@ int32 CFE_TBL_Load( CFE_TBL_Handle_t TblHandle,
                                                  (int)ThisAppId, (unsigned int)Status, RegRecPtr->Name);
                                             
                             /* Zero out the buffer to remove any bad data */
-                            memset(WorkingBufferPtr->BufferPtr, 0, RegRecPtr->Size);     
+                            memset(WorkingBufferPtr->BufferPtr, 0, RegRecPtr->EdsInfo.Size.Bytes);
                         }
                     }
 
@@ -1479,7 +1496,7 @@ int32 CFE_TBL_GetInfo( CFE_TBL_Info_t *TblInfoPtr, const char *TblName )
         RegRecPtr = &CFE_TBL_TaskData.Registry[RegIndx];
 
         /* Return table characteristics */        
-        TblInfoPtr->Size        = RegRecPtr->Size;
+        TblInfoPtr->Size        = RegRecPtr->EdsInfo.Size.Bytes;
         TblInfoPtr->DoubleBuffered = RegRecPtr->DoubleBuffered;
         TblInfoPtr->DumpOnly    = RegRecPtr->DumpOnly;
         TblInfoPtr->UserDefAddr = RegRecPtr->UserDefAddr;
@@ -1594,7 +1611,7 @@ int32 CFE_TBL_Modified( CFE_TBL_Handle_t TblHandle )
         /* Update CRC on contents of table */
         RegRecPtr->Buffers[RegRecPtr->ActiveBufferIndex].Crc = 
             CFE_ES_CalculateCRC(RegRecPtr->Buffers[RegRecPtr->ActiveBufferIndex].BufferPtr,
-                                RegRecPtr->Size,
+                                RegRecPtr->EdsInfo.Size.Bytes,
                                 0,
                                 CFE_MISSION_ES_DEFAULT_CRC);
 

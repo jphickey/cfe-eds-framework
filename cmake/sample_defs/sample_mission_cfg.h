@@ -32,25 +32,18 @@
 **
 ** Author:   R.McGraw/SSI
 **
+** NOTE: In the EDS build, more MISSION definitions are in EDS XML files
+** 
+**
 ******************************************************************************/
 
 #ifndef _cfe_mission_cfg_
 #define _cfe_mission_cfg_
 
-
-/**
-**  \cfemissioncfg Spacecraft ID
-**
-**  \par Description:
-**      This defines the value that is returned by the call to
-**      CFE_PSP_GetSpacecraftId.
-**
-**  \par Limits
-**       The cFE does not place a limit on this configuration paramter.
-**       CCSDS allocates 8 bits for this field in the standard VCDU.
-*/
-#define CFE_MISSION_SPACECRAFT_ID       0x42
-
+/*
+ * Pull in defintions from EDS
+ */
+#include "samplemission_eds_designparameters.h"
 
 /**
 **  \cfemissioncfg cFE SB message format
@@ -65,16 +58,13 @@
 **      MESSAGE_FORMAT_IS_CCSDS must be defined for all cFE deployments. MESSAGE_FORMAT_IS_CCSDS_VER_2 is optional
 */
 #define MESSAGE_FORMAT_IS_CCSDS
-/* #define MESSAGE_FORMAT_IS_CCSDS_VER_2 */
-#undef MESSAGE_FORMAT_IS_CCSDS_VER_2
 
 
 
 /** \name Packet timestamp format identifiers */
 /** \{ */
-#define CFE_MISSION_SB_TIME_32_16_SUBS   1  /**< \brief 32 bits seconds + 16 bits subseconds (units = 2^^-16)  */
-#define CFE_MISSION_SB_TIME_32_32_SUBS   2  /**< \brief 32 bits seconds + 32 bits subseconds (units = 2^^-32)  */
-#define CFE_MISSION_SB_TIME_32_32_M_20   3  /**< \brief 32 bits seconds + 20 bits microsecs + 12 bits reserved */
+#define CFE_MISSION_SB_TIME_SUBSECS_BASE2           1  /**< \brief 32 bits seconds + N bits subseconds base-2 (units = 1/2^^N)  */
+#define CFE_MISSION_SB_TIME_SUBSECS_MICROSECONDS    2  /**< \brief 32 bits seconds + 20 bits microseconds + 12 bits reserved    */
 /** \} */
 
 /**
@@ -86,7 +76,7 @@
 **  \par Limits
 **      Must be defined as one of the supported formats listed above
 */
-#define CFE_MISSION_SB_PACKET_TIME_FORMAT  CFE_MISSION_SB_TIME_32_16_SUBS
+#define CFE_MISSION_SB_PACKET_TIME_SUBSECONDS_UNITS  CFE_MISSION_SB_TIME_SUBSECS_BASE2
 
 
 /**
@@ -308,19 +298,6 @@
 
 
 
-/**
-**  \cfeevscfg Maximum Event Message Length
-**
-**  \par Description:
-**      Indicates the maximum length (in characters) of the formatted text
-**      string portion of an event message
-**
-**  \par Limits
-**      Not Applicable
-*/
-#define CFE_MISSION_EVS_MAX_MESSAGE_LENGTH     122
-
-
 /** \name Checksum/CRC algorithm identifiers */
 /** \{ */
 #define CFE_MISSION_ES_CRC_8   1  /**< \brief CRC ( 8 bit additive - returns 32 bit total) (Currently not implemented) */
@@ -357,428 +334,5 @@
 #define CFE_MISSION_TBL_MAX_NAME_LENGTH         16
 
 
-/**
-**  \cfemissioncfg cFE Message ID Base Numbers
-**
-**  \par Description:
-**      Message Id base numbers for the cFE messages
-**      These will now differ in format when using CCSDS version 2 as they will no longer
-**      include the Secondary Header Flag and CCSDS version bits. 
-**
-**      NOTES: cFE MsgIds are the sum of the base numbers and the portable msg
-**             numbers.
-**
-**             For MESSAGE_FORMAT_IS_CCSDS_VER_2 These base MsgIds values are dependent on the
-**             values returned by the following SB Macros to form a 16 bit message ID (default
-**             macro definitions are in cfe_sb_msg_id_utils.h, default values below are
-**             representative of default macro definitions) :
-**               CFE_SB_CMD_MESSAGE_TYPE, CFE_SB_RD_APID_FROM_MSGID
-**               CFE_SB_RD_SUBSYS_ID_FROM_MSGID and CFE_SB_RD_TYPE_FROM_MSGID
-**
-**  \par Limits
-**      Must be less than CFE_PLATFORM_SB_HIGHEST_VALID_MSGID
-*/
-#ifndef MESSAGE_FORMAT_IS_CCSDS_VER_2
-#define CFE_MISSION_CMD_MID_BASE1   0x1800
-#define CFE_MISSION_TLM_MID_BASE1   0x0800
-#else
-#define CFE_MISSION_CMD_MID_BASE1   0x0080
-#define CFE_MISSION_TLM_MID_BASE1   0x0000
+
 #endif
-
-#define CFE_MISSION_CMD_APPID_BASE1 1
-#define CFE_MISSION_TLM_APPID_BASE1 0
-
-#ifndef MESSAGE_FORMAT_IS_CCSDS_VER_2
-#define CFE_MISSION_CMD_MID_BASE_GLOB   0x1860
-#define CFE_MISSION_TLM_MID_BASE_GLOB   0x0860
-#else
-#define CFE_MISSION_CMD_MID_BASE_GLOB   0x00E0
-#define CFE_MISSION_TLM_MID_BASE_GLOB   0x0060
-#endif
-
-
-
-/**
-**  \cfemissioncfg cFE Portable Message Numbers for Commands
-**
-**  \par Description:
-**      Portable message numbers for the cFE command messages
-**      NOTE: cFE MsgIds are the sum of the base numbers and the portable msg
-**            numbers.
-**
-**  \par Limits
-**      Not Applicable
-*/
-#define CFE_MISSION_EVS_CMD_MSG         1
-    /* Offset 2 is available */
-#define CFE_MISSION_SB_CMD_MSG          3
-#define CFE_MISSION_TBL_CMD_MSG         4
-#define CFE_MISSION_TIME_CMD_MSG        5
-#define CFE_MISSION_ES_CMD_MSG          6
-
-#define CFE_MISSION_ES_SEND_HK_MSG      8
-#define CFE_MISSION_EVS_SEND_HK_MSG     9
-    /* Offset 10 is available */
-#define CFE_MISSION_SB_SEND_HK_MSG      11
-#define CFE_MISSION_TBL_SEND_HK_MSG     12
-#define CFE_MISSION_TIME_SEND_HK_MSG    13
-
-#define CFE_MISSION_TIME_TONE_CMD_MSG   16
-#define CFE_MISSION_TIME_1HZ_CMD_MSG    17
-
-
-/**
-**  \cfemissioncfg cFE Portable Message Numbers for Global Messages
-**
-**  \par Description:
-**      Portable message numbers for the cFE global messages
-**      NOTE: cFE MsgIds are the sum of the base numbers and the portable msg
-**            numbers.
-**
-**  \par Limits
-**      Not Applicable
-*/
-#define CFE_MISSION_TIME_DATA_CMD_MSG   0
-#define CFE_MISSION_TIME_SEND_CMD_MSG   2
-
-
-/**
-**  \cfemissioncfg cFE Portable Message Numbers for Telemetry
-**
-**  \par Description:
-**      Portable message numbers for the cFE telemetry messages
-**      NOTE: cFE MsgIds are the sum of the base numbers and the portable msg
-**            numbers.
-**
-**  \par Limits
-**      Not Applicable
-*/
-#define CFE_MISSION_ES_HK_TLM_MSG       0
-#define CFE_MISSION_EVS_HK_TLM_MSG      1
-   /* Offset 2 is available */
-#define CFE_MISSION_SB_HK_TLM_MSG       3
-#define CFE_MISSION_TBL_HK_TLM_MSG      4
-#define CFE_MISSION_TIME_HK_TLM_MSG     5
-#define CFE_MISSION_TIME_DIAG_TLM_MSG   6
-
-#define CFE_MISSION_EVS_LONG_EVENT_MSG_MSG    8
-#define CFE_MISSION_EVS_SHORT_EVENT_MSG_MSG   9
-#define CFE_MISSION_SB_STATS_TLM_MSG          10
-#define CFE_MISSION_ES_APP_TLM_MSG            11
-#define CFE_MISSION_TBL_REG_TLM_MSG           12
-#define CFE_MISSION_SB_ALLSUBS_TLM_MSG        13
-#define CFE_MISSION_SB_ONESUB_TLM_MSG         14
-#define CFE_MISSION_ES_SHELL_TLM_MSG          15
-#define CFE_MISSION_ES_MEMSTATS_TLM_MSG       16
-
-/**
-**  \cfeescfg Mission Max Apps in a message
-**
-**  \par Description:
-**      Indicates the maximum number of apps in a telemetry housekeeping message
-**
-**      This affects the layout of command/telemetry messages but does not affect run
-**      time behavior or internal allocation.
-**
-**  \par Limits
-**       All CPUs within the same SB domain (mission) must share the same definition
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-*/
-#define CFE_MISSION_ES_MAX_APPLICATIONS    16
-
-
-/**
-**  \cfeescfg Define Max Shell Command Size for messages
-**
-**  \par Description:
-**       Defines the maximum size in characters of the shell command.
-**
-**      This affects the layout of command/telemetry messages but does not affect run
-**      time behavior or internal allocation.
-**
-**  \par Limits
-**       All CPUs within the same SB domain (mission) must share the same definition
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-**
-**       This value should be kept as a multiple of 4, to maintain alignment of
-**       any possible neighboring fields without implicit padding.
-*/
-#define CFE_MISSION_ES_MAX_SHELL_CMD  64
-
-
-/**
-**  \cfeescfg Define Shell Command Telemetry Pkt Segment Size for messages
-**
-**  \par Description:
-**       Defines the size of the shell command tlm packet segments.The shell command
-**       output size is dependant on the shell command itself. If the shell output
-**       size is greater than the size of the packet defined here, the fsw will
-**       generate a series of tlm packets (of the size defined here) that can be
-**       reconstructed by the ground system.
-**
-**      This affects the layout of command/telemetry messages but does not affect run
-**      time behavior or internal allocation.
-**
-**  \par Limits
-**       All CPUs within the same SB domain (mission) must share the same definition
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-**
-**       This value should be kept as a multiple of 4, to maintain alignment of
-**       any possible neighboring fields without implicit padding.
-**
-*/
-#define CFE_MISSION_ES_MAX_SHELL_PKT    64
-
-/**
-**  \cfeescfg Define Max Number of Performance IDs for messages
-**
-**  \par Description:
-**       Defines the maximum number of perf ids allowed in command/telemetry messages
-**
-**      This affects the layout of command/telemetry messages but does not affect run
-**      time behavior or internal allocation.
-**
-**  \par Limits
-**       All CPUs within the same SB domain (mission) must share the same definition
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-**
-*/
-#define CFE_MISSION_ES_PERF_MAX_IDS                  128
-
-/**
-**  \cfetblcfg Maximum Length of Full Table Name in messages
-**
-**  \par Description:
-**      Indicates the maximum length (in characters) of the entire table name
-**      within software bus messages, in "AppName.TableName" notation.
-**
-**      This affects the layout of command/telemetry messages but does not affect run
-**      time behavior or internal allocation.
-**
-**  \par Limits
-**       All CPUs within the same SB domain (mission) must share the same definition
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-**
-**       This value should be kept as a multiple of 4, to maintain alignment of
-**       any possible neighboring fields without implicit padding.
-*/
-#define CFE_MISSION_TBL_MAX_FULL_NAME_LEN         (CFE_MISSION_TBL_MAX_NAME_LENGTH + CFE_MISSION_MAX_API_LEN + 4)
-
-/**
-**  \cfesbcfg Maximum Number of pipes that SB command/telemetry messages may hold
-**
-**  \par Description:
-**       Dictates the maximum number of unique Pipes the SB message defintions will hold.
-**
-**       This affects the layout of command/telemetry messages but does not affect run
-**       time behavior or internal allocation.
-**   
-**  \par Limits
-**       All CPUs within the same SB domain (mission) must share the same definition
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-**
-*/
-#define CFE_MISSION_SB_MAX_PIPES                64
-
-
-/**
-**  \cfemissioncfg cFE Maximum length for pathnames within data exchange structures
-**
-**  \par Description:
-**       The value of this constant dictates the size of pathnames within all structures
-**       used for external data exchange, such as Software bus messages and table definitions.
-**       This is typically the same as OS_MAX_PATH_LEN but that is OSAL dependent --
-**       and as such it definable on a per-processor/OS basis and hence may be different
-**       across multiple processors.  It is recommended to set this to the value of the
-**       largest OS_MAX_PATH_LEN in use on any CPU on the mission.
-**
-**       This affects only the layout of command/telemetry messages and table definitions;
-**       internal allocation may use the platform-specific OS_MAX_PATH_LEN value.
-**   
-**  \par Limits
-**       All CPUs within the same SB domain (mission) and ground tools must share the
-**       same definition.
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-**
-**       This value should be kept as a multiple of 4, to maintain alignment of
-**       any possible neighboring fields without implicit padding.
-*/
-#define CFE_MISSION_MAX_PATH_LEN      64
-
-/**
-**  \cfemissioncfg cFE Maximum length for filenames within data exchange structures
-**
-**  \par Description:
-**       The value of this constant dictates the size of filenames within all structures
-**       used for external data exchange, such as Software bus messages and table definitions.
-**       This is typically the same as OS_MAX_FILE_LEN but that is OSAL dependent --
-**       and as such it definable on a per-processor/OS basis and hence may be different
-**       across multiple processors.  It is recommended to set this to the value of the
-**       largest OS_MAX_FILE_LEN in use on any CPU on the mission.
-**
-**       This affects only the layout of command/telemetry messages and table definitions;
-**       internal allocation may use the platform-specific OS_MAX_FILE_LEN value.
-**
-**  \par Limits
-**       All CPUs within the same SB domain (mission) and ground tools must share the
-**       same definition.
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-**
-**       This value should be kept as a multiple of 4, to maintain alignment of
-**       any possible neighboring fields without implicit padding.
-*/
-#define CFE_MISSION_MAX_FILE_LEN      20
-
-/**
-**  \cfemissioncfg cFE Maximum length for API names within data exchange structures
-**
-**  \par Description:
-**       The value of this constant dictates the size of filenames within all structures
-**       used for external data exchange, such as Software bus messages and table definitions.
-**       This is typically the same as OS_MAX_API_LEN but that is OSAL dependent --
-**       and as such it definable on a per-processor/OS basis and hence may be different
-**       across multiple processors.  It is recommended to set this to the value of the
-**       largest OS_MAX_API_LEN in use on any CPU on the mission.
-**
-**       This affects only the layout of command/telemetry messages and table definitions;
-**       internal allocation may use the platform-specific OS_MAX_API_LEN value.
-**
-**  \par Limits
-**       All CPUs within the same SB domain (mission) must share the same definition
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-**
-**       This value should be kept as a multiple of 4, to maintain alignment of
-**       any possible neighboring fields without implicit padding.
-*/
-#define CFE_MISSION_MAX_API_LEN       20
-
-/**
-**  \cfeescfg Maximum Length of Full CDS Name in messages
-**
-**  \par Description:
-**      Indicates the maximum length (in characters) of the entire CDS name
-**      of the following form: "ApplicationName.CDSName"
-**
-**       This affects the layout of command/telemetry messages but does not affect run
-**       time behavior or internal allocation.
-**
-**  \par Limits
-**       All CPUs within the same SB domain (mission) must share the same definition
-**       Note this affects the size of messages, so it must not cause any message
-**       to exceed the max length.
-**
-**       This value should be kept as a multiple of 4, to maintain alignment of
-**       any possible neighboring fields without implicit padding.
-*/
-#define CFE_MISSION_ES_CDS_MAX_NAME_LEN       (CFE_MISSION_ES_CDS_MAX_NAME_LENGTH + CFE_MISSION_MAX_API_LEN + 4)
-
-
-/*
- * Compatibility layer for CFE release 6.6
- * During development of CFE 6.6 a naming convention was introduced such
- * that all mission-wide / global symbols use a CFE_MISSION_ prefix.
- *
- * The following section provides a mapping from the historical name to
- * the new name for compatibility with existing code.  The code can then be
- * compiled with the CFE_OMIT_DEPRECATED_6_6 macro defined, and an error will
- * be triggered if any of the old symbol names are referenced in the code.
- *
- * It is expected that this compatibility layer will be removed in the next
- * release following 6.6, so all code must be fixed to use the new name.
- */
-#ifndef CFE_OMIT_DEPRECATED_6_6
-
-#define CFE_SPACECRAFT_ID           CFE_MISSION_SPACECRAFT_ID
-#define CFE_SB_TIME_32_16_SUBS      CFE_MISSION_SB_TIME_32_16_SUBS
-#define CFE_SB_TIME_32_32_SUBS      CFE_MISSION_SB_TIME_32_32_SUBS
-#define CFE_SB_TIME_32_32_M_20      CFE_MISSION_SB_TIME_32_32_M_20
-#define CFE_SB_PACKET_TIME_FORMAT   CFE_MISSION_SB_PACKET_TIME_FORMAT
-#define CFE_SB_MAX_SB_MSG_SIZE      CFE_MISSION_SB_MAX_SB_MSG_SIZE
-#define CFE_TIME_CFG_DEFAULT_TAI    CFE_MISSION_TIME_CFG_DEFAULT_TAI
-#define CFE_TIME_CFG_DEFAULT_UTC    CFE_MISSION_TIME_CFG_DEFAULT_UTC
-#define CFE_TIME_CFG_FAKE_TONE      CFE_MISSION_TIME_CFG_FAKE_TONE
-#define CFE_TIME_AT_TONE_WAS        CFE_MISSION_TIME_AT_TONE_WAS
-#define CFE_TIME_AT_TONE_WILL_BE    CFE_MISSION_TIME_AT_TONE_WILL_BE
-#define CFE_TIME_MIN_ELAPSED        CFE_MISSION_TIME_MIN_ELAPSED
-#define CFE_TIME_MAX_ELAPSED        CFE_MISSION_TIME_MAX_ELAPSED
-#define CFE_TIME_DEF_MET_SECS       CFE_MISSION_TIME_DEF_MET_SECS
-#define CFE_TIME_DEF_MET_SUBS       CFE_MISSION_TIME_DEF_MET_SUBS
-#define CFE_TIME_DEF_STCF_SECS      CFE_MISSION_TIME_DEF_STCF_SECS
-#define CFE_TIME_DEF_STCF_SUBS      CFE_MISSION_TIME_DEF_STCF_SUBS
-#define CFE_TIME_DEF_LEAPS          CFE_MISSION_TIME_DEF_LEAPS
-#define CFE_TIME_DEF_DELAY_SECS     CFE_MISSION_TIME_DEF_DELAY_SECS
-#define CFE_TIME_DEF_DELAY_SUBS     CFE_MISSION_TIME_DEF_DELAY_SUBS
-#define CFE_TIME_EPOCH_YEAR         CFE_MISSION_TIME_EPOCH_YEAR
-#define CFE_TIME_EPOCH_DAY          CFE_MISSION_TIME_EPOCH_DAY
-#define CFE_TIME_EPOCH_HOUR         CFE_MISSION_TIME_EPOCH_HOUR
-#define CFE_TIME_EPOCH_MINUTE       CFE_MISSION_TIME_EPOCH_MINUTE
-#define CFE_TIME_EPOCH_SECOND       CFE_MISSION_TIME_EPOCH_SECOND
-#define CFE_TIME_FS_FACTOR          CFE_MISSION_TIME_FS_FACTOR
-#define CFE_ES_CDS_MAX_NAME_LENGTH  CFE_MISSION_ES_CDS_MAX_NAME_LENGTH
-#define CFE_EVS_MAX_MESSAGE_LENGTH  CFE_MISSION_EVS_MAX_MESSAGE_LENGTH
-#define CFE_ES_CRC_8                CFE_MISSION_ES_CRC_8
-#define CFE_ES_CRC_16               CFE_MISSION_ES_CRC_16
-#define CFE_ES_CRC_32               CFE_MISSION_ES_CRC_32
-#define CFE_ES_DEFAULT_CRC          CFE_MISSION_ES_DEFAULT_CRC
-#define CFE_TBL_MAX_NAME_LENGTH     CFE_MISSION_TBL_MAX_NAME_LENGTH
-#define CFE_CMD_MID_BASE_CPU1       CFE_MISSION_CMD_MID_BASE_CPU1
-#define CFE_TLM_MID_BASE_CPU1       CFE_MISSION_TLM_MID_BASE_CPU1
-#define CFE_CMD_APPID_BASE_CPU1     CFE_MISSION_CMD_APPID_BASE_CPU1
-#define CFE_TLM_APPID_BASE_CPU1     CFE_MISSION_TLM_APPID_BASE_CPU1
-#define CFE_CMD_MID_BASE_CPU2       CFE_MISSION_CMD_MID_BASE_CPU2
-#define CFE_TLM_MID_BASE_CPU2       CFE_MISSION_TLM_MID_BASE_CPU2
-#define CFE_CMD_APPID_BASE_CPU2     CFE_MISSION_CMD_APPID_BASE_CPU2
-#define CFE_TLM_APPID_BASE_CPU2     CFE_MISSION_TLM_APPID_BASE_CPU2
-#define CFE_CMD_MID_BASE_CPU3       CFE_MISSION_CMD_MID_BASE_CPU3
-#define CFE_TLM_MID_BASE_CPU3       CFE_MISSION_TLM_MID_BASE_CPU3
-#define CFE_CMD_APPID_BASE_CPU3     CFE_MISSION_CMD_APPID_BASE_CPU3
-#define CFE_TLM_APPID_BASE_CPU3     CFE_MISSION_TLM_APPID_BASE_CPU3
-#define CFE_CMD_MID_BASE_GLOB       CFE_MISSION_CMD_MID_BASE_GLOB
-#define CFE_TLM_MID_BASE_GLOB       CFE_MISSION_TLM_MID_BASE_GLOB
-#define CFE_EVS_CMD_MSG             CFE_MISSION_EVS_CMD_MSG
-#define CFE_SB_CMD_MSG              CFE_MISSION_SB_CMD_MSG
-#define CFE_TBL_CMD_MSG             CFE_MISSION_TBL_CMD_MSG
-#define CFE_TIME_CMD_MSG            CFE_MISSION_TIME_CMD_MSG
-#define CFE_ES_CMD_MSG              CFE_MISSION_ES_CMD_MSG
-#define CFE_ES_SEND_HK_MSG          CFE_MISSION_ES_SEND_HK_MSG
-#define CFE_EVS_SEND_HK_MSG         CFE_MISSION_EVS_SEND_HK_MSG
-#define CFE_SB_SEND_HK_MSG          CFE_MISSION_SB_SEND_HK_MSG
-#define CFE_TBL_SEND_HK_MSG         CFE_MISSION_TBL_SEND_HK_MSG
-#define CFE_TIME_SEND_HK_MSG        CFE_MISSION_TIME_SEND_HK_MSG
-#define CFE_TIME_TONE_CMD_MSG       CFE_MISSION_TIME_TONE_CMD_MSG
-#define CFE_TIME_1HZ_CMD_MSG        CFE_MISSION_TIME_1HZ_CMD_MSG
-#define CFE_TIME_DATA_CMD_MSG       CFE_MISSION_TIME_DATA_CMD_MSG
-#define CFE_TIME_SEND_CMD_MSG       CFE_MISSION_TIME_SEND_CMD_MSG
-#define CFE_ES_HK_TLM_MSG           CFE_MISSION_ES_HK_TLM_MSG
-#define CFE_EVS_HK_TLM_MSG          CFE_MISSION_EVS_HK_TLM_MSG
-#define CFE_SB_HK_TLM_MSG           CFE_MISSION_SB_HK_TLM_MSG
-#define CFE_TBL_HK_TLM_MSG          CFE_MISSION_TBL_HK_TLM_MSG
-#define CFE_TIME_HK_TLM_MSG         CFE_MISSION_TIME_HK_TLM_MSG
-#define CFE_TIME_DIAG_TLM_MSG       CFE_MISSION_TIME_DIAG_TLM_MSG
-#define CFE_EVS_EVENT_MSG_MSG       CFE_MISSION_EVS_LONG_EVENT_MSG_MSG
-#define CFE_SB_STATS_TLM_MSG        CFE_MISSION_SB_STATS_TLM_MSG
-#define CFE_ES_APP_TLM_MSG          CFE_MISSION_ES_APP_TLM_MSG
-#define CFE_TBL_REG_TLM_MSG         CFE_MISSION_TBL_REG_TLM_MSG
-#define CFE_SB_ALLSUBS_TLM_MSG      CFE_MISSION_SB_ALLSUBS_TLM_MSG
-#define CFE_SB_ONESUB_TLM_MSG       CFE_MISSION_SB_ONESUB_TLM_MSG
-#define CFE_ES_SHELL_TLM_MSG        CFE_MISSION_ES_SHELL_TLM_MSG
-#define CFE_ES_MEMSTATS_TLM_MSG     CFE_MISSION_ES_MEMSTATS_TLM_MSG
-
-#endif /* CFE_OMIT_DEPRECATED_6_6 */
-
-
-
-
-#endif /* _cfe_mission_cfg_ */
-
-

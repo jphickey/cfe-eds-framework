@@ -45,10 +45,10 @@
 #include "cfe_tbl.h"
 #include "common_types.h"
 #include "ut_support.h"
-#include "cfe_tbl_msg.h"
 #include "cfe_tbl_internal.h"
 #include "cfe_tbl_task.h"
 #include "cfe_tbl_task_cmds.h"
+#include "cfe_tbl_eds_interface.h"
 
 typedef struct
 {
@@ -148,26 +148,6 @@ void Test_CFE_TBL_TaskInit(void);
 **
 ******************************************************************************/
 void Test_CFE_TBL_InitData(void);
-
-/*****************************************************************************/
-/**
-** \brief Test command handler table message ID (or command code) search
-**        function
-**
-** \par Description
-**        This function tests the command handler table message ID (or command
-**        code) search function.
-**
-** \par Assumptions, External Events, and Notes:
-**        None
-**
-** \returns
-**        This function does not return a value.
-**
-** \sa #UT_Text, #UT_InitData, #UT_Report, #CFE_TBL_SearchCmdHndlrTbl,
-**
-******************************************************************************/
-void Test_CFE_TBL_SearchCmdHndlrTbl(void);
 
 /*****************************************************************************/
 /**

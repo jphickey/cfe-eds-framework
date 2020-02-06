@@ -49,11 +49,14 @@
 */
 #define CFE_SB_POLL                     0      /**< \brief Option used with #CFE_SB_RcvMsg to request immediate pipe status */
 #define CFE_SB_PEND_FOREVER            -1      /**< \brief Option used with #CFE_SB_RcvMsg to force a wait for next message */
-#define CFE_SB_SUB_ENTRIES_PER_PKT      20     /**< \brief Configuration parameter used by SBN App */
 #define CFE_SB_SUBSCRIPTION             0      /**< \brief Subtype specifier used in #CFE_SB_SingleSubscriptionTlm_t by SBN App */
 #define CFE_SB_UNSUBSCRIPTION           1      /**< \brief Subtype specified used in #CFE_SB_SingleSubscriptionTlm_t by SBN App */
 
-#define CFE_SB_INVALID_MSG_ID           0xFFFF /**< \brief Initializer for CFE_SB_MsgId_t values that will not match any real MsgId */
+/**
+ * \brief Initializer for CFE_SB_MsgId_t values that will not match any real MsgId 
+ */
+#define CFE_SB_MSG_ID_INITIALIZER           { .MsgId = 0 }
+#define CFE_SB_INVALID_MSG_ID               ((CFE_SB_MsgId_t)CFE_SB_MSG_ID_INITIALIZER)
 
 /*
 ** Macro Definitions
@@ -1241,6 +1244,61 @@ int32 CFE_SB_MessageStringGet(char *DestStringPtr, const char *SourceStringPtr, 
 int32 CFE_SB_MessageStringSet(char *DestStringPtr, const char *SourceStringPtr, uint32 DestMaxSize, uint32 SourceMaxSize);
 
 /**
+** \brief Gets the SB Message ID from an EDS TopicId
+**
+** \par Description
+**        To enhance portability across multiple CPUs, missions, and platforms,
+**        the EDS for an application should not specify absolute values for SB Message IDs
+**        (aka CCSDS APIDs) for the messages that an app sends/receives.
+**
+**        Instead, the EDS specifies an offset from a base value (which itself could
+**        be allocated by the tool set) and the final value is calculated at run time.
+**
+**        This routine converts from an EDS APID offset into the absolute SB MsgId value.
+**
+** \par Assumptions, External Events, and Notes:
+**        This depends on the PSP processor ID value being correct
+**
+** \returns An value to be used for the Software Bus Message ID
+**/
+CFE_SB_MsgId_t CFE_SB_MsgId_From_TopicId(uint16 TopicId);
+
+/*****************************************************************************/
+/**
+** \brief Gets an EDS TopicId from a SB Message ID value
+**
+** \par Description
+**        To enhance portability across multiple CPUs, missions, and platforms,
+**        the EDS for an application should not specify absolute values for SB Message IDs
+**        (aka CCSDS APIDs) for the messages that an app sends/receives.
+**
+**        Instead, the EDS specifies an offset from a base value (which itself could
+**        be allocated by the tool set) and the final value is calculated at run time.
+**
+**        This routine converts from an absolute SB MsgId value into the EDS Offset.
+**
+** \par Assumptions, External Events, and Notes:
+**        This depends on the PSP processor ID value being correct
+**
+** \returns An value to be used for the Software Bus Message ID
+**/
+uint16 CFE_SB_MsgId_To_TopicId(CFE_SB_MsgId_t MsgId);
+
+/**
+ * @brief Identifies whether a given CFE_SB_MsgId_t is valid
+ *
+ * @par Description
+ *      Performs a basic sanity check on a CFE_SB_MsgId_t
+ *
+ * @return true if sanity checks passed, false otherwise.
+ */
+static inline bool CFE_SB_IsValidMsgId(CFE_SB_MsgId_t MsgId)
+{
+    return (MsgId.MsgId != 0);
+}
+
+
+/**
  * @brief Identifies whether a two CFE_SB_MsgId_t values are equal
  *
  * @par Description
@@ -1257,7 +1315,7 @@ int32 CFE_SB_MessageStringSet(char *DestStringPtr, const char *SourceStringPtr, 
  */
 static inline bool CFE_SB_MsgId_Equal(CFE_SB_MsgId_t MsgId1, CFE_SB_MsgId_t MsgId2)
 {
-    return (MsgId1 == MsgId2);
+    return (MsgId1.MsgId == MsgId2.MsgId);
 }
 
 /*****************************************************************************/
@@ -1288,7 +1346,7 @@ static inline bool CFE_SB_MsgId_Equal(CFE_SB_MsgId_t MsgId1, CFE_SB_MsgId_t MsgI
  */
 static inline CFE_SB_MsgId_Atom_t CFE_SB_MsgIdToValue(CFE_SB_MsgId_t MsgId)
 {
-    return MsgId;
+    return (MsgId.MsgId);
 }
 
 /*****************************************************************************/
@@ -1317,7 +1375,11 @@ static inline CFE_SB_MsgId_Atom_t CFE_SB_MsgIdToValue(CFE_SB_MsgId_t MsgId)
  */
 static inline CFE_SB_MsgId_t CFE_SB_ValueToMsgId(CFE_SB_MsgId_Atom_t MsgIdValue)
 {
-    return MsgIdValue;
+    /* Because this might be compiled using C++ as well,
+     * it cannot use the C99 compound liternal syntax */
+    CFE_SB_MsgId_t Result;
+    Result.MsgId = MsgIdValue;
+    return Result;
 }
 
 

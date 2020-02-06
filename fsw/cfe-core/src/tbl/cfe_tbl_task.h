@@ -43,6 +43,7 @@
 #include "cfe_tbl_events.h"
 #include "cfe_tbl_msg.h"
 
+#include "edslib_datatypedb.h"
 
 /*************************************************************************/
 
@@ -185,7 +186,9 @@ typedef struct
 typedef struct 
 {
     uint32                      OwnerAppId;         /**< \brief Application ID of App that Registered Table */
-    uint32                      Size;               /**< \brief Size, in bytes, of Table */
+    EdsLib_Id_t                 EdsId;
+    EdsLib_DataTypeDB_TypeInfo_t EdsInfo;
+    uint32                      BinaryFileSize;     /**< \brief Size, in bytes, of binary Table file */
     CFE_SB_MsgId_t              NotificationMsgId;  /**< \brief Message ID of an associated management notification message */
     uint32                      NotificationParam;  /**< \brief Parameter of an associated management notification message */
     CFE_TBL_LoadBuff_t          Buffers[2];         /**< \brief Active and Inactive Buffer Pointers */

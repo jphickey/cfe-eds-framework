@@ -160,7 +160,6 @@ int32 CFE_ES_DumpCDSRegistryCmd(const CFE_ES_DumpCDSRegistry_t *data);
 ** Message Handler Helper Functions
 */
 bool CFE_ES_ValidateHandle(CFE_ES_MemHandle_t  Handle);
-bool CFE_ES_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 ExpectedLength);
 void CFE_ES_FileWriteByteCntErr(const char *Filename,uint32 Requested,uint32 Actual);
 
 /*************************************************************************/

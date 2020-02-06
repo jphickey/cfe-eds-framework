@@ -41,6 +41,8 @@
 #include "cfe_evs.h"
 #include "cfe_fs.h"
 #include "cfe_psp.h"
+#include "cfe_sb_eds.h"
+#include "edslib_datatypedb.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -269,7 +271,8 @@ int32 CFE_TBL_EarlyInit (void)
 void CFE_TBL_InitRegistryRecord (CFE_TBL_RegistryRec_t *RegRecPtr)
 {
     RegRecPtr->OwnerAppId = CFE_TBL_NOT_OWNED;
-    RegRecPtr->Size = 0;
+    RegRecPtr->EdsId = EDSLIB_ID_INVALID;
+    memset(&RegRecPtr->EdsInfo, 0, sizeof(RegRecPtr->EdsInfo));
     RegRecPtr->NotificationMsgId = CFE_SB_INVALID_MSG_ID;
     RegRecPtr->NotificationCC = 0;
     RegRecPtr->NotificationParam = 0;
@@ -919,7 +922,7 @@ int32 CFE_TBL_GetWorkingBuffer(CFE_TBL_LoadBuff_t **WorkingBufferPtr,
                 /* In case the file contains a partial table load, get the active buffer contents first */
                 memcpy((*WorkingBufferPtr)->BufferPtr,
                           RegRecPtr->Buffers[RegRecPtr->ActiveBufferIndex].BufferPtr,
-                          RegRecPtr->Size);
+                          RegRecPtr->EdsInfo.Size.Bytes);
             }
         }
     }
@@ -945,16 +948,59 @@ int32 CFE_TBL_LoadFromFile(CFE_TBL_LoadBuff_t *WorkingBufferPtr,
     CFE_FS_Header_t      StdFileHeader;
     CFE_TBL_File_Hdr_t   TblFileHeader;
     int32                FileDescriptor;
-    size_t               FilenameLen = strlen(Filename);
     uint32               NumBytes;
+    uint16               ScratchBuffId;
     uint8                ExtraByte;
+    CFE_TBL_LoadBuff_t   *ScratchBufferPtr;
+    EdsLib_Id_t          FinalId;
 
-    if (FilenameLen > (OS_MAX_PATH_LEN-1))
+    ScratchBufferPtr = NULL;
+
+    /*
+     * EDS INTEGRATION:
+     * In order to load from a file we need to first obtain a scratch buffer, which
+     * will temporarily hold the binary data.  The binary data is then de-serialized
+     * using EDS and the actual working buffer is populated.  The scratch buffer is then
+     * freed for other use.
+     */
+
+    /* Take Mutex to make sure we are not trying to grab a working buffer that some */
+    /* other application is also trying to grab. */
+    Status = OS_MutSemTake(CFE_TBL_TaskData.WorkBufMutex);
+
+    /* Make note of any errors but continue and hope for the best */
+    if (Status != OS_SUCCESS)
     {
-        Status = CFE_TBL_ERR_FILENAME_TOO_LONG;
+        CFE_ES_WriteToSysLog("CFE_TBL:Load-Internal error taking WorkBuf Mutex (Status=0x%08X)\n",
+                (unsigned int)Status);
     }
     else
     {
+        /* Determine if there are any common buffers available */
+        for (ScratchBuffId = 0; ScratchBuffId < CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS; ++ScratchBuffId)
+        {
+            /* If a free buffer was found, then return the address to the associated shared buffer */
+            if (CFE_TBL_TaskData.LoadBuffs[ScratchBuffId].Taken == false)
+            {
+                CFE_TBL_TaskData.LoadBuffs[ScratchBuffId].Taken = true;
+                ScratchBufferPtr = &CFE_TBL_TaskData.LoadBuffs[ScratchBuffId];
+                break;
+            }
+        }
+
+        /* Allow others to obtain a shared working buffer */
+        OS_MutSemGive(CFE_TBL_TaskData.WorkBufMutex);
+    }
+
+    if (ScratchBufferPtr == NULL)
+    {
+        CFE_ES_WriteToSysLog("CFE_TBL:Load-Cannot obtain shared buffer\n");
+        Status = CFE_TBL_ERR_NO_BUFFER_AVAIL;
+    }
+    else
+    {
+        memset(ScratchBufferPtr->BufferPtr, 0, RegRecPtr->BinaryFileSize);
+
         /* Try to open the specified table file */
         FileDescriptor = OS_open(Filename, OS_READ_ONLY, 0);
 
@@ -967,52 +1013,73 @@ int32 CFE_TBL_LoadFromFile(CFE_TBL_LoadBuff_t *WorkingBufferPtr,
                 /* Verify that the specified file has compatible data for specified table */
                 if (strcmp(RegRecPtr->Name, TblFileHeader.TableName) == 0)
                 {
-                    if ((TblFileHeader.Offset + TblFileHeader.NumBytes) > RegRecPtr->Size)
+                    if ((TblFileHeader.Offset + TblFileHeader.NumBytes) > RegRecPtr->BinaryFileSize)
                     {
                         Status = CFE_TBL_ERR_FILE_TOO_LARGE;
                     }
                     else
                     {
-                        /* Any Table load that starts beyond the first byte is a "partial load" */
-                        /* But a file that starts with the first byte and ends before filling   */
-                        /* the whole table is just considered "short".                          */
-                        if (TblFileHeader.Offset > 0)
-                        {
-                            Status = CFE_TBL_WARN_PARTIAL_LOAD;
-                        }
-                        else if (TblFileHeader.NumBytes < RegRecPtr->Size)
-                        {
-                            Status = CFE_TBL_WARN_SHORT_FILE;
-                        }
-
                         NumBytes = OS_read(FileDescriptor,
-                                           ((uint8*)WorkingBufferPtr->BufferPtr) + TblFileHeader.Offset,
+                                           ((uint8*)ScratchBufferPtr->BufferPtr) + TblFileHeader.Offset,
                                            TblFileHeader.NumBytes);
 
                         if (NumBytes != TblFileHeader.NumBytes)
                         {
                             Status = CFE_TBL_ERR_LOAD_INCOMPLETE;
                         }
-                        
-                        /* Check to see if the file is too large (ie - more data than header claims) */
-                        NumBytes = OS_read(FileDescriptor, &ExtraByte, 1);
-                        
-                        /* If successfully read another byte, then file must have too much data */
-                        if (NumBytes == 1)
+                        else
                         {
-                            Status = CFE_TBL_ERR_FILE_TOO_LARGE;
+                            FinalId = RegRecPtr->EdsId;
+                            Status = EdsLib_DataTypeDB_UnpackPartialObject(CFE_SB_GetEds(), &FinalId, WorkingBufferPtr->BufferPtr,
+                                    ScratchBufferPtr->BufferPtr, CFE_PLATFORM_TBL_MAX_SNGL_TABLE_SIZE, 8 * RegRecPtr->BinaryFileSize, TblFileHeader.Offset);
+
+                            if (Status == EDSLIB_SUCCESS)
+                            {
+                                Status = EdsLib_DataTypeDB_VerifyUnpackedObject(CFE_SB_GetEds(), FinalId,
+                                        WorkingBufferPtr->BufferPtr, ScratchBufferPtr->BufferPtr,
+                                        EDSLIB_DATATYPEDB_RECOMPUTE_LENGTH);
+                            }
+
+                            if (Status != EDSLIB_SUCCESS)
+                            {
+                                Status = CFE_TBL_ERR_LOAD_INCOMPLETE;
+                            }
+
+                            /* Any Table load that starts beyond the first byte is a "partial load" */
+                            /* But a file that starts with the first byte and ends before filling   */
+                            /* the whole table is just considered "short".                          */
+                            else if (TblFileHeader.Offset > 0)
+                            {
+                                Status = CFE_TBL_WARN_PARTIAL_LOAD;
+                            }
+                            else if (TblFileHeader.NumBytes < RegRecPtr->BinaryFileSize)
+                            {
+                                Status = CFE_TBL_WARN_SHORT_FILE;
+                            }
                         }
 
-                        memset(WorkingBufferPtr->DataSource, 0, OS_MAX_PATH_LEN);
-                        strncpy(WorkingBufferPtr->DataSource, Filename, OS_MAX_PATH_LEN);
+                        if (Status == CFE_SUCCESS)
+                        {
+                            /* Check to see if the file is too large (ie - more data than header claims) */
+                            NumBytes = OS_read(FileDescriptor, &ExtraByte, 1);
+
+                            /* If successfully read another byte, then file must have too much data */
+                            if (NumBytes == 1)
+                            {
+                                Status = CFE_TBL_ERR_FILE_TOO_LARGE;
+                            }
+                        }
+
+                        strncpy(WorkingBufferPtr->DataSource, Filename, sizeof(WorkingBufferPtr->DataSource)-1);
+                        WorkingBufferPtr->DataSource[sizeof(WorkingBufferPtr->DataSource)-1] = 0;
 
                         /* Save file creation time for later storage into Registry */
                         WorkingBufferPtr->FileCreateTimeSecs = StdFileHeader.TimeSeconds;
                         WorkingBufferPtr->FileCreateTimeSubSecs = StdFileHeader.TimeSubSeconds;
-                        
+
                         /* Compute the CRC on the specified table buffer */
                         WorkingBufferPtr->Crc = CFE_ES_CalculateCRC(WorkingBufferPtr->BufferPtr,
-                                                                    RegRecPtr->Size,
+                                                                    RegRecPtr->EdsInfo.Size.Bytes,
                                                                     0,
                                                                     CFE_MISSION_ES_DEFAULT_CRC);
                     }
@@ -1030,6 +1097,9 @@ int32 CFE_TBL_LoadFromFile(CFE_TBL_LoadBuff_t *WorkingBufferPtr,
             /* Return error code obtained from OS_open */
             Status = FileDescriptor;
         }
+
+        /* Free the scratch buffer */
+        ScratchBufferPtr->Taken = false;
     }
 
     return Status;
@@ -1104,7 +1174,7 @@ int32 CFE_TBL_UpdateInternal( CFE_TBL_Handle_t TblHandle,
                 {
                     memcpy(RegRecPtr->Buffers[0].BufferPtr,
                               CFE_TBL_TaskData.LoadBuffs[RegRecPtr->LoadInProgress].BufferPtr,
-                              RegRecPtr->Size);
+                              RegRecPtr->EdsInfo.Size.Bytes);
                 }
 
                 /* Save source description with active buffer */
@@ -1182,7 +1252,10 @@ int32 CFE_TBL_ReadHeaders( int32 FileDescriptor,
                            const char *LoadFilename )
 {
     int32 Status;
-    int32 EndianCheck = 0x01020304;
+    EdsLib_Id_t                 EdsId;
+    EdsLib_DataTypeDB_TypeInfo_t HdrInfo;
+    uint32                      ExpectedSize;
+    uint8_t LocalBuffer[sizeof(CFE_TBL_File_Hdr_t)];
 
     #if (CFE_PLATFORM_TBL_VALID_SCID_COUNT > 0)
     static uint32 ListSC[2] = { CFE_PLATFORM_TBL_VALID_SCID_1, CFE_PLATFORM_TBL_VALID_SCID_2};
@@ -1237,10 +1310,14 @@ int32 CFE_TBL_ReadHeaders( int32 FileDescriptor,
             }
             else
             {
-                Status = OS_read(FileDescriptor, TblFileHeaderPtr, sizeof(CFE_TBL_File_Hdr_t));
+                EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CFE_TBL), CFE_TBL_File_Hdr_DATADICTIONARY);
+                EdsLib_DataTypeDB_GetTypeInfo(CFE_SB_GetEds(), EdsId, &HdrInfo);
+                ExpectedSize = (HdrInfo.Size.Bits + 7) / 8;
+
+                Status = OS_read(FileDescriptor, LocalBuffer, ExpectedSize);
 
                 /* Verify successful read of cFE Table File Header */
-                if (Status != sizeof(CFE_TBL_File_Hdr_t))
+                if (Status != ExpectedSize)
                 {
                     CFE_EVS_SendEventWithAppID(CFE_TBL_FILE_TBL_HDR_ERR_EID,
                                                CFE_EVS_EventType_ERROR,
@@ -1252,16 +1329,22 @@ int32 CFE_TBL_ReadHeaders( int32 FileDescriptor,
                 }
                 else
                 {
-                    /* All "required" checks have passed and we are pointing at the data */
-                    Status = CFE_SUCCESS;
+                    Status = EdsLib_DataTypeDB_UnpackCompleteObject(CFE_SB_GetEds(), &EdsId, TblFileHeaderPtr, LocalBuffer,
+                            sizeof(*TblFileHeaderPtr), 8 * ExpectedSize);
 
-                    if ((*(char *)&EndianCheck) == 0x04)
+                    if (Status == EDSLIB_SUCCESS)
                     {
-                        /* If this is a little endian processor, then the standard cFE Table Header,   */
-                        /* which is in big endian format, must be swapped so that the data is readable */
-                        CFE_TBL_ByteSwapTblHeader(TblFileHeaderPtr);
+                        /* All "required" checks have passed and we are pointing at the data */
+                        Status = CFE_SUCCESS;
                     }
+                    else
+                    {
+                        Status = CFE_TBL_ERR_NO_TBL_HEADER;
+                    }
+                }
 
+                if (Status == CFE_SUCCESS)
+                {
                     /*
                      * Ensure termination of all local strings. These were read from a file, so they
                      * must be treated with appropriate care.  This could happen in case the file got
@@ -1326,40 +1409,6 @@ int32 CFE_TBL_ReadHeaders( int32 FileDescriptor,
     return Status;
 }   /* End of CFE_TBL_ReadHeaders() */
 
-
-/*******************************************************************
-**
-** CFE_TBL_ByteSwapTblHeader
-**
-** NOTE: For complete prolog information, see above
-********************************************************************/
-
-void CFE_TBL_ByteSwapTblHeader(CFE_TBL_File_Hdr_t *HdrPtr)
-{
-    CFE_TBL_ByteSwapUint32(&HdrPtr->Reserved);
-    CFE_TBL_ByteSwapUint32(&HdrPtr->Offset);
-    CFE_TBL_ByteSwapUint32(&HdrPtr->NumBytes);
-} /* End of CFE_TBL_ByteSwapTblHeader() */
-
-
-/*******************************************************************
-**
-** CFE_TBL_ByteSwapUint32
-**
-** NOTE: For complete prolog information, see above
-********************************************************************/
-
-void CFE_TBL_ByteSwapUint32(uint32 *Uint32ToSwapPtr)
-{
-    int32 Temp = *Uint32ToSwapPtr;
-    char *InPtr = (char *)&Temp;
-    char *OutPtr = (char *)Uint32ToSwapPtr;
-    
-    OutPtr[0] = InPtr[3];
-    OutPtr[1] = InPtr[2];
-    OutPtr[2] = InPtr[1];
-    OutPtr[3] = InPtr[0];    
-} /* End of CFE_TBL_ByteSwapUint32() */
 
 /*******************************************************************
 **

@@ -502,24 +502,6 @@ int32 CFE_TBL_ReadHeaders( int32 FileDescriptor,
 void CFE_TBL_InitRegistryRecord (CFE_TBL_RegistryRec_t *RegRecPtr);
 
 
-/*****************************************************************************/
-/**
-** \brief Byte swaps a CFE_TBL_File_Hdr_t structure
-**
-** \par Description
-**        Converts a big-endian version of a CFE_TBL_File_Hdr_t structure to
-**        a little-endian version and vice-versa.
-**
-** \par Assumptions, External Events, and Notes:
-**          None
-**
-** \param[in]  HdrPtr   Pointer to table header that needs to be swapped.
-** 
-** \param[out] *HdrPtr  The swapped header
-**
-**                     
-******************************************************************************/
-void CFE_TBL_ByteSwapTblHeader(CFE_TBL_File_Hdr_t *HdrPtr);
 
 
 /*****************************************************************************/
@@ -589,25 +571,6 @@ void CFE_TBL_UpdateCriticalTblCDS(CFE_TBL_RegistryRec_t *RegRecPtr);
 **                     
 ******************************************************************************/
 int32 CFE_TBL_SendNotificationMsg(CFE_TBL_RegistryRec_t *RegRecPtr);
-
-/*****************************************************************************/
-/**
-** \brief Performs a byte swap on a uint32 integer
-**
-** \par Description
-**        Converts a big-endian uint32 integer to a little-endian uint32 integer
-**        and vice-versa.
-**
-** \par Assumptions, External Events, and Notes:
-**          None
-**
-** \param[in]  Uint32ToSwapPtr Pointer to uint32 value to be swapped.
-**
-** \param[out] *Uint32ToSwapPtr The swapped uint32 value
-**
-**
-******************************************************************************/
-extern void CFE_TBL_ByteSwapUint32(uint32 *Uint32ToSwapPtr);
 
 
 /*

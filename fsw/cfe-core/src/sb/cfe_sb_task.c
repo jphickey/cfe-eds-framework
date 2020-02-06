@@ -42,13 +42,41 @@
 #include "cfe_psp.h"
 #include "cfe_es_msg.h"
 #include "cfe_sb_verify.h"
-#include "cfe_sb_msg_id_util.h"
+#include "cfe_sb_eds.h"
+
 #include <string.h>
 
 /*  Task Globals */
 cfe_sb_t                CFE_SB;
 CFE_SB_Qos_t            CFE_SB_Default_Qos;
 
+/* Include the EDS for CFE SB */
+#include "cfe_sb_eds_dictionary.h"
+#include "cfe_sb_eds_dispatcher.h"
+
+
+/*
+ * Define a lookup table for SB command codes
+ */
+const CFE_SB_Application_Component_Telecommand_DispatchTable_t CFE_SB_TC_DISPATCH_TABLE =
+{
+        .CMD = {
+                .DisableRoute_indication = CFE_SB_DisableRouteCmd,
+                .DisableSubReporting_indication = CFE_SB_DisableSubReportingCmd,
+                .EnableRoute_indication = CFE_SB_EnableRouteCmd,
+                .EnableSubReporting_indication = CFE_SB_EnableSubReportingCmd,
+                .Noop_indication = CFE_SB_NoopCmd,
+                .ResetCounters_indication = CFE_SB_ResetCountersCmd,
+                .SendMapInfo_indication = CFE_SB_SendMapInfoCmd,
+                .SendPipeInfo_indication = CFE_SB_SendPipeInfoCmd,
+                .SendPrevSubs_indication = CFE_SB_SendPrevSubsCmd,
+                .SendRoutingInfo_indication = CFE_SB_SendRoutingInfoCmd,
+                .SendSbStats_indication = CFE_SB_SendStatsCmd
+        },
+        .SEND_HK = {
+                .indication = CFE_SB_SendHKTlmCmd
+        }
+};
 
 /******************************************************************************
 **  Function:  CFE_SB_TaskMain()
@@ -148,6 +176,9 @@ int32 CFE_SB_AppInit(void){
 
     /* Get the assigned Application ID for the SB Task */
     CFE_ES_GetAppID(&CFE_SB.AppId);
+
+    /* Register the data dictionary so that outgoing messages can be processed by other apps */
+    CFE_SB_EDS_RegisterSelf(&CFE_SB_DATATYPE_DB);
 
     /* Process the platform cfg file events to be filtered */
     if(CFE_PLATFORM_SB_FILTERED_EVENT1 != 0){
@@ -297,44 +328,6 @@ int32 CFE_SB_AppInit(void){
 
 
 /******************************************************************************
-**  Function:  CFE_SB_VerifyCmdLength()
-**
-**  Purpose:
-**    Function to verify the length of incoming SB command packets
-**
-**  Arguments:
-**    Message pointer and expected length
-**
-**  Return:
-**    true if length is acceptable
-*/
-bool CFE_SB_VerifyCmdLength(CFE_SB_MsgPtr_t Msg, uint16 ExpectedLength)
-{
-    bool result       = true;
-    uint16  ActualLength = CFE_SB_GetTotalMsgLength(Msg);
-
-    /*
-    ** Verify the command packet length
-    */
-    if (ExpectedLength != ActualLength)
-    {
-        CFE_SB_MsgId_t MessageID = CFE_SB_GetMsgId(Msg);
-        uint16 CommandCode = CFE_SB_GetCmdCode(Msg);
-
-        CFE_EVS_SendEvent(CFE_SB_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
-                "Invalid cmd length: ID = 0x%X, CC = %d, Exp Len = %d, Len = %d",
-                (unsigned int)MessageID, (int)CommandCode, (int)ExpectedLength, (int)ActualLength);
-        result = false;
-        ++CFE_SB.HKTlmMsg.Payload.CommandErrorCounter;
-    }
-
-    return(result);
-
-} /* End of CFE_SB_VerifyCmdLength() */
-
-
-
-/******************************************************************************
 **  Function:  CFE_SB_ProcessCmdPipePkt()
 **
 **  Purpose:
@@ -346,111 +339,36 @@ bool CFE_SB_VerifyCmdLength(CFE_SB_MsgPtr_t Msg, uint16 ExpectedLength)
 **  Return:
 **    none
 */
-void CFE_SB_ProcessCmdPipePkt(void) {
-   switch(CFE_SB_GetMsgId(CFE_SB.CmdPipePktPtr)){
+void CFE_SB_ProcessCmdPipePkt(void)
+{
+    int32 Status;
 
-      case CFE_SB_SEND_HK_MID:
-         /* Note: Command counter not incremented for this command */
-         CFE_SB_SendHKTlmCmd((CCSDS_CommandPacket_t *)CFE_SB.CmdPipePktPtr);
-         break;
+    Status = CFE_SB_Application_Component_Telecommand_Dispatch(
+            CFE_SB_Telecommand_indication_Command_ID,
+            CFE_SB.CmdPipePktPtr,
+            &CFE_SB_TC_DISPATCH_TABLE);
 
-      case CFE_SB_CMD_MID:
-         switch (CFE_SB_GetCmdCode(CFE_SB.CmdPipePktPtr)) {
-            case CFE_SB_NOOP_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_Noop_t)))
-                {
-                    CFE_SB_NoopCmd((CFE_SB_Noop_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_RESET_COUNTERS_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_ResetCounters_t)))
-                {
-                    /* Note: Command counter not incremented for this command */
-                    CFE_SB_ResetCountersCmd((CFE_SB_ResetCounters_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_SEND_SB_STATS_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_SendSbStats_t)))
-                {
-                    CFE_SB_SendStatsCmd((CFE_SB_SendSbStats_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_SEND_ROUTING_INFO_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_SendRoutingInfo_t)))
-                {
-                    CFE_SB_SendRoutingInfoCmd((CFE_SB_SendRoutingInfo_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_ENABLE_ROUTE_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_EnableRoute_t)))
-                {
-                    CFE_SB_EnableRouteCmd((CFE_SB_EnableRoute_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_DISABLE_ROUTE_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_DisableRoute_t)))
-                {
-                    CFE_SB_DisableRouteCmd((CFE_SB_DisableRoute_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_SEND_PIPE_INFO_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_SendPipeInfo_t)))
-                {
-                    CFE_SB_SendPipeInfoCmd((CFE_SB_SendPipeInfo_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_SEND_MAP_INFO_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_SendMapInfo_t)))
-                {
-                    CFE_SB_SendMapInfoCmd((CFE_SB_SendMapInfo_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_SEND_PREV_SUBS_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_SendPrevSubs_t)))
-                {
-                    CFE_SB_SendPrevSubsCmd((CFE_SB_SendPrevSubs_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_ENABLE_SUB_REPORTING_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_EnableSubReporting_t)))
-                {
-                    CFE_SB_EnableSubReportingCmd((CFE_SB_EnableSubReporting_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            case CFE_SB_DISABLE_SUB_REPORTING_CC:
-                if (CFE_SB_VerifyCmdLength(CFE_SB.CmdPipePktPtr, sizeof(CFE_SB_DisableSubReporting_t)))
-                {
-                    CFE_SB_DisableSubReportingCmd((CFE_SB_DisableSubReporting_t *)CFE_SB.CmdPipePktPtr);
-                }
-                break;
-
-            default:
-               CFE_EVS_SendEvent(CFE_SB_BAD_CMD_CODE_EID,CFE_EVS_EventType_ERROR,
+    if (Status == CFE_STATUS_BAD_COMMAND_CODE)
+    {
+        CFE_EVS_SendEvent(CFE_SB_BAD_CMD_CODE_EID,CFE_EVS_EventType_ERROR,
                      "Invalid Cmd, Unexpected Command Code %d",
                      (int)CFE_SB_GetCmdCode(CFE_SB.CmdPipePktPtr));
-               CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
-               break;
-         } /* end switch on cmd code */
-         break;
-
-         default:
-            CFE_EVS_SendEvent(CFE_SB_BAD_MSGID_EID,CFE_EVS_EventType_ERROR,
-                  "Invalid Cmd, Unexpected Msg Id: 0x%04x",
-                  (unsigned int)CFE_SB_GetMsgId(CFE_SB.CmdPipePktPtr));
-            CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
-            break;
-
-   } /* end switch on MsgId */
+        CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
+    }
+    else if (Status == CFE_STATUS_WRONG_MSG_LENGTH)
+    {
+        CFE_EVS_SendEvent(CFE_SB_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
+                "Invalid cmd length: ID = 0x%X, CC = %d",
+                (unsigned int)CFE_SB_MsgIdToValue(CFE_SB_GetMsgId(CFE_SB.CmdPipePktPtr)), (int)CFE_SB_GetCmdCode(CFE_SB.CmdPipePktPtr));
+        ++CFE_SB.HKTlmMsg.Payload.CommandErrorCounter;
+    }
+    else if (Status != CFE_SUCCESS)
+    {
+        CFE_EVS_SendEvent(CFE_SB_BAD_MSGID_EID,CFE_EVS_EventType_ERROR,
+                "Invalid Cmd, Unexpected Msg Id: 0x%04x",
+                  (unsigned int)CFE_SB_MsgIdToValue(CFE_SB_GetMsgId(CFE_SB.CmdPipePktPtr)));
+        CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
+    }
 
 } /* end CFE_SB_ProcessCmdPipePkt */
 
@@ -598,7 +516,7 @@ int32 CFE_SB_EnableRouteCmd(const CFE_SB_EnableRoute_t *data)
 
     CmdPtr = &data->Payload;
 
-    MsgId  = CmdPtr->MsgId;
+    MsgId  = CFE_SB_ValueToMsgId(CmdPtr->MsgId);
     PipeId = CmdPtr->Pipe;
 
     /* check cmd parameters */
@@ -606,7 +524,7 @@ int32 CFE_SB_EnableRouteCmd(const CFE_SB_EnableRoute_t *data)
        (CFE_SB_ValidatePipeId(PipeId) != CFE_SUCCESS))
     {
         CFE_EVS_SendEvent(CFE_SB_ENBL_RTE3_EID,CFE_EVS_EventType_ERROR,
-                      "Enbl Route Cmd:Invalid Param.Msg 0x%x,Pipe %d",(unsigned int)MsgId,(int)PipeId);
+                      "Enbl Route Cmd:Invalid Param.Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
         CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
         /*
          * returning "success" here as there is no other recourse;
@@ -618,7 +536,7 @@ int32 CFE_SB_EnableRouteCmd(const CFE_SB_EnableRoute_t *data)
     DestPtr = CFE_SB_GetDestPtr(CFE_SB_ConvertMsgIdtoMsgKey(MsgId), PipeId);
     if(DestPtr == NULL){
         CFE_EVS_SendEvent(CFE_SB_ENBL_RTE1_EID,CFE_EVS_EventType_ERROR,
-                "Enbl Route Cmd:Route does not exist.Msg 0x%x,Pipe %d",(unsigned int)MsgId,(int)PipeId);
+                "Enbl Route Cmd:Route does not exist.Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
         CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
         /*
          * returning "success" here as there is no other recourse;
@@ -629,7 +547,7 @@ int32 CFE_SB_EnableRouteCmd(const CFE_SB_EnableRoute_t *data)
 
     DestPtr->Active = CFE_SB_ACTIVE;
     CFE_EVS_SendEvent(CFE_SB_ENBL_RTE2_EID,CFE_EVS_EventType_DEBUG,
-                      "Enabling Route,Msg 0x%x,Pipe %d",(unsigned int)MsgId,(int)PipeId);
+                      "Enabling Route,Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
 
     CFE_SB.HKTlmMsg.Payload.CommandCounter++;
 
@@ -660,14 +578,14 @@ int32 CFE_SB_DisableRouteCmd(const CFE_SB_DisableRoute_t *data)
 
     CmdPtr = &data->Payload;
 
-    MsgId  = CmdPtr->MsgId;
+    MsgId  = CFE_SB_ValueToMsgId(CmdPtr->MsgId);
     PipeId = CmdPtr->Pipe;
 
     /* check cmd parameters */
     if(!CFE_SB_IsValidMsgId(MsgId) ||
        (CFE_SB_ValidatePipeId(PipeId) != CFE_SUCCESS)){
         CFE_EVS_SendEvent(CFE_SB_DSBL_RTE3_EID,CFE_EVS_EventType_ERROR,
-                   "Disable Route Cmd:Invalid Param.Msg 0x%x,Pipe %d",(unsigned int)MsgId,(int)PipeId);
+                   "Disable Route Cmd:Invalid Param.Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
         CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
         /*
          * returning "success" here as there is no other recourse;
@@ -679,7 +597,7 @@ int32 CFE_SB_DisableRouteCmd(const CFE_SB_DisableRoute_t *data)
     DestPtr = CFE_SB_GetDestPtr(CFE_SB_ConvertMsgIdtoMsgKey(MsgId), PipeId);
     if(DestPtr == NULL){
         CFE_EVS_SendEvent(CFE_SB_DSBL_RTE1_EID,CFE_EVS_EventType_ERROR,
-            "Disable Route Cmd:Route does not exist,Msg 0x%x,Pipe %d",(unsigned int)MsgId,(int)PipeId);
+            "Disable Route Cmd:Route does not exist,Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
         CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
         /*
          * returning "success" here as there is no other recourse;
@@ -691,7 +609,7 @@ int32 CFE_SB_DisableRouteCmd(const CFE_SB_DisableRoute_t *data)
     DestPtr->Active = CFE_SB_INACTIVE;
 
     CFE_EVS_SendEvent(CFE_SB_DSBL_RTE2_EID,CFE_EVS_EventType_DEBUG,
-                      "Route Disabled,Msg 0x%x,Pipe %d",(unsigned int)MsgId,(int)PipeId);
+                      "Route Disabled,Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
     CFE_SB.HKTlmMsg.Payload.CommandCounter++;
 
     return CFE_SUCCESS;
@@ -885,7 +803,7 @@ int32 CFE_SB_SendRtgInfo(const char *Filename)
             /* If invalid id, continue on to next entry */
             if (pd != NULL) {
             
-                Entry.MsgId     = RtgTblPtr->MsgId;
+                Entry.MsgId     = CFE_SB_MsgIdToValue(RtgTblPtr->MsgId);
                 Entry.PipeId    = DestPtr -> PipeId;
                 Entry.State     = DestPtr -> Active;
                 Entry.MsgCnt    = DestPtr -> DestCnt;               
@@ -1056,7 +974,7 @@ int32 CFE_SB_SendMapInfo(const char *Filename)
         {
             RtgTblPtr = CFE_SB_GetRoutePtrFromIdx(RtgTblIdx);
 
-            Entry.MsgId = RtgTblPtr->MsgId;
+            Entry.MsgId = CFE_SB_MsgIdToValue(RtgTblPtr->MsgId);
             Entry.Index = CFE_SB_RouteIdxToValue(RtgTblIdx);
 
             WriteStat = OS_write (fd, &Entry, sizeof(CFE_SB_MsgMapFileEntry_t));
@@ -1128,7 +1046,7 @@ int32 CFE_SB_SendPrevSubsCmd(const CFE_SB_SendPrevSubs_t *data)
             if(DestPtr->Scope == CFE_SB_GLOBAL){
             
                 /* ...add entry into pkt */
-                CFE_SB.PrevSubMsg.Payload.Entry[EntryNum].MsgId = RoutePtr->MsgId;
+                CFE_SB.PrevSubMsg.Payload.Entry[EntryNum].MsgId = CFE_SB_MsgIdToValue(RoutePtr->MsgId);
                 CFE_SB.PrevSubMsg.Payload.Entry[EntryNum].Qos.Priority = 0;
                 CFE_SB.PrevSubMsg.Payload.Entry[EntryNum].Qos.Reliability = 0;
                 EntryNum++;

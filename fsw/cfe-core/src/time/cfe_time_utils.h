@@ -283,7 +283,7 @@ typedef struct
   ** Time at the tone command packets (sent by time servers)...
   */
   CFE_TIME_ToneDataCmd_t ToneDataCmd;
-  CFE_TIME_ToneSignalCmd_t ToneSignalCmd;
+  CCSDS_CommandPacket_t  ToneSignalCmd;
 
   /*
    * Normally "tone send" commands come from the scheduler based on the

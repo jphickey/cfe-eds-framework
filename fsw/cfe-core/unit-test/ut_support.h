@@ -52,6 +52,7 @@
 
 #include "cfe.h"
 #include "cfe_sb.h"
+#include "cfe_sb_eds.h"
 #include "cfe_es.h"
 #include "common_types.h"
 #include "cfe_evs_task.h"
@@ -107,23 +108,11 @@ extern const char *UT_OSP_MESSAGES[];
 #define CFE_SB_RD_TYPE_FROM_MSGID(MsgId)       ( (MsgId & CFE_SB_CMD_MESSAGE_TYPE) >> 7) 
 #endif
 
-/*
- * NOTE: There are some UT cases in TBL that are dependent on
- * the endianness of the local CPU.  This "endian check" exists
- * to provide hints to the test code.
- *
- * All endian-specific code should be replaced with endian-neutral
- * code in future versions.  This check will be removed in a future
- * version once that is complete.  No new test code should use this.
- */
-#define UT_LITTLE_ENDIAN 1
-#define UT_BIG_ENDIAN    2
-extern uint8  UT_Endianess;
 
 
 typedef struct
 {
-    CFE_SB_MsgId_t MsgId;
+    uint16 TopicId;
     uint16 SnapshotOffset;
     uint16 SnapshotSize;
     uint16 Count;
@@ -146,16 +135,15 @@ typedef struct
 typedef struct
 {
     /**
-     * Invoke the handler for this MsgID
+     * Offset of handler function to invoke
+     * If set negative, prevents any handler from being invoked
      */
-    CFE_SB_MsgId_t MsgId;
+    int32 DispatchOffset;
 
     /**
-     * Specifies the sub-command to invoke
-     * (ignored if the handler does not use command codes,
-     * set to zero in this case).
+     * Set nonzero to indicate a code to be returned from dispatcher.
      */
-    uint16 CommandCode;
+    int32 DispatchError;
 
 } UT_TaskPipeDispatchId_t;
 
@@ -328,6 +316,22 @@ void UT_ReportFailures(void);
 ******************************************************************************/
 void UT_CallTaskPipe(void (*TaskPipeFunc)(CFE_SB_MsgPtr_t), CFE_SB_MsgPtr_t Msg, uint32 MsgSize,
         UT_TaskPipeDispatchId_t DispatchId);
+
+/*****************************************************************************/
+/**
+** \brief A UT-Assert compatible hook function to call a user-specified function
+**
+** \par Description
+**        Passes the first argument of the context information to the user-specified handler function
+**
+** \par Assumptions, External Events, and Notes:
+**        None
+**
+** \returns
+**        Passes through the return code from the handler
+**
+******************************************************************************/
+int32 UT_SoftwareBusDispatchHook(void *UserObj, int32 StubRetcode, uint32 CallCount, const UT_StubContext_t *Context);
 
 /*****************************************************************************/
 /**

@@ -98,26 +98,6 @@
 
 
 /*
-** Type definition (system time)...
-*/
-/** 
-**  \brief Data structure used to hold system time values
-**
-**  \par Description
-**       The #CFE_TIME_SysTime_t data structure is used to hold time
-**       values.  Time is referred to as the elapsed time (in seconds
-**       and subseconds) since a specified epoch time.  The subseconds
-**       field contains the number of 2^(-32) second intervals that have
-**       elapsed since the epoch.
-**
-*/
-typedef struct
-{
-  uint32  Seconds;            /**< \brief Number of seconds since epoch */
-  uint32  Subseconds;         /**< \brief Number of subseconds since epoch (LSB = 2^(-32) seconds) */
-} CFE_TIME_SysTime_t;
-
-/*
 ** Macro to copy systime into another systime.
 ** Preferred to use this macro as it does not require the two arguments to be exactly the same type,
 ** it will work with any two structures that define "Seconds" and "Subseconds" members.

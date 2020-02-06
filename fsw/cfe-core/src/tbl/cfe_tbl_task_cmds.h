@@ -40,9 +40,14 @@
 /*********************  Macro and Constant Type Definitions   ***************************/
 
 /*
- * For backward compatibility, keep this enumeration for now but map the
- * values to the globally-defined codes in cfe_error.h, so it won't be confusing
- * if intermixed with a typical CFE int32 return code.
+ * TBL had already used a dispatch table prior to EDS (this was unique in CFE)
+ * These enumerations indicate the action that the parent handler
+ * should take, but the EDS infrastructure expects globally unique codes
+ * (as defined in cfe_error.h) to be returned from the handler functions.
+ *
+ * To eliminate possible alias confusion, cfe_error.h is extended with a couple
+ * more values such that these will not overlap with any other int32 values defined
+ * in cfe_error.h
  */
 typedef enum
 {
@@ -50,34 +55,6 @@ typedef enum
     CFE_TBL_DONT_INC_CTR = CFE_STATUS_NO_COUNTER_INCREMENT, /**< No errors detected but don't increment command counter */
     CFE_TBL_INC_CMD_CTR = CFE_SUCCESS                       /**< No errors detected and increment command counter */
 } CFE_TBL_CmdProcRet_t;
-
-typedef int32 (*CFE_TBL_MsgProcFuncPtr_t)(const void *MsgPtr);
-
-#define CFE_TBL_BAD_CMD_CODE  (-1) /**< Command Code found in Message does not match any in #CFE_TBL_CmdHandlerTbl */
-#define CFE_TBL_BAD_MSG_ID    (-2) /**< Message ID found in Message does not match any in #CFE_TBL_CmdHandlerTbl */
-
-/*
-** Table task const data
-*/
-
-typedef enum
-{
-    CFE_TBL_TERM_MSGTYPE=0,   /**< \brief Command Handler Table Terminator Type */
-    CFE_TBL_MSG_MSGTYPE,      /**< \brief Message Type (requires Message ID match) */
-    CFE_TBL_CMD_MSGTYPE       /**< \brief Command Type (requires Message ID and Command Code match) */
-} CFE_TBL_MsgType_t;
-
-/**
-** Data structure of a single record in #CFE_TBL_CmdHandlerTbl
-*/
-typedef struct {
-    CFE_SB_MsgId_t           MsgId;           /**< \brief Acceptable Message ID */
-    uint32                   CmdCode;         /**< \brief Acceptable Command Code (if necessary) */
-    uint32                   ExpectedLength;  /**< \brief Expected Message Length (in bytes) including message header */
-    CFE_TBL_MsgProcFuncPtr_t MsgProcFuncPtr;  /**< \brief Pointer to function to handle message  */
-    CFE_TBL_MsgType_t        MsgTypes;        /**< \brief Message Type (i.e. - with/without Cmd Code)   */
-} CFE_TBL_CmdHandlerTblRec_t;
-
 
 /* Command Message Processing Functions */
 /*****************************************************************************/

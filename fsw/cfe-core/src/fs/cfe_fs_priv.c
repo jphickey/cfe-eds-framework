@@ -38,6 +38,8 @@
 #include "cfe_es.h"
 #include "cfe_fs.h"
 #include "cfe_fs_priv.h"
+#include "cfe_sb_eds.h"
+#include "cfe_fs_eds_dictionary.h"
 
 #include <string.h>
 
@@ -71,6 +73,8 @@ int32 CFE_FS_EarlyInit (void)
       CFE_ES_WriteToSysLog("FS Shared Data Mutex creation failed! RC=0x%08x\n",(unsigned int)Stat);
       return Stat;
     }/* end if */
+
+    CFE_SB_EDS_RegisterLib(CFE_PLATFORM_ES_MAX_LIBRARIES, &CFE_FS_DATATYPE_DB);
 
     return Stat;
 

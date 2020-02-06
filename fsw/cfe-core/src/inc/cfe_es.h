@@ -196,63 +196,6 @@
 typedef cpuaddr CFE_ES_MemHandle_t;  /**< \brief Data type used to hold Handles of Memory Pools created via CFE_ES_PoolCreate and CFE_ES_PoolCreateNoSem */
 
 /*
-** 
-** CFE_ES_AppInfo_t is a structure that is used to provide
-** information about an app. It is primarily used for the QueryOne and
-** QueryAll Commands.
-**
-*/
-typedef struct
-{
-   uint32   AppId;                          /**< \cfetlmmnemonic \ES_APP_ID
-                                                 \brief Application ID for this Application */
-   uint32   Type;                           /**< \cfetlmmnemonic \ES_APPTYPE
-                                                 \brief The type of App: CORE or EXTERNAL */
-
-   char     Name[OS_MAX_API_NAME];          /**< \cfetlmmnemonic \ES_APPNAME
-                                                 \brief The Registered Name of the Application */
-   char     EntryPoint[OS_MAX_API_NAME];    /**< \cfetlmmnemonic \ES_APPENTRYPT
-                                                 \brief The Entry Point label for the Application */
-   char     FileName[OS_MAX_PATH_LEN];      /**< \cfetlmmnemonic \ES_APPFILENAME
-                                                 \brief The Filename of the file containing the Application */
-
-   uint32   StackSize;                      /**< \cfetlmmnemonic \ES_STACKSIZE
-                                                 \brief The Stack Size of the Application */
-   uint32   ModuleId;                       /**< \cfetlmmnemonic \ES_MODULEID
-                                                 \brief The ID of the Loadable Module for the Application */
-   uint32   AddressesAreValid;              /**< \cfetlmmnemonic \ES_ADDRVALID
-                                                 \brief Indicates that the Code, Data, and BSS addresses/sizes are valid */
-   uint32   CodeAddress;                    /**< \cfetlmmnemonic \ES_CODEADDR
-                                                 \brief The Address of the Application Code Segment*/
-   uint32   CodeSize;                       /**< \cfetlmmnemonic \ES_CODESIZE
-                                                 \brief The Code Size of the Application */
-   uint32   DataAddress;                    /**< \cfetlmmnemonic \ES_DATAADDR
-                                                 \brief The Address of the Application Data Segment*/
-   uint32   DataSize;                       /**< \cfetlmmnemonic \ES_DATASIZE
-                                                 \brief The Data Size of the Application */
-   uint32   BSSAddress;                     /**< \cfetlmmnemonic \ES_BSSADDR
-                                                 \brief The Address of the Application BSS Segment*/
-   uint32   BSSSize;                        /**< \cfetlmmnemonic \ES_BSSSIZE
-                                                  \brief The BSS Size of the Application */
-   uint32   StartAddress;                   /**< \cfetlmmnemonic \ES_STARTADDR
-                                                 \brief The Start Address of the Application */
-   uint16   ExceptionAction;                /**< \cfetlmmnemonic \ES_EXCEPTNACTN
-                                                 \brief What should occur if Application has an exception
-                                                 (Restart Application OR Restart Processor) */
-   uint16   Priority;                       /**< \cfetlmmnemonic \ES_PRIORITY
-                                                 \brief The Priority of the Application */
-   uint32   MainTaskId;                     /**< \cfetlmmnemonic \ES_MAINTASKID
-                                                 \brief The Application's Main Task ID */
-   uint32   ExecutionCounter;               /**< \cfetlmmnemonic \ES_MAINTASKEXECNT
-                                                 \brief The Application's Main Task Execution Counter */
-   char     MainTaskName[OS_MAX_API_NAME];  /**< \cfetlmmnemonic \ES_MAINTASKNAME
-                                                 \brief The Application's Main Task ID */
-   uint32   NumOfChildTasks;                /**< \cfetlmmnemonic \ES_CHILDTASKS
-                                                 \brief Number of Child tasks for an App */
-
-} CFE_ES_AppInfo_t;
-
-/*
 ** Task Info Type
 */
 typedef struct
@@ -264,30 +207,6 @@ typedef struct
    uint8    AppName[OS_MAX_API_NAME];  /**< \brief Parent Application Name */
 
 } CFE_ES_TaskInfo_t;
-
-/*
-** Memory Pool Statistics data type
-*/
-typedef struct
-{
-    uint32  BlockSize;               /**< \brief Number of bytes in each of these blocks */
-    uint32  NumCreated;              /**< \brief Number of Memory Blocks of this size created */
-    uint32  NumFree;                 /**< \brief Number of Memory Blocks of this size that are free */
-} CFE_ES_BlockStats_t;
-
-typedef struct
-{
-    uint32                PoolSize;                /**< \cfetlmmnemonic \ES_POOLSIZE
-                                                        \brief  Size of Memory Pool (in bytes) */
-    uint32                NumBlocksRequested;      /**< \cfetlmmnemonic \ES_BLKSREQ
-                                                        \brief Number of times a memory block has been allocated */
-    uint32                CheckErrCtr;             /**< \cfetlmmnemonic \ES_BLKERRCTR
-                                                        \brief Number of errors detected when freeing a memory block */
-    uint32                NumFreeBytes;            /**< \cfetlmmnemonic \ES_FREEBYTES
-                                                        \brief Number of bytes never allocated to a block */
-    CFE_ES_BlockStats_t   BlockStats[CFE_ES_MAX_MEMPOOL_BLOCK_SIZES]; /**< \cfetlmmnemonic \ES_BLKSTATS
-                                                                           \brief Contains stats on each block size */
-} CFE_ES_MemPoolStats_t;
 
 /*
 ** CDS Handle type

@@ -80,12 +80,13 @@
 #include "osapi.h"
 #include "private/cfe_private.h"
 #include "cfe_sb_priv.h"
-#include "cfe_sb_msg_id_util.h"
 #include "cfe_sb.h"
 #include "ccsds.h"
 #include "cfe_error.h"
 #include "cfe_es.h"
-#include "cfe_sb_msg_id_util.h"
+#include "cfe_sb_eds.h"
+#include "cfe_missionlib_runtime.h"
+
 #include <string.h>
 
 /******************************************************************************
@@ -138,6 +139,9 @@ int32 CFE_SB_CleanUpApp(uint32 AppId){
 
   /* Release any zero copy buffers */
   CFE_SB_ZeroCopyReleaseAppId(AppId);
+
+  /* Remove any message dictionary the app had */
+  CFE_SB_EDS_UnregisterApp(AppId);
 
   return CFE_SUCCESS;
 
@@ -705,17 +709,11 @@ char *CFE_SB_GetAppTskName(uint32 TaskId,char *FullName){
 */
 uint8 CFE_SB_GetPktType(CFE_SB_MsgId_t MsgId)
 {
-
-#ifdef MESSAGE_FORMAT_IS_CCSDS
-    CFE_SB_MsgId_Atom_t Val = MsgId;
-
-#ifndef MESSAGE_FORMAT_IS_CCSDS_VER_2
-        return CFE_TST(Val,12);
-#else
-        return CFE_SB_RD_TYPE_FROM_MSGID(Val);
-#endif /* MESSAGE_FORMAT_IS_CCSDS_VER_2 */
-        
-#endif /* MESSAGE_FORMAT_IS_CCSDS */
+    if (CFE_SB_PubSub_IsListenerComponent(&MsgId))
+    {
+        return CFE_SB_CMD;
+    }
+    return CFE_SB_TLM;
 
 }/* end CFE_SB_GetPktType */
 

@@ -124,22 +124,20 @@
 */
 #define OS_INCLUDE_MODULE_LOADER
 
-#ifdef OS_INCLUDE_MODULE_LOADER
-   /*
-   ** This define sets the size of the OS Module Table, which keeps track of the loaded modules in 
-   ** the running system. This define must be set high enough to support the maximum number of
-   ** loadable modules in the system. If the the table is filled up at runtime, a new module load
-   ** would fail.
-   */
-   #define OS_MAX_MODULES 32
+/*
+** This define sets the size of the OS Module Table, which keeps track of the loaded modules in
+** the running system. This define must be set high enough to support the maximum number of
+** loadable modules in the system. If the the table is filled up at runtime, a new module load
+** would fail.
+**
+** If the module loader is disabled, this should be set to 0
+*/
+#define OS_MAX_MODULES 20
 
-   /*
-   ** The Static Loader define is used for switching between the Dynamic and Static loader implementations.
-   */
-   /* #define OS_STATIC_LOADER */
-
-#endif
-
+/*
+** The Static Loader define is used for switching between the Dynamic and Static loader implementations.
+*/
+#define OS_STATIC_LOADER
 
 /*
 ** This define sets the maximum symbol name string length. It is used in implementations that 

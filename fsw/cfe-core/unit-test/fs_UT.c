@@ -48,6 +48,11 @@ const char *FS_SYSLOG_MSGS[] =
         "FS SharedData Mutex Give Err Stat=0x%x,App=%d,Function=%s\n"
 };
 
+/*
+ * Stub object for EDS registration call
+ */
+const struct EdsLib_App_DataTypeDB { uint32 Data; } CFE_FS_DATATYPE_DB = { 0 };
+
 static CFE_FS_Decompress_State_t UT_FS_Decompress_State;
 
 
@@ -65,8 +70,6 @@ void UtTest_Setup(void)
     UT_ADD_TEST(Test_CFE_FS_ReadHeader);
     UT_ADD_TEST(Test_CFE_FS_WriteHeader);
     UT_ADD_TEST(Test_CFE_FS_SetTimestamp);
-    UT_ADD_TEST(Test_CFE_FS_ByteSwapCFEHeader);
-    UT_ADD_TEST(Test_CFE_FS_ByteSwapUint32);
     UT_ADD_TEST(Test_CFE_FS_IsGzFile);
     UT_ADD_TEST(Test_CFE_FS_ExtractFileNameFromPath);
     UT_ADD_TEST(Test_CFE_FS_Private);
@@ -192,60 +195,6 @@ void Test_CFE_FS_SetTimestamp(void)
               CFE_FS_SetTimestamp(FileDes, NewTimestamp) == OS_FS_SUCCESS,
               "CFE_FS_SetTimestamp",
               "Write time stamp - successful");
-}
-
-/*
-** Test FS API byte swap cFE header function
-*/
-void Test_CFE_FS_ByteSwapCFEHeader(void)
-{
-    CFE_FS_Header_t Hdr;
-
-#ifdef UT_VERBOSE
-    UT_Text("Begin Test Byte Swap cFE Header\n");
-#endif
-
-    UT_InitData();
-    Hdr.ContentType = 0x11223344;
-    Hdr.SubType = 0x22334455;
-    Hdr.Length = 0x33445566;
-    Hdr.SpacecraftID = 0x44556677;
-    Hdr.ProcessorID = 0x55667788;
-    Hdr.ApplicationID = 0x66778899;
-    Hdr.TimeSeconds = 0x778899aa;
-    Hdr.TimeSubSeconds = 0x8899aabb;
-
-    /* Test byte-swapping the header values */
-    CFE_FS_ByteSwapCFEHeader(&Hdr);
-    UT_Report(__FILE__, __LINE__,
-              Hdr.ContentType == 0x44332211 && Hdr.SubType == 0x55443322 &&
-              Hdr.Length == 0x66554433 && Hdr.SpacecraftID == 0x77665544 &&
-              Hdr.ProcessorID == 0x88776655 &&
-              Hdr.ApplicationID == 0x99887766 &&
-              Hdr.TimeSeconds == 0xaa998877 &&
-              Hdr.TimeSubSeconds == 0xbbaa9988,
-              "CFE_FS_ByteSwapUint32",
-              "Byte swap header - successful");
-}
-
-/*
-** Test FS API byte swap uint32 function
-*/
-void Test_CFE_FS_ByteSwapUint32(void)
-{
-    uint32 test = 0x11223344;
-    uint32 *testptr = &test;
-
-#ifdef UT_VERBOSE
-    UT_Text("Begin Test Byte Swap uint32\n");
-#endif
-
-    /* Test byte-swapping a uint32 value */
-    UT_InitData();
-    CFE_FS_ByteSwapUint32(testptr);
-    UT_Report(__FILE__, __LINE__,
-              test == 0x44332211, "CFE_FS_ByteSwapUint32",
-              "Byte swap - successful");
 }
 
 /*

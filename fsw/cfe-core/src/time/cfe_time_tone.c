@@ -119,36 +119,6 @@ void CFE_TIME_ToneSend(void)
     NewMET.Subseconds = 0;
 
     /*
-    ** Current clock state is a combination of factors...
-    */
-
-    #ifdef CFE_PLATFORM_TIME_CFG_BIGENDIAN
-
-    /*
-    ** Current clock state is a combination of factors...
-    */
-    uint16 AtToneState = CFE_TIME_CalculateState(&Reference);
-
-    /*
-    ** Payload must be big-endian.
-    */
-
-    CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET.Seconds =
-        CFE_MAKE_BIG32(NewMET.Seconds);
-    CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET.Subseconds =
-        CFE_MAKE_BIG32(NewMET.Subseconds);
-    CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF.Seconds =
-        CFE_MAKE_BIG32(Reference.AtToneSTCF.Seconds);
-    CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF.Subseconds =
-        CFE_MAKE_BIG32(Reference.AtToneSTCF.Subseconds);
-    CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneLeapSeconds = 
-        CFE_MAKE_BIG16(Reference.AtToneLeapSeconds);
-    CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneState = 
-        CFE_MAKE_BIG16(AtToneState);
-
-    #else /* !CFE_PLATFORM_TIME_CFG_BIGENDIAN */
-
-    /*
     ** Remainder of time values are unchanged...
     */
     CFE_TIME_Copy(&CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET, &NewMET);
@@ -159,8 +129,6 @@ void CFE_TIME_ToneSend(void)
     ** Current clock state is a combination of factors...
     */
     CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneState = CFE_TIME_CalculateState(&Reference);
-
-    #endif /* CFE_PLATFORM_TIME_CFG_BIGENDIAN */
 
     /*
     ** Send "time at the tone" command data packet...
@@ -274,33 +242,10 @@ int32 CFE_TIME_ToneSendMET(CFE_TIME_SysTime_t NewMET)
             /*
             ** Set "time at the tone" command data packet arguments...
             */
-
-            #ifdef CFE_PLATFORM_TIME_CFG_BIGENDIAN
-
-            /*
-            ** Payload must be big-endian.
-            */
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET.Seconds =
-                CFE_MAKE_BIG32(NewMET.Seconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET.Subseconds =
-                CFE_MAKE_BIG32(NewMET.Subseconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF.Seconds =
-                CFE_MAKE_BIG32(Reference.AtToneSTCF.Seconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF.Subseconds =
-                CFE_MAKE_BIG32(Reference.AtToneSTCF.Subseconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneLeapSeconds = 
-                CFE_MAKE_BIG16(Reference.AtToneLeapSeconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneState = 
-                CFE_MAKE_BIG16(ClockState);
-
-            #else /* !CFE_PLATFORM_TIME_CFG_BIGENDIAN */
-
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET   = NewMET;
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF  = Reference.AtToneSTCF;
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneLeapSeconds = Reference.AtToneLeapSeconds;
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneState = ClockState;
-
-            #endif /* CFE_PLATFORM_TIME_CFG_BIGENDIAN */
 
             /*
             ** Send "time at the tone" command data packet...
@@ -428,33 +373,10 @@ int32 CFE_TIME_ToneSendGPS(CFE_TIME_SysTime_t NewTime, int16 NewLeaps)
             /*
             ** Set "time at the tone" command data packet arguments...
             */
-
-            #ifdef CFE_PLATFORM_TIME_CFG_BIGENDIAN
-
-            /*
-            ** Payload must be big-endian.
-            */
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET.Seconds =
-                CFE_MAKE_BIG32(NewMET.Seconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET.Subseconds =
-                CFE_MAKE_BIG32(NewMET.Subseconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF.Seconds =
-                CFE_MAKE_BIG32(NewSTCF.Seconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF.Subseconds =
-                CFE_MAKE_BIG32(NewSTCF.Subseconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneLeapSeconds = 
-                CFE_MAKE_BIG16(NewLeaps);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneState = 
-                CFE_MAKE_BIG16(ClockState);
-
-            #else /* !CFE_PLATFORM_TIME_CFG_BIGENDIAN */
-
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET   = NewMET;
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF  = NewSTCF;
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneLeapSeconds = NewLeaps;
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneState = ClockState;
-
-            #endif /* CFE_PLATFORM_TIME_CFG_BIGENDIAN */
 
             /*
             ** Send "time at the tone" command data packet...
@@ -580,34 +502,10 @@ int32 CFE_TIME_ToneSendTime(CFE_TIME_SysTime_t NewTime)
             /*
             ** Set "time at the tone" command data packet arguments...
             */
-
-            #ifdef CFE_PLATFORM_TIME_CFG_BIGENDIAN
-
-            /*
-            ** Payload must be big-endian.
-            */
-
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET.Seconds =
-                CFE_MAKE_BIG32(NewMET.Seconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET.Subseconds =
-                CFE_MAKE_BIG32(NewMET.Subseconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF.Seconds =
-                CFE_MAKE_BIG32(NewSTCF.Seconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF.Subseconds =
-                CFE_MAKE_BIG32(NewSTCF.Subseconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneLeapSeconds = 
-                CFE_MAKE_BIG16(Reference.AtToneLeapSeconds);
-            CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneState = 
-                CFE_MAKE_BIG16(ClockState);
-
-            #else /* !CFE_PLATFORM_TIME_CFG_BIGENDIAN */
-
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneMET   = NewMET;
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneSTCF  = NewSTCF;
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneLeapSeconds = Reference.AtToneLeapSeconds;
             CFE_TIME_TaskData.ToneDataCmd.Payload.AtToneState = ClockState;
-
-            #endif /* CFE_PLATFORM_TIME_CFG_BIGENDIAN */
 
             /*
             ** Send "time at the tone" command data packet...
@@ -643,31 +541,10 @@ void CFE_TIME_ToneData(const CFE_TIME_ToneDataCmd_Payload_t *ToneDataCmd)
     /*
     ** Save the data packet (may be a while before the data is used)...
     */
-
-    #ifdef CFE_PLATFORM_TIME_CFG_BIGENDIAN
-
-    /*
-    ** Tone data will be big-endian, convert to platform-endian.
-    */
-    CFE_TIME_TaskData.PendingMET.Seconds =
-        CFE_MAKE_BIG32(ToneDataCmd->AtToneMET.Seconds);
-    CFE_TIME_TaskData.PendingMET.Subseconds =
-        CFE_MAKE_BIG32(ToneDataCmd->AtToneMET.Subseconds);
-    CFE_TIME_TaskData.PendingSTCF.Seconds =
-        CFE_MAKE_BIG32(ToneDataCmd->AtToneSTCF.Seconds);
-    CFE_TIME_TaskData.PendingSTCF.Subseconds =
-        CFE_MAKE_BIG32(ToneDataCmd->AtToneSTCF.Subseconds);
-    CFE_TIME_TaskData.PendingLeaps = CFE_MAKE_BIG16(ToneDataCmd->AtToneLeapSeconds);
-    CFE_TIME_TaskData.PendingState = CFE_MAKE_BIG16(ToneDataCmd->AtToneState);
-
-    #else /* !CFE_PLATFORM_TIME_CFG_BIGENDIAN */
-
     CFE_TIME_Copy(&CFE_TIME_TaskData.PendingMET, &ToneDataCmd->AtToneMET);
     CFE_TIME_Copy(&CFE_TIME_TaskData.PendingSTCF, &ToneDataCmd->AtToneSTCF);
     CFE_TIME_TaskData.PendingLeaps = ToneDataCmd->AtToneLeapSeconds;
     CFE_TIME_TaskData.PendingState = ToneDataCmd->AtToneState;
-
-    #endif /* CFE_PLATFORM_TIME_CFG_BIGENDIAN */
 
     /*
     ** If the data packet is designed to arrive after the tone...

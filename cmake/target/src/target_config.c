@@ -39,6 +39,8 @@
 #include "cfe_time.h"
 #include "cfecfs_version_info.h"
 #include "cfecfs_build_info.h"
+#include "edslib_api_types.h"
+#include "cfe_mission_eds_parameters.h"
 
 
 #ifndef CFE_CPU_NAME_VALUE
@@ -121,6 +123,51 @@ static CFE_StaticModuleLoadEntry_t GLOBAL_PSP_MODULELIST[] =
 #undef LOAD_PSP_MODULE
 
 
+/*
+ * Determine the proper values for populating the EDS-related
+ * fields of the configuration structure.  This depends on the
+ * selected linkage mode (static or dynamic).
+ */
+#ifdef CFE_STATIC_EDSDB_OBJECT
+
+/*
+ * Static EDS object link mode:
+ * Only the const pointer gets assigned to the EDS object, and the
+ * non-const pointer gets set NULL.  There are no "write" operations
+ * in this mode -- registration and de-registration is not necessary.
+ */
+#define CFE_CONST_EDSDB_PTR        &CFE_STATIC_EDSDB_OBJECT
+#define CFE_NONCONST_EDSDB_PTR     NULL
+
+#else   /* CFE_STATIC_EDSDB_OBJECT */
+
+/*
+ * Dynamic (non-const) runtime EDS database object
+ * This is filled in as additional EDS datasheet objects are registered
+ */
+static EdsLib_DataTypeDB_t CFE_DYNAMIC_EDS_TABLE[EDS_MAX_DATASHEETS] =
+{
+        NULL
+};
+
+static EdsLib_DatabaseObject_t CFE_DYNAMIC_EDSDB_OBJECT =
+{
+        .AppTableSize = EDS_MAX_DATASHEETS,
+        .DataTypeDB_Table = CFE_DYNAMIC_EDS_TABLE
+};
+
+/*
+ * Dynamic EDS object link mode:
+ * Both the const and non-const pointers get assigned to the same object.
+ * Runtime code should use the non-const pointer only for those operations
+ * that require a writable object (i.e. registration and de-registration)
+ */
+#define CFE_CONST_EDSDB_PTR        &CFE_DYNAMIC_EDSDB_OBJECT
+#define CFE_NONCONST_EDSDB_PTR     &CFE_DYNAMIC_EDSDB_OBJECT
+
+#endif /* CFE_STATIC_EDSDB_OBJECT */
+
+
 /**
  * Instantiation of global system-wide configuration struct
  * This contains build info plus pointers to the PSP and CFE
@@ -141,6 +188,8 @@ Target_ConfigData GLOBAL_CONFIGDATA =
         .CfeConfig = &GLOBAL_CFE_CONFIGDATA,
         .PspConfig = &GLOBAL_PSP_CONFIGDATA,
         .PspModuleList = GLOBAL_PSP_MODULELIST,
+        .EdsDb = CFE_CONST_EDSDB_PTR,
+        .DynamicEdsDb = CFE_NONCONST_EDSDB_PTR
 };
 
 

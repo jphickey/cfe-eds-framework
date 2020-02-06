@@ -102,7 +102,8 @@ int32 CFE_TBL_CleanUpApp(uint32 AppId)
 
 int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,                   /* Returned Handle */
                         const char   *Name,                               /* Application specific name  */
-                        uint32  Size,                                     /* Size, in bytes, of table   */
+                        uint16  EdsAppIdx,
+                        uint16  EdsTypeIdx,                               /* EDS database entry for data definition   */
                         uint16  TblOptionFlags,                           /* Tbl Options Settings     */
                         CFE_TBL_CallbackFuncPtr_t TblValidationFuncPtr )  /* Ptr to func that validates tbl */
 {

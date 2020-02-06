@@ -48,6 +48,7 @@
 #include "cfe_evs_log.h"
 #include "cfe_evs_task.h"
 #include "cfe_evs_utils.h"
+#include "cfe_evs_eds_interface.h"
 #include "cfe_sb.h"
 #include "cfe_es.h"
 #include "cfe_time.h"

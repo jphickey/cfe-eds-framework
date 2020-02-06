@@ -28,9 +28,15 @@
 /* Use the EDS generated version of these types */
 #include "cfe_sb_eds_typedefs.h"
 
+/*
+ * Provide the correct type to use for CFE_SB_MsgId_t
+ */
+typedef CFE_SB_SoftwareBus_PubSub_Interface_t CFE_SB_MsgId_t;
+
 #else
 /* Use the local definitions of these types */
 
+#include "cfe_mission_cfg.h"
 #include "common_types.h"
 #include "cfe_mission_cfg.h"
 

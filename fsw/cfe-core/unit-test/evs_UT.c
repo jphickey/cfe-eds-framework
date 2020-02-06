@@ -59,137 +59,126 @@ static const char *EVS_SYSLOG_MSGS[] =
         "EVS:Subscribing to HK Request Failed:RC=0x%08X\n"
 };
 
+/*
+ * Stub object for EDS registration
+ */
+const struct EdsLib_App_DataTypeDB { uint32 Data; } CFE_EVS_DATATYPE_DB = { 0 };
+
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_EVS_CMD_NOOP_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_NOOP_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.Noop_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_RESET_COUNTERS_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_RESET_COUNTERS_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.ResetCounters_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_ENABLE_EVENT_TYPE_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_ENABLE_EVENT_TYPE_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.EnableEventType_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_DISABLE_EVENT_TYPE_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_DISABLE_EVENT_TYPE_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.DisableEventType_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_SET_EVENT_FORMAT_MODE_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_SET_EVENT_FORMAT_MODE_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.SetEventFormatMode_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_ENABLE_APP_EVENT_TYPE_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_ENABLE_APP_EVENT_TYPE_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.EnableAppEventType_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_DISABLE_APP_EVENT_TYPE_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_DISABLE_APP_EVENT_TYPE_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.DisableAppEventType_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_ENABLE_APP_EVENTS_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_ENABLE_APP_EVENTS_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.EnableAppEvents_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_DISABLE_APP_EVENTS_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_DISABLE_APP_EVENTS_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.DisableAppEvents_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_RESET_APP_COUNTER_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_RESET_APP_COUNTER_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.ResetAppCounter_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_SET_FILTER_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_SET_FILTER_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.SetFilter_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_ENABLE_PORTS_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_ENABLE_PORTS_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.EnablePorts_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_DISABLE_PORTS_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_DISABLE_PORTS_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.DisablePorts_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_RESET_FILTER_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_RESET_FILTER_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.ResetFilter_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_RESET_ALL_FILTERS_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_RESET_ALL_FILTERS_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.ResetAllFilters_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_ADD_EVENT_FILTER_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_ADD_EVENT_FILTER_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.AddEventFilter_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_DELETE_EVENT_FILTER_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_DELETE_EVENT_FILTER_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.DeleteEventFilter_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_WRITE_APP_DATA_FILE_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_WRITE_APP_DATA_FILE_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.WriteAppDataFile_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_WRITE_LOG_DATA_FILE_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_WRITE_LOG_DATA_FILE_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.WriteLogDataFile_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_SET_LOG_MODE_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_SET_LOG_MODE_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.SetLogMode_indication)
 };
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_CLEAR_LOG_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = CFE_EVS_CLEAR_LOG_CC
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, CMD.ClearLog_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_EVS_INVALID_MID =
 {
-        .MsgId = 0xFFFF,
-        .CommandCode = 0
+        .DispatchOffset = -1,
+        .DispatchError = CFE_STATUS_UNKNOWN_MSG_ID
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_EVS_CMD_INVALID_CC =
 {
-        .MsgId = CFE_EVS_CMD_MID,
-        .CommandCode = 0x7F
+        .DispatchOffset = -1,
+        .DispatchError = CFE_STATUS_BAD_COMMAND_CODE
+};
+static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_EVS_CMD_INVALID_LENGTH =
+{
+        .DispatchOffset = -1,
+        .DispatchError = CFE_STATUS_WRONG_MSG_LENGTH
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_EVS_SEND_HK =
 {
-        .MsgId = CFE_EVS_SEND_HK_MID
+        .DispatchOffset = offsetof(CFE_EVS_Application_Component_Telecommand_DispatchTable_t, SEND_HK.indication)
 };
 
 
 static const UT_SoftwareBusSnapshot_Entry_t UT_EVS_LONGFMT_SNAPSHOTDATA =
 {
-        .MsgId = CFE_EVS_LONG_EVENT_MSG_MID,
+        .TopicId = CFE_MISSION_EVS_LONG_EVENT_MSG_TOPICID,
         .SnapshotOffset = offsetof(CFE_EVS_LongEventTlm_t, Payload.PacketID.EventID),
         .SnapshotSize = sizeof(uint16)
 };
 
 static const UT_SoftwareBusSnapshot_Entry_t UT_EVS_SHORTFMT_SNAPSHOTDATA =
 {
-        .MsgId = CFE_EVS_SHORT_EVENT_MSG_MID,
+        .TopicId = CFE_MISSION_EVS_SHORT_EVENT_MSG_TOPICID,
         .SnapshotOffset = offsetof(CFE_EVS_ShortEventTlm_t, Payload.PacketID.EventID),
         .SnapshotSize = sizeof(uint16)
 };
@@ -277,8 +266,8 @@ void UtTest_Setup(void)
 */
 void Test_Init(void)
 {
-    CFE_EVS_BitMaskCmd_t        bitmaskcmd;
-    CFE_EVS_AppNameBitMaskCmd_t appbitcmd;
+    CFE_EVS_EnableEventType_t        bitmaskcmd;
+    CFE_EVS_EnableAppEventType_t     appbitcmd;
 
 #ifdef UT_VERBOSE
     UT_Text("Begin Test Init\n");
@@ -302,7 +291,7 @@ void Test_Init(void)
      * invalid command packet
      */
     UT_InitData();
-    UT_SetDeferredRetcode(UT_KEY(CFE_SB_GetMsgId), 1, 0);
+    UT_SetDeferredRetcode(UT_KEY(CFE_SB_EDS_Dispatch), 1, CFE_STATUS_UNKNOWN_MSG_ID);
     UT_EVS_DoGenericCheckEvents(CFE_EVS_TaskMain, &UT_EVS_EventBuf);
     UT_Report(__FILE__, __LINE__,
               UT_SyslogIsInHistory(EVS_SYSLOG_MSGS[8]) &&
@@ -888,18 +877,18 @@ void Test_Format(void)
 
     CFE_TIME_SysTime_t          time = {0, 0};
     CFE_EVS_SetEventFormatMode_t    modecmd;
-    CFE_EVS_AppNameBitMaskCmd_t     appbitcmd;
+    CFE_EVS_EnableAppEventType_t    appbitcmd;
     CFE_EVS_PacketID_t           CapturedMsg;
     UT_SoftwareBusSnapshot_Entry_t LongFmtSnapshotData =
     {
-            .MsgId = CFE_EVS_LONG_EVENT_MSG_MID,
+            .TopicId = CFE_MISSION_EVS_LONG_EVENT_MSG_TOPICID,
             .SnapshotBuffer = &CapturedMsg,
             .SnapshotOffset = offsetof(CFE_EVS_LongEventTlm_t, Payload.PacketID),
             .SnapshotSize = sizeof(CapturedMsg)
     };
     UT_SoftwareBusSnapshot_Entry_t ShortFmtSnapshotData =
     {
-            .MsgId = CFE_EVS_SHORT_EVENT_MSG_MID,
+            .TopicId = CFE_MISSION_EVS_SHORT_EVENT_MSG_TOPICID,
             .SnapshotBuffer = &CapturedMsg,
             .SnapshotOffset = offsetof(CFE_EVS_ShortEventTlm_t, Payload.PacketID),
             .SnapshotSize = sizeof(CapturedMsg)
@@ -1049,10 +1038,10 @@ void Test_Format(void)
 */
 void Test_Ports(void)
 {
-    CFE_EVS_BitMaskCmd_t    bitmaskcmd;
+    CFE_EVS_EnablePorts_t    bitmaskcmd;
     UT_SoftwareBusSnapshot_Entry_t LocalSnapshotData =
     {
-            .MsgId = CFE_EVS_LONG_EVENT_MSG_MID
+            .TopicId = CFE_MISSION_EVS_LONG_EVENT_MSG_TOPICID
     };
 
 #ifdef UT_VERBOSE
@@ -1194,7 +1183,7 @@ void Test_Logging(void)
     char                 tmpString[100];
     union
     {
-        CFE_EVS_NoArgsCmd_t         cmd;
+        CFE_EVS_CommandBase_t       cmd;
         CFE_EVS_SetLogMode_t        modecmd;
         CFE_EVS_WriteLogDataFile_t  logfilecmd;
     } CmdBuf;
@@ -1412,9 +1401,9 @@ void Test_WriteApp(void)
 {
     union
     {
-        CFE_EVS_NoArgsCmd_t         cmd;
+        CFE_EVS_CommandBase_t       cmd;
         CFE_EVS_WriteAppDataFile_t  AppDataCmd;
-        CFE_EVS_AppNameBitMaskCmd_t appbitcmd;
+        CFE_EVS_EnableAppEventType_t appbitcmd;
     } CmdBuf;
 
 #ifdef UT_VERBOSE
@@ -1515,10 +1504,10 @@ void Test_WriteApp(void)
 */
 void Test_BadAppCmd(void)
 {
-    CFE_EVS_AppNameBitMaskCmd_t     appbitcmd;
-    CFE_EVS_AppNameCmd_t            appnamecmd;
-    CFE_EVS_AppNameEventIDMaskCmd_t appmaskcmd;
-    CFE_EVS_AppNameEventIDCmd_t     appcmdcmd;
+    CFE_EVS_EnableAppEventType_t    appbitcmd;
+    CFE_EVS_EnableAppEvents_t       appnamecmd;
+    CFE_EVS_SetFilter_t             appmaskcmd;
+    CFE_EVS_ResetFilter_t           appcmdcmd;
     uint32 TestAppID;
 
 #ifdef UT_VERBOSE
@@ -1917,12 +1906,12 @@ void Test_BadAppCmd(void)
 void Test_EventCmd(void)
 {
     uint16                          EventCount[4];
-    CFE_EVS_BitMaskCmd_t        bitmaskcmd;
-    CFE_EVS_AppNameBitMaskCmd_t appbitcmd;
-    CFE_EVS_AppNameCmd_t        appnamecmd;
+    CFE_EVS_EnableEventType_t       bitmaskcmd;
+    CFE_EVS_EnableAppEventType_t    appbitcmd;
+    CFE_EVS_EnableAppEvents_t       appnamecmd;
     UT_SoftwareBusSnapshot_Entry_t LocalSnapshotData =
     {
-        .MsgId = CFE_EVS_LONG_EVENT_MSG_MID
+            .TopicId = CFE_MISSION_EVS_LONG_EVENT_MSG_TOPICID
     };
 
 #ifdef UT_VERBOSE
@@ -2163,10 +2152,10 @@ void Test_EventCmd(void)
 void Test_FilterCmd(void)
 {
     int                             i;
-    CFE_EVS_AppNameCmd_t            appnamecmd;
-    CFE_EVS_AppNameEventIDMaskCmd_t appmaskcmd;
-    CFE_EVS_AppNameEventIDCmd_t     appcmdcmd;
-    CFE_EVS_AppNameBitMaskCmd_t     appbitcmd;
+    CFE_EVS_EnableAppEvents_t       appnamecmd;
+    CFE_EVS_SetFilter_t             appmaskcmd;
+    CFE_EVS_ResetFilter_t           appcmdcmd;
+    CFE_EVS_EnableAppEventType_t    appbitcmd;
 
 #ifdef UT_VERBOSE
     UT_Text("Begin Test Filter Command\n");
@@ -2397,10 +2386,14 @@ void Test_FilterCmd(void)
 
 /*
 ** Test commands with invalid command, command packet, and command length
+**
+** With EDS all these tests are redundant since length is checked
+** by the SB Dispatch function.  Most test cases are removed since
+** they no longer provide any value-add.
 */
 void Test_InvalidCmd(void)
 {
-    CFE_EVS_NoArgsCmd_t cmd;
+    CFE_EVS_CommandBase_t cmd;
 
 #ifdef UT_VERBOSE
     UT_Text("Begin Test Invalid Command\n");
@@ -2429,219 +2422,19 @@ void Test_InvalidCmd(void)
     /* Test invalid command length event */
     UT_InitData();
     UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-            UT_TPID_CFE_EVS_CMD_NOOP_CC,
+            UT_TPID_CFE_EVS_CMD_INVALID_LENGTH,
             &UT_EVS_EventBuf);
     UT_Report(__FILE__, __LINE__,
               UT_EVS_EventBuf.EventID ==  CFE_EVS_LEN_ERR_EID,
               "CFE_EVS_VerifyCmdLength",
               "Invalid command length with no op command");
 
-    /* Test invalid command length with reset counters command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_RESET_COUNTERS_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with reset counters command");
-
-    /* Test invalid command length with enable event type command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_ENABLE_EVENT_TYPE_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with enable event type command");
-
-    /* Test invalid command length with disable event type command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_DISABLE_EVENT_TYPE_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with disable event type command");
-
-    /* Test invalid command length with set event format mode command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_SET_EVENT_FORMAT_MODE_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with set event format mode command");
-
-    /* Test invalid command length with enable application event
-     * type command
+    /*
+     * EDS: Removed additional test cases for wrong length -
+     * It is all common code now, the test above covers everything,
+     * there is no need to do this for every possible command code
      */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_ENABLE_APP_EVENT_TYPE_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with enable application event type "
-                "command");
 
-    /* Test invalid command length with disable application event
-     * type command
-     */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_DISABLE_APP_EVENT_TYPE_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with disable application event type "
-                "command");
-
-    /* Test invalid command length with enable application events command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_ENABLE_APP_EVENTS_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with enable application events command");
-
-    /* Test invalid command length with disable application events command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_DISABLE_APP_EVENTS_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with disable application events command");
-
-    /* Test invalid command length with reset application counter command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_RESET_APP_COUNTER_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with reset application counter command");
-
-    /* Test invalid command length with set filter command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_SET_FILTER_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with set filter command");
-
-    /* Test invalid command length with enable ports command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_ENABLE_PORTS_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with enable ports command");
-
-    /* Test invalid command length with disable ports command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_DISABLE_PORTS_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with disable ports command");
-
-    /* Test invalid command length with reset filter command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_RESET_FILTER_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with reset filter command");
-
-    /* Test invalid command length with reset all filters command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_RESET_ALL_FILTERS_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with reset all filters command");
-
-    /* Test invalid command length with add event filter command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_ADD_EVENT_FILTER_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with add event filter command");
-
-    /* Test invalid command length with delete event filter command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_DELETE_EVENT_FILTER_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with delete event filter command");
-
-    /* Test invalid command length with write application data command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_WRITE_APP_DATA_FILE_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with write application data command");
-
-    /* Test invalid command length with write log data command */
-    UT_InitData();
-    CFE_EVS_GlobalData.EVS_TlmPkt.Payload.LogEnabled = true;
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_WRITE_LOG_DATA_FILE_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with write log data command");
-
-    /* Test invalid command length with set log mode command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_SET_LOG_MODE_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with set log mode command");
-
-    /* Test invalid command length with clear log command */
-    UT_InitData();
-    UT_EVS_DoDispatchCheckEvents(&cmd, 0, 
-               UT_TPID_CFE_EVS_CMD_CLEAR_LOG_CC,
-               &UT_EVS_EventBuf);
-    UT_Report(__FILE__, __LINE__,
-              UT_EVS_EventBuf.EventID == CFE_EVS_LEN_ERR_EID,
-              "CFE_EVS_VerifyCmdLength",
-              "Invalid command length with clear log command");
 }
 
 /*
@@ -2652,7 +2445,7 @@ void Test_Misc(void)
     union
     {
         CFE_SB_Msg_t msg;
-        CFE_EVS_NoArgsCmd_t cmd;
+        CFE_EVS_CommandBase_t cmd;
         CFE_EVS_SetLogMode_t  modecmd;
         CFE_EVS_WriteLogDataFile_t writelogdatacmd;
     } PktBuf;
@@ -2663,7 +2456,7 @@ void Test_Misc(void)
     char               msg[CFE_MISSION_EVS_MAX_MESSAGE_LENGTH + 2];
     UT_SoftwareBusSnapshot_Entry_t HK_SnapshotData =
     {
-            .MsgId = CFE_EVS_HK_TLM_MID
+            .TopicId = CFE_MISSION_EVS_HK_TLM_TOPICID
     };
 
 

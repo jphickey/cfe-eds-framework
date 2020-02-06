@@ -59,6 +59,11 @@ extern int32 dummy_function(void);
 char StartupScript[MAX_STARTUP_SCRIPT];
 
 /*
+ * Stub object for EDS registration call
+ */
+const struct EdsLib_App_DataTypeDB { uint32 Data; } CFE_ES_DATATYPE_DB = { 0 };
+
+/*
  * Macro to convert UT OSAL IDs to array index
  * This should work for both the opaque and non-opaque IDs as
  * provided by UT stub libraries (not for real code, though!)
@@ -68,141 +73,121 @@ char StartupScript[MAX_STARTUP_SCRIPT];
 
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_NOOP_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_NOOP_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.Noop_indication)
 };
 
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_RESET_COUNTERS_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_RESET_COUNTERS_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ResetCounters_indication)
 };
 
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_RESTART_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_RESTART_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.Restart_indication)
 };
 
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_SHELL_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_SHELL_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.Shell_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_START_APP_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_START_APP_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.StartApp_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_STOP_APP_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_STOP_APP_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.StopApp_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_RESTART_APP_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_RESTART_APP_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.RestartApp_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_RELOAD_APP_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_RELOAD_APP_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ReloadApp_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_QUERY_ONE_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_QUERY_ONE_CC };
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.QueryOne_indication)
+};
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_QUERY_ALL_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_QUERY_ALL_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.QueryAll_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_QUERY_ALL_TASKS_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_QUERY_ALL_TASKS_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.QueryAllTasks_indication)
 };
+
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_CLEAR_SYSLOG_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_CLEAR_SYSLOG_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ClearSyslog_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_WRITE_SYSLOG_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_WRITE_SYSLOG_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.WriteSyslog_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_OVER_WRITE_SYSLOG_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_OVER_WRITE_SYSLOG_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.OverWriteSyslog_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_CLEAR_ER_LOG_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_CLEAR_ER_LOG_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ClearERLog_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_WRITE_ER_LOG_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_WRITE_ER_LOG_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.WriteERLog_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_START_PERF_DATA_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_START_PERF_DATA_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.StartPerfData_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_STOP_PERF_DATA_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_STOP_PERF_DATA_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.StopPerfData_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_SET_PERF_FILTER_MASK_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_SET_PERF_FILTER_MASK_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.SetPerfFilterMask_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_SET_PERF_TRIGGER_MASK_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_SET_PERF_TRIGGER_MASK_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.SetPerfTriggerMask_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_RESET_PR_COUNT_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_RESET_PR_COUNT_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ResetPRCount_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_SET_MAX_PR_COUNT_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_SET_MAX_PR_COUNT_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.SetMaxPRCount_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_DELETE_CDS_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_DELETE_CDS_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.DeleteCDS_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_SEND_MEM_POOL_STATS_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_SEND_MEM_POOL_STATS_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.SendMemPoolStats_indication)
 };
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_DUMP_CDS_REGISTRY_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_DUMP_CDS_REGISTRY_CC
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.DumpCDSRegistry_indication)
 };
-
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_INVALID_CC =
 {
-        .MsgId = CFE_ES_CMD_MID,
-        .CommandCode = CFE_ES_DUMP_CDS_REGISTRY_CC + 2
+        .DispatchOffset = -1,
+        .DispatchError = CFE_STATUS_BAD_COMMAND_CODE
 };
-
+static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_CMD_INVALID_LENGTH =
+{
+        .DispatchOffset = -1,
+        .DispatchError = CFE_STATUS_WRONG_MSG_LENGTH
+};
 static const UT_TaskPipeDispatchId_t  UT_TPID_CFE_ES_SEND_HK =
 {
-        .MsgId = CFE_ES_SEND_HK_MID
+        .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, SEND_HK.indication)
 };
 
 
@@ -2480,7 +2465,7 @@ void TestTask(void)
     union
     {
         CFE_SB_Msg_t             Msg;
-        CFE_ES_NoArgsCmd_t       NoArgsCmd;
+        CFE_ES_CommandBase_t     NoArgsCmd;
         CFE_ES_Restart_t         RestartCmd;
         CFE_ES_Shell_t           ShellCmd;
         CFE_ES_StartApp_t        StartAppCmd;
@@ -3314,16 +3299,10 @@ void TestTask(void)
               "CFE_ES_WriteERLogCmd",
               "Write E&R log; reset area");
 
-    /* Test clearing the log with a bad size in the verify command
-     * length call
+    /* Test 06.061: clearing the log with a bad size in the verify command
+     * length call has been removed because bad sizes are now handled by
+     * the SB dispatch function and the SB unit test.
      */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0,
-            UT_TPID_CFE_ES_CMD_CLEAR_ER_LOG_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_ClearERLogCmd",
-              "Packet length error");
 
     /* Test resetting and setting the max for the processor reset count */
     ES_ResetUnitTest();
@@ -3535,30 +3514,14 @@ void TestTask(void)
     /* Test sending a no-op command with an invalid command length */
     ES_ResetUnitTest();
     UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_NOOP_CC);
+        UT_TPID_CFE_ES_CMD_INVALID_LENGTH);
     UT_Report(__FILE__, __LINE__,
               UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
               "CFE_ES_NoopCmd",
               "No-op; invalid command length");
 
-    /* Test sending a reset counters command with an invalid command length */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_RESET_COUNTERS_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_ResetCountersCmd",
-              "Reset counters; invalid command length");
-
-    /* Test sending a cFE restart command with an invalid command length */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_RESTART_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_RestartCmd",
-              "Restart cFE; invalid command length");
-
+    /* NOTE: EDS removes invalid length/command tests
+     * because this is handled by common code (tested separately) */
     /* Test cFE restart with a power on reset */
     ES_ResetUnitTest();
     memset(&CmdBuf, 0, sizeof(CmdBuf));
@@ -3570,26 +3533,8 @@ void TestTask(void)
               "CFE_ES_RestartCmd",
               "Power on reset restart type");
 
-    /* Test sending a shell command with an invalid command length */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_SHELL_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_ShellCmd",
-              "Shell command; invalid command length");
-
-    /* Test sending a start application command with an invalid command
-     * length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_START_APP_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_StartAppCmd",
-              "Start application command; invalid command length");
-
+    /* NOTE: EDS removes invalid length/command tests
+     * because this is handled by common code (tested separately) */
     /* Test start application command with a processor restart on application
      * exception
      */
@@ -3611,61 +3556,8 @@ void TestTask(void)
               "CFE_ES_StartAppCmd",
               "Processor restart on application exception");
 
-    /* Test sending a stop application command with an invalid command
-     * length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_STOP_APP_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_StopAppCmd",
-              "Stop application command; invalid command length");
-
-    /* Test sending a restart application command with an invalid command
-     * length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_RESTART_APP_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_RestartAppCmd",
-              "Restart application command; invalid command length");
-
-    /* Test sending a reload application command with an invalid command
-     * length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_RELOAD_APP_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_ReloadAppCmd",
-              "Reload application command; invalid command length");
-
-    /* Test sending a write request for a single application with an
-     * invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_QUERY_ONE_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_QueryOneAppCmd",
-              "Query one application command; invalid command length");
-
-    /* Test sending a write request for all applications with an
-     * invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_QUERY_ALL_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_QueryAllAppCmd",
-              "Query all applications command; invalid command length");
-
+    /* NOTE: EDS removes invalid length/command tests
+     * because this is handled by common code (tested separately) */
     /* Test write of all app data to file with a file open failure */
     ES_ResetUnitTest();
     memset(&CmdBuf, 0, sizeof(CmdBuf));
@@ -3677,17 +3569,8 @@ void TestTask(void)
               "CFE_ES_QueryAllCmd",
               "Write application information file fail; file open");
 
-    /* Test sending a write request for all tasks with an
-     * invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_QUERY_ALL_TASKS_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_QueryAllAppCmd",
-              "Query all tasks command; invalid command length");
-
+    /* NOTE: EDS removes invalid length/command tests
+     * because this is handled by common code (tested separately) */
     /* Test write of all task data to file with a file open failure */
     ES_ResetUnitTest();
     memset(&CmdBuf, 0, sizeof(CmdBuf));
@@ -3699,39 +3582,8 @@ void TestTask(void)
               "CFE_ES_QueryAllCmd",
               "Write task information file fail; file open");
 
-    /* Test sending a request to clear the system log with an
-     * invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_CLEAR_SYSLOG_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_ClearSyslogCmd",
-              "Clear system log command; invalid command length");
-
-    /* Test sending a request to overwrite the system log with an
-     * invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_OVER_WRITE_SYSLOG_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_OverwriteSyslogCmd",
-              "Overwrite system log command; invalid command length");
-
-    /* Test sending a request to write the system log with an
-     * invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_WRITE_SYSLOG_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_WriteSyslogCmd",
-              "Write system log command; invalid command length");
-
+    /* NOTE: EDS removes invalid length/command tests
+     * because this is handled by common code (tested separately) */
     /* Test successful overwriting of the system log using overwrite mode */
     ES_ResetUnitTest();
     memset(&CmdBuf, 0, sizeof(CmdBuf));
@@ -3743,62 +3595,8 @@ void TestTask(void)
               "CFE_ES_OverWriteSyslogCmd",
               "Overwrite system log received (overwrite mode)");
 
-    /* Test sending a request to write the error log with an
-     * invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_WRITE_ER_LOG_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_WriteErrlogCmd",
-              "Write error log command; invalid command length");
-
-    /* Test sending a request to reset the processor reset count with an
-     * invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_RESET_PR_COUNT_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_ResetPRCountCmd",
-              "Reset processor reset count command; invalid command length");
-
-    /* Test sending a request to set the maximum processor reset count with
-     * an invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_SET_MAX_PR_COUNT_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_SetMaxPRCountCmd",
-              "Set maximum processor reset count command; invalid "
-                "command length");
-
-    /* Test sending a request to delete the CDS with an invalid command
-     * length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_DELETE_CDS_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_DeleteCDSCmd",
-              "Delete CDS command; invalid command length");
-
-    /* Test sending a telemetry pool statistics retrieval command with an
-     * invalid command length
-     */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_SEND_MEM_POOL_STATS_CC);
-    UT_Report(__FILE__, __LINE__,
-              UT_EventIsInHistory(CFE_ES_LEN_ERR_EID),
-              "CFE_ES_DeleteCDSCmd",
-              "Telemetry pool command; invalid command length");
-
+    /* NOTE: EDS removes invalid length/command tests
+     * because this is handled by common code (tested separately) */
     /* Test successful dump of CDS to file using a specified dump file name */
     ES_ResetUnitTest();
     memset(&CmdBuf, 0, sizeof(CmdBuf));
@@ -4260,41 +4058,8 @@ void TestPerf(void)
               "CFE_ES_PerfLogAdd",
               "Invalid trigger mode");
 
-    /* Test performance data collection start with an invalid message length */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_START_PERF_DATA_CC);
-    UT_Report(__FILE__, __LINE__,
-              !UT_EventIsInHistory(CFE_ES_PERF_STARTCMD_EID),
-              "CFE_ES_StartPerfDataCmd",
-              "Invalid message length");
-
-    /* Test performance data collection stop with an invalid message length */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_STOP_PERF_DATA_CC);
-    UT_Report(__FILE__, __LINE__,
-              !UT_EventIsInHistory(CFE_ES_PERF_STOPCMD_EID),
-              "CFE_ES_StopPerfDataCmd",
-              "Invalid message length");
-
-    /* Test performance data filer mask with an invalid message length */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_SET_PERF_FILTER_MASK_CC);
-    UT_Report(__FILE__, __LINE__,
-              !UT_EventIsInHistory(CFE_ES_PERF_FILTMSKCMD_EID),
-              "CFE_ES_SetPerfFilterMaskCmd",
-              "Invalid message length");
-
-    /* Test performance data trigger mask with an invalid message length */
-    ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, 
-        UT_TPID_CFE_ES_CMD_SET_PERF_TRIGGER_MASK_CC);
-    UT_Report(__FILE__, __LINE__,
-              !UT_EventIsInHistory(CFE_ES_PERF_TRIGMSKCMD_EID),
-              "CFE_ES_SetPerfTriggerMaskCmd",
-              "Invalid message length");
+    /* NOTE: EDS removes invalid length/command tests
+     * because this is handled by common code (tested separately) */
 }
 
 void TestAPI(void)

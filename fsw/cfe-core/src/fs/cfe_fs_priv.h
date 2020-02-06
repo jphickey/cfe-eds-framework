@@ -67,8 +67,6 @@ typedef struct
 
 extern void CFE_FS_LockSharedData(const char *FunctionName );
 extern void CFE_FS_UnlockSharedData(const char *FunctionName );
-extern void CFE_FS_ByteSwapCFEHeader(CFE_FS_Header_t *Hdr);
-extern void CFE_FS_ByteSwapUint32(uint32 *Uint32ToSwapPtr);
 
 
 #endif /* _cfe_fs_priv_ */

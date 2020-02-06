@@ -182,16 +182,6 @@
 */
 #define CFE_PLATFORM_SB_HIGHEST_VALID_MSGID      0x1FFF
 
-/**
-**  \cfesbcfg Platform Endian Indicator
-**
-**  \par Description:
-**       The value of this constant indicates the endianess of the target system
-**
-**  \par Limits
-**       This parameter has a lower limit of 0 and an upper limit of 1.
-*/
-#define CFE_PLATFORM_ENDIAN CCSDS_LITTLE_ENDIAN
 
 /**
 **  \cfesbcfg Default Routing Information Filename
@@ -339,20 +329,6 @@
 */
 #define CFE_PLATFORM_TIME_CFG_SERVER  true
 #define CFE_PLATFORM_TIME_CFG_CLIENT  false
-
-
-/**
-** \cfetimecfg Time Tone In Big-Endian Order
-**
-** \par Description:
-**      If this configuration parameter is defined, the CFE time server will
-**      publish time tones with payloads in big-endian order, and time clients
-**      will expect the tones to be in big-endian order. This is useful for
-**      mixed-endian environments. This will become obsolete once EDS is
-**      available and the CFE time tone message is defined.
-*/
-#undef CFE_PLATFORM_TIME_CFG_BIGENDIAN
-
 
 /**
 **  \cfetimecfg Local MET or Virtual MET Selection for Time Servers

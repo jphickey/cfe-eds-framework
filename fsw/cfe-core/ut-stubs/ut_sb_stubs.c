@@ -35,6 +35,7 @@
 #include <string.h>
 #include "cfe.h"
 #include "cfe_platform_cfg.h"
+#include "cfe_sb_eds.h" /* API calls for EDS extensions */
 #include "utstubs.h"
 
 /*
@@ -178,42 +179,16 @@ uint16 CFE_SB_GetCmdCode(CFE_SB_MsgPtr_t MsgPtr)
 ******************************************************************************/
 CFE_SB_MsgId_t CFE_SB_GetMsgId(const CFE_SB_Msg_t *MsgPtr)
 {
-    CFE_SB_MsgId_t MsgId = 0;
+    CFE_SB_MsgId_t MsgId = { 0 };
 
     UT_DEFAULT_IMPL(CFE_SB_GetMsgId);
 
     if (UT_Stub_CopyToLocal(UT_KEY(CFE_SB_GetMsgId), &MsgId, sizeof(MsgId)) < sizeof(MsgId))
     {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
-
-#ifndef MESSAGE_FORMAT_IS_CCSDS_VER_2  
-        MsgId = CCSDS_RD_SID(MsgPtr->Hdr);
-#else
-
-        uint32            SubSystemId;
-
-        MsgId = CCSDS_RD_APID(MsgPtr->Hdr); /* Primary header APID  */
-     
-        if ( CCSDS_RD_TYPE(MsgPtr->Hdr) == CCSDS_CMD)
-              MsgId = MsgId | CFE_SB_CMD_MESSAGE_TYPE;  
-
-        /* Add in the SubSystem ID as needed */
-        SubSystemId = CCSDS_RD_SUBSYSTEM_ID(MsgPtr->SpacePacket.ApidQ);
-        MsgId = (MsgId | (SubSystemId << 8));
-
-/* Example code to add in the System ID as needed. */
-/*   The default is to init this field to the Spacecraft ID but ignore for routing.   */
-/*   To fully implement this field would require significant SB optimization to avoid */
-/*   prohibitively large routing and index tables. */
-/*      uint16            SystemId;                              */
-/*      SystemId = CCSDS_RD_SYSTEM_ID(HdrPtr->ApidQ);            */
-/*      MsgId = (MsgId | (SystemId << 16)) */
-#endif
-#endif
-
+        MsgId.MsgId = (MsgPtr->Hdr.BaseHdr.AppId << 2) | (MsgPtr->Hdr.BaseHdr.SecHdrFlags & 0x03);
     }
 
-return MsgId;
+    return MsgId;
 }
 
 /*****************************************************************************/
@@ -395,31 +370,9 @@ int32 CFE_SB_SetCmdCode(CFE_SB_MsgPtr_t MsgPtr, uint16 CmdCode)
 void CFE_SB_SetMsgId(CFE_SB_MsgPtr_t MsgPtr, CFE_SB_MsgId_t MsgId)
 {
     UT_DEFAULT_IMPL(CFE_SB_SetMsgId);
+    MsgPtr->Hdr.BaseHdr.AppId = MsgId.MsgId >> 2;
+    MsgPtr->Hdr.BaseHdr.SecHdrFlags = MsgId.MsgId & 0x03;
     UT_Stub_CopyFromLocal(UT_KEY(CFE_SB_SetMsgId), (uint8*)&MsgId, sizeof(MsgId));
-#ifndef MESSAGE_FORMAT_IS_CCSDS_VER_2  
-    CCSDS_WR_SID(MsgPtr->Hdr, MsgId);
-#else
-  CCSDS_WR_VERS(MsgPtr->SpacePacket.Hdr, 1);
-
-  /* Set the stream ID APID in the primary header. */
-  CCSDS_WR_APID(MsgPtr->SpacePacket.Hdr, CFE_SB_RD_APID_FROM_MSGID(MsgId) );
-  
-  CCSDS_WR_TYPE(MsgPtr->SpacePacket.Hdr, CFE_SB_RD_TYPE_FROM_MSGID(MsgId) );
-  
-  
-  CCSDS_CLR_SEC_APIDQ(MsgPtr->SpacePacket.ApidQ);
-  
-  CCSDS_WR_EDS_VER(MsgPtr->SpacePacket.ApidQ, 1);
-  
-  CCSDS_WR_ENDIAN(MsgPtr->SpacePacket.ApidQ, CFE_PLATFORM_ENDIAN);
-  
-  CCSDS_WR_PLAYBACK(MsgPtr->SpacePacket.ApidQ, false);
-  
-  CCSDS_WR_SUBSYSTEM_ID(MsgPtr->SpacePacket.ApidQ, CFE_SB_RD_SUBSYS_ID_FROM_MSGID(MsgId));
-  
-  CCSDS_WR_SYSTEM_ID(MsgPtr->SpacePacket.ApidQ, CFE_SPACECRAFT_ID);
-
-#endif
 }
 
 
@@ -703,6 +656,145 @@ int32 CFE_SB_MessageStringSet(char *DestStringPtr, const char *SourceStringPtr, 
     }
 
     return status;
+}
+
+const struct EdsLib_DatabaseObject *CFE_SB_GetEds(void)
+{
+    struct EdsLib_DatabaseObject *Obj;
+
+    if (UT_DEFAULT_IMPL(CFE_SB_GetEds) != 0 ||
+            UT_Stub_CopyToLocal(UT_KEY(CFE_SB_GetEds), (uint8*)&Obj, sizeof(Obj) != sizeof(Obj)))
+    {
+        Obj = NULL;
+    }
+
+    return Obj;
+}
+
+void CFE_SB_EDS_RegisterSelf(CFE_SB_EDS_AppDbPtr_t AppEds)
+{
+    UT_DEFAULT_IMPL(CFE_SB_EDS_RegisterSelf);
+}
+
+void CFE_SB_EDS_UnregisterSelf(void)
+{
+    UT_DEFAULT_IMPL(CFE_SB_EDS_UnregisterSelf);
+}
+
+void CFE_SB_EDS_RegisterApp(uint32 AppId, CFE_SB_EDS_AppDbPtr_t AppEds)
+{
+    UT_DEFAULT_IMPL(CFE_SB_EDS_RegisterApp);
+}
+
+void CFE_SB_EDS_UnregisterApp(uint32 AppId)
+{
+    UT_DEFAULT_IMPL(CFE_SB_EDS_UnregisterApp);
+}
+
+void CFE_SB_EDS_RegisterLib(uint32 LibId, CFE_SB_EDS_AppDbPtr_t AppEds)
+{
+    UT_DEFAULT_IMPL(CFE_SB_EDS_RegisterLib);
+}
+
+void CFE_SB_EDS_UnregisterLib(uint32 LibId)
+{
+    UT_DEFAULT_IMPL(CFE_SB_EDS_UnregisterLib);
+}
+
+int32 CFE_SB_EDS_UnpackInputMessage(uint16 InterfaceId, CFE_SB_Msg_t *DestBuffer,
+        const void *SourceBuffer, uint32 *DestBufferSize, uint32 SourceBufferSize)
+{
+    int32 Result = UT_DEFAULT_IMPL(CFE_SB_EDS_UnpackInputMessage);
+
+    if (Result == CFE_SUCCESS)
+    {
+        *DestBufferSize = UT_Stub_CopyToLocal(UT_KEY(CFE_SB_EDS_UnpackInputMessage), DestBuffer, *DestBufferSize);
+    }
+
+    return Result;
+}
+
+int32 CFE_SB_EDS_PackOutputMessage(uint16 InterfaceId, void *DestBuffer,
+        const CFE_SB_Msg_t *SourceBuffer, uint32 *DestBufferSize, uint32 SourceBufferSize)
+{
+    int32 Result = UT_DEFAULT_IMPL(CFE_SB_EDS_PackOutputMessage);
+
+    if (Result == CFE_SUCCESS)
+    {
+        *DestBufferSize = UT_Stub_CopyToLocal(UT_KEY(CFE_SB_EDS_PackOutputMessage), DestBuffer, *DestBufferSize);
+    }
+
+    return Result;
+}
+
+
+uint16 CFE_SB_MsgId_To_TopicId(CFE_SB_MsgId_t MsgId)
+{
+    return MsgId.MsgId >> 2;
+}
+
+CFE_SB_MsgId_t CFE_SB_MsgId_From_TopicId(uint16 TopicId)
+{
+    CFE_SB_MsgId_t MsgId;
+    
+    MsgId.MsgId = TopicId << 2;
+    if (TopicId >= CFE_MISSION_TELECOMMAND_BASE_TOPICID &&
+            TopicId < CFE_MISSION_TELECOMMAND_MAX_TOPICID)
+    {
+        MsgId.MsgId |= 0x03;
+    }
+    else if (TopicId >= CFE_MISSION_TELEMETRY_BASE_TOPICID &&
+            TopicId < CFE_MISSION_TELEMETRY_MAX_TOPICID)
+    {
+        MsgId.MsgId |= 0x01;
+    }
+    return MsgId;
+}
+
+/*
+ * "Stub" for CFE_SB_EDS_Dispatch_Message() -
+ * Some unit tests directly call the handler function for a given message type, but others
+ * go through the "TaskPipe" and rely on that to actually call the handler.  With EDS this
+ * dispatch operation is a shared function in SB and based on the EDS structure.
+ *
+ * The result is that although this is a "stub" it actually needs to do the real dispatch
+ * or quite a few tests will break.
+ *
+ * If those tests can be updated to call the handler directly (which makes more sense for
+ * this type of test) then this can become a normal stub once again, as it should be.
+ */
+int32 CFE_SB_EDS_Dispatch(
+        uint16 InterfaceId,
+        uint16 IndicationIndex,
+        uint16 DispatchTableID,
+        const CFE_SB_Msg_t *Message,
+        const void* DispatchTable)
+{
+    int32 Result;
+    uint32 DispatchMap;
+    union
+    {
+        cpuaddr MemAddr;
+        const void* GenericPtr;
+        int32 (**DispatchFunc)(const CFE_SB_Msg_t *);
+    } HandlerPtr;
+
+    UT_Stub_RegisterContext(UT_KEY(CFE_SB_EDS_Dispatch), Message);
+    Result = UT_DEFAULT_IMPL(CFE_SB_EDS_Dispatch);
+
+    if (Result == CFE_SUCCESS)
+    {
+        if (UT_Stub_CopyToLocal(UT_KEY(CFE_SB_EDS_Dispatch), (uint8*)&DispatchMap, sizeof(DispatchMap)) ==
+                sizeof(DispatchMap))
+        {
+            HandlerPtr.GenericPtr = DispatchTable;
+            HandlerPtr.MemAddr += DispatchMap;
+
+            Result = (*HandlerPtr.DispatchFunc)(Message);
+        }
+    }
+
+    return Result;
 }
 
 UT_DEFAULT_STUB(CFE_SB_Unsubscribe, (CFE_SB_MsgId_t MsgId, CFE_SB_PipeId_t PipeId))

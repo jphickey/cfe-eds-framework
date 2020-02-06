@@ -40,6 +40,10 @@
 #include "cfe_psp.h"
 #include "cfe_error.h"
 #include "cfe_sb_events.h"
+#include "cfe_sb_eds_db.h"
+
+#include "base_types_eds_dictionary.h"
+#include "ccsds_spacepacket_eds_dictionary.h"
 
 #include <string.h>
 
@@ -129,6 +133,18 @@ int32 CFE_SB_EarlyInit (void) {
 
     CFE_SB.ZeroCopyTail = NULL;
 
+    /*
+     * Use this early-init to register the base type
+     * EDS DB objects that all other types will be based on.
+     *
+     * These are globals and not strictly related to SB,
+     * but the SB manages the registry of EDS entities
+     * so it makes sense to populate these right now.
+     */
+    CFE_SB_EDS_RegisterGlobal(&BASE_TYPES_DATATYPE_DB);
+    CFE_SB_EDS_RegisterGlobal(&CCSDS_SPACEPACKET_DATATYPE_DB);
+
+
     return Stat;
 
 }/* end CFE_SB_EarlyInit */
@@ -217,20 +233,12 @@ void CFE_SB_InitPipeTbl(void){
 */
 void CFE_SB_InitMsgMap(void){
 
-#ifdef MESSAGE_FORMAT_IS_CCSDS
     CFE_SB_MsgKey_Atom_t   KeyVal;
 
     for (KeyVal=0; KeyVal < CFE_SB_MAX_NUMBER_OF_MSG_KEYS; KeyVal++)
     {
         CFE_SB.MsgMap[KeyVal] = CFE_SB_INVALID_ROUTE_IDX;
     }
-
-#ifndef MESSAGE_FORMAT_IS_CCSDS_VER_2  /* Then use the default, version 1 */
-    CFE_ES_WriteToSysLog("SB internal message format: CCSDS Space Packet Protocol version 1\n");
-#else   /* VER_2 is the same now but will change for larger and/or distributed systems */
-    CFE_ES_WriteToSysLog("SB internal message format: Space Packet Protocol version 2 (extended hdr)\n");
-#endif
-#endif
 
 }/* end CFE_SB_InitMsgMap */
 
