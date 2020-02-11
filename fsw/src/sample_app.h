@@ -40,7 +40,11 @@
 
 #include "sample_app_perfids.h"
 #include "sample_app_msgids.h"
-#include "sample_app_msg.h"
+
+/* Use the EDS generated type definitions */
+#include "sample_eds_defines.h"
+#include "sample_eds_typedefs.h"
+
 
 /***********************************************************************/
 #define SAMPLE_PIPE_DEPTH                     32 /* Depth of the Command Pipe for Application */
@@ -114,16 +118,13 @@ typedef struct
 */
 void  SAMPLE_AppMain(void);
 int32 SAMPLE_AppInit(void);
-void  SAMPLE_ProcessCommandPacket(CFE_SB_MsgPtr_t Msg);
-void  SAMPLE_ProcessGroundCommand(CFE_SB_MsgPtr_t Msg);
 int32 SAMPLE_ReportHousekeeping(const CCSDS_CommandPacket_t *Msg);
 int32 SAMPLE_ResetCounters(const SAMPLE_ResetCounters_t *Msg);
 int32 SAMPLE_Process(const SAMPLE_Process_t *Msg);
 int32 SAMPLE_Noop(const SAMPLE_Noop_t *Msg);
+int32 SAMPLE_DoExample(const SAMPLE_DoExample_t *Msg);
 void  SAMPLE_GetCrc(const char *TableName);
 
 int32 SAMPLE_TblValidationFunc(void *TblData);
-
-bool  SAMPLE_VerifyCmdLength(CFE_SB_MsgPtr_t Msg, uint16 ExpectedLength);
 
 #endif /* _sample_app_h_ */

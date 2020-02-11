@@ -38,12 +38,36 @@
 
 #include <string.h>
 
+#include "sample_eds_dispatcher.h"
+#include "sample_eds_dictionary.h"
+
 /*
 ** global data
 */
 SAMPLE_GlobalData_t SAMPLE_Global;
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *  * *  * * * * **/
+/*
+ * Define a lookup table for SAMPLE app command codes
+ */
+static const SAMPLE_Application_Component_Telecommand_DispatchTable_t SAMPLE_TC_DISPATCH_TABLE =
+{
+        .CMD =
+        {
+                .Noop_indication = SAMPLE_Noop,
+                .ResetCounters_indication = SAMPLE_ResetCounters,
+                .Process_indication = SAMPLE_Process,
+                .DoExample_indication = SAMPLE_DoExample
+
+        },
+        .SEND_HK =
+        {
+                .indication = SAMPLE_ReportHousekeeping
+        }
+};
+
+
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* SAMPLE_AppMain() -- Application entry point and main process loop          */
 /*                                                                            */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *  * *  * * * * **/
@@ -94,7 +118,9 @@ void SAMPLE_AppMain( void )
 
         if (status == CFE_SUCCESS)
         {
-            SAMPLE_ProcessCommandPacket(SAMPLE_Global.MsgPtr);
+            SAMPLE_Application_Component_Telecommand_Dispatch(
+                    CFE_SB_Telecommand_indication_Command_ID,
+                    SAMPLE_Global.MsgPtr, &SAMPLE_TC_DISPATCH_TABLE);
         }
         else
         {
@@ -172,6 +198,11 @@ int32 SAMPLE_AppInit( void )
     }
 
     /*
+     * Register message dictionary with SB
+     */
+    CFE_SB_EDS_RegisterSelf(&SAMPLE_DATATYPE_DB);
+
+    /*
     ** Initialize housekeeping packet (clear user data area).
     */
     CFE_SB_InitMsg(&SAMPLE_Global.HkBuf.MsgHdr,
@@ -222,7 +253,8 @@ int32 SAMPLE_AppInit( void )
     */
     status = CFE_TBL_Register(&SAMPLE_Global.TblHandles[0],
                               "SampleTable",
-                              sizeof(SAMPLE_Table_t),
+                              EDS_INDEX(SAMPLE),
+                              SAMPLE_Table_DATADICTIONARY,
                               CFE_TBL_OPT_DEFAULT,
                               SAMPLE_TblValidationFunc);
     if ( status != CFE_SUCCESS )
@@ -252,96 +284,6 @@ int32 SAMPLE_AppInit( void )
 } /* End of SAMPLE_AppInit() */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*  Name:  SAMPLE_ProcessCommandPacket                                        */
-/*                                                                            */
-/*  Purpose:                                                                  */
-/*     This routine will process any packet that is received on the SAMPLE    */
-/*     command pipe.                                                          */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
-void SAMPLE_ProcessCommandPacket( CFE_SB_MsgPtr_t Msg )
-{
-    CFE_SB_MsgId_t  MsgId;
-
-    MsgId = CFE_SB_GetMsgId(Msg);
-
-    switch (MsgId)
-    {
-        case SAMPLE_APP_CMD_MID:
-            SAMPLE_ProcessGroundCommand(Msg);
-            break;
-
-        case SAMPLE_APP_SEND_HK_MID:
-            SAMPLE_ReportHousekeeping((CCSDS_CommandPacket_t *)Msg);
-            break;
-
-        default:
-            CFE_EVS_SendEvent(SAMPLE_INVALID_MSGID_ERR_EID,
-                              CFE_EVS_ERROR,
-         	              "SAMPLE: invalid command packet,MID = 0x%x",
-                              MsgId);
-            break;
-    }
-
-    return;
-
-} /* End SAMPLE_ProcessCommandPacket */
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*                                                                            */
-/* SAMPLE_ProcessGroundCommand() -- SAMPLE ground commands                    */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-void SAMPLE_ProcessGroundCommand( CFE_SB_MsgPtr_t Msg )
-{
-    uint16 CommandCode;
-
-    CommandCode = CFE_SB_GetCmdCode(Msg);
-
-    /*
-    ** Process "known" SAMPLE app ground commands
-    */
-    switch (CommandCode)
-    {
-        case SAMPLE_APP_NOOP_CC:
-            if (SAMPLE_VerifyCmdLength(Msg, sizeof(SAMPLE_Noop_t)))
-            {
-                SAMPLE_Noop((SAMPLE_Noop_t *)Msg);
-            }
-
-            break;
-
-        case SAMPLE_APP_RESET_COUNTERS_CC:
-            if (SAMPLE_VerifyCmdLength(Msg, sizeof(SAMPLE_ResetCounters_t)))
-            {
-                SAMPLE_ResetCounters((SAMPLE_ResetCounters_t *)Msg);
-            }
-
-            break;
-
-        case SAMPLE_APP_PROCESS_CC:
-            if (SAMPLE_VerifyCmdLength(Msg, sizeof(SAMPLE_Process_t)))
-            {
-                SAMPLE_Process((SAMPLE_Process_t *)Msg);
-            }
-
-            break;
-
-        /* default case already found during FC vs length test */
-        default:
-            CFE_EVS_SendEvent(SAMPLE_COMMAND_ERR_EID,
-                              CFE_EVS_ERROR,
-                              "Invalid ground command code: CC = %d",
-                              CommandCode);
-            break;
-    }
-
-    return;
-
-} /* End of SAMPLE_ProcessGroundCommand() */
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*  Name:  SAMPLE_ReportHousekeeping                                          */
 /*                                                                            */
 /*  Purpose:                                                                  */
 /*         This function is triggered in response to a task telemetry request */
@@ -460,40 +402,20 @@ int32  SAMPLE_Process( const SAMPLE_Process_t *Msg )
 } /* End of SAMPLE_ProcessCC */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
+/*  Name:  SAMPLE_DoExample                                               */
 /*                                                                            */
-/* SAMPLE_VerifyCmdLength() -- Verify command packet length                   */
+/*  Purpose:                                                                  */
+/*         Example command with a value.  Writes the value to syslog.         */
 /*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-bool SAMPLE_VerifyCmdLength( CFE_SB_MsgPtr_t Msg, uint16 ExpectedLength )
+/* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
+int32 SAMPLE_DoExample(const SAMPLE_DoExample_t *data)
 {
-    bool result = true;
+    CFE_ES_WriteToSysLog("SAMPLE APP Command Received, value=%u",
+            (unsigned int)data->Payload.Value);
+    return CFE_SUCCESS;
 
-    uint16 ActualLength = CFE_SB_GetTotalMsgLength(Msg);
+} /* End of SAMPLE_DoExample() */
 
-    /*
-    ** Verify the command packet length.
-    */
-    if (ExpectedLength != ActualLength)
-    {
-        CFE_SB_MsgId_t MessageID   = CFE_SB_GetMsgId(Msg);
-        uint16         CommandCode = CFE_SB_GetCmdCode(Msg);
-
-        CFE_EVS_SendEvent(SAMPLE_LEN_ERR_EID,
-                          CFE_EVS_ERROR,
-                          "Invalid Msg length: ID = 0x%X,  CC = %d, Len = %d, Expected = %d",
-                          MessageID,
-                          CommandCode,
-                          ActualLength,
-                          ExpectedLength);
-
-        result = false;
-
-        SAMPLE_Global.ErrCounter++;
-    }
-
-    return( result );
-
-} /* End of SAMPLE_VerifyCmdLength() */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */

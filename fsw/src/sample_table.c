@@ -36,4 +36,4 @@ SAMPLE_Table_t sampleTable = { 1, 2};
 **    3) a brief description of the contents of the file image
 **    4) the desired name of the table image binary file that is cFE compatible
 */
-CFE_TBL_FILEDEF(sampleTable, SAMPLE_APP.SampleTable, Table Utility Test Table, sample_table.tbl )
+CFE_TBL_FILEDEF(sampleTable, "SAMPLE_APP.SampleTable", "Table Utility Test Table", "sample_table.tbl", "SAMPLE/Table")

@@ -29,8 +29,9 @@
 #ifndef _sample_app_perfids_h_
 #define _sample_app_perfids_h_
 
+#include "cfe_perfids_eds_typedefs.h"
 
-#define SAMPLE_APP_PERF_ID              91 
+#define SAMPLE_APP_PERF_ID          CFE_MISSION_PerfID_SAMPLE_APP
 
 #endif /* _sample_app_perfids_h_ */
 

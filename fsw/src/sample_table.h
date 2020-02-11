@@ -31,14 +31,9 @@
 #define _sample_table_h_
 
 /*
-** Table structure
+** Table structure is defined in EDS
 */
-typedef struct
-{
-    uint16     Int1;
-    uint16     Int2;
-
-} SAMPLE_Table_t;
+#include "sample_eds_typedefs.h"
 
 #endif /* _sample_table_h_ */
 

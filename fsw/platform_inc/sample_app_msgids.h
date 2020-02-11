@@ -30,9 +30,11 @@
 #ifndef _sample_app_msgids_h_
 #define _sample_app_msgids_h_
 
-#define SAMPLE_APP_CMD_MID            	0x1882
-#define SAMPLE_APP_SEND_HK_MID        	0x1883
-#define SAMPLE_APP_HK_TLM_MID		0x0883
+#include "cfe_mission_eds_parameters.h"
+
+#define SAMPLE_APP_CMD_MID              CFE_SB_MsgId_From_TopicId(CFE_MISSION_SAMPLE_APP_CMD_TOPICID)
+#define SAMPLE_APP_SEND_HK_MID          CFE_SB_MsgId_From_TopicId(CFE_MISSION_SAMPLE_APP_SEND_HK_TOPICID)
+#define SAMPLE_APP_HK_TLM_MID           CFE_SB_MsgId_From_TopicId(CFE_MISSION_SAMPLE_APP_HK_TLM_TOPICID)
 
 #endif /* _sample_app_msgids_h_ */
 
