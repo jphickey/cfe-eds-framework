@@ -29,10 +29,11 @@
 #ifndef _ci_lab_msgids_h_
 #define _ci_lab_msgids_h_
 
-#define CI_LAB_CMD_MID     0x1884
-#define CI_LAB_SEND_HK_MID 0x1885
+#include "cfe_mission_eds_parameters.h"
 
-#define CI_LAB_HK_TLM_MID 0x0884
+#define CI_LAB_CMD_MID                 CFE_SB_MsgId_From_TopicId(CFE_MISSION_CI_LAB_CMD_TOPICID)
+#define CI_LAB_SEND_HK_MID             CFE_SB_MsgId_From_TopicId(CFE_MISSION_CI_LAB_SEND_HK_TOPICID)
+#define CI_LAB_HK_TLM_MID              CFE_SB_MsgId_From_TopicId(CFE_MISSION_CI_LAB_HK_TLM_TOPICID)
 
 #endif /* _ci_lab_msgids_h_ */
 

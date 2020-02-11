@@ -44,11 +44,16 @@
 #include <errno.h>
 #include <unistd.h>
 
+/* Use the EDS generated type definitions */
+#include "ci_lab_eds_defines.h"
+#include "ci_lab_eds_typedefs.h"
+
+
 /****************************************************************************/
 
-#define cfgCI_LAB_PORT    1234
-#define CI_LAB_MAX_INGEST 768
-#define CI_LAB_PIPE_DEPTH 32
+#define CI_LAB_DEFAULT_PORT 1235
+#define CI_LAB_MAX_INGEST   1024
+#define CI_LAB_PIPE_DEPTH   32
 
 /************************************************************************
 ** Type Definitions
@@ -63,11 +68,7 @@
 */
 void CI_Lab_AppMain(void);
 void CI_LAB_TaskInit(void);
-void CI_LAB_ProcessCommandPacket(void);
-void CI_LAB_ProcessGroundCommand(void);
 void CI_LAB_ResetCounters_Internal(void);
 void CI_LAB_ReadUpLink(void);
-
-bool CI_LAB_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 ExpectedLength);
 
 #endif /* _ci_lab_app_h_ */

@@ -32,9 +32,14 @@
 #include "ci_lab_app.h"
 #include "ci_lab_perfids.h"
 #include "ci_lab_msgids.h"
-#include "ci_lab_msg.h"
 #include "ci_lab_events.h"
 #include "ci_lab_version.h"
+
+#include "cfe_sb_eds.h"
+
+#include "ci_lab_eds_dictionary.h"
+#include "ci_lab_eds_dispatcher.h"
+
 
 /*
 ** CI global data...
@@ -67,7 +72,8 @@ typedef struct
     OS_SockAddr_t      SocketAddress;
 
     CI_LAB_HkTlm_Buffer_t   HkBuffer;
-    CI_LAB_IngestBuffer_t   IngestBuffer;
+    CI_LAB_IngestBuffer_t   MsgBuffer;
+    CI_LAB_IngestBuffer_t   NetworkBuffer;
 } CI_LAB_GlobalData_t;
 
 
@@ -90,6 +96,20 @@ static CFE_EVS_BinFilter_t CI_LAB_EventFilters[] = {/* Event ID    mask */
 int32 CI_LAB_Noop(const CI_LAB_Noop_t *data);
 int32 CI_LAB_ResetCounters(const CI_LAB_ResetCounters_t *data);
 int32 CI_LAB_ReportHousekeeping(const CCSDS_CommandPacket_t *data);
+
+/*
+ * Define a lookup table for CI lab command codes
+ */
+static const CI_LAB_Application_Component_Telecommand_DispatchTable_t CI_LAB_TC_DISPATCH_TABLE =
+{
+        .CMD =
+        {
+                .Noop_indication            = CI_LAB_Noop,
+                .ResetCounters_indication   = CI_LAB_ResetCounters,
+
+        },
+        .SEND_HK = {.indication = CI_LAB_ReportHousekeeping}
+};
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* CI_Lab_AppMain() -- Application entry point and main process loop          */
@@ -124,7 +144,8 @@ void CI_Lab_AppMain(void)
 
         if (status == CFE_SUCCESS)
         {
-            CI_LAB_ProcessCommandPacket();
+            CI_LAB_Application_Component_Telecommand_Dispatch(
+                    CFE_SB_Telecommand_indication_Command_ID, CI_LAB_Global.MsgPtr, &CI_LAB_TC_DISPATCH_TABLE);
         }
 
         /* Regardless of packet vs timeout, always process uplink queue      */
@@ -166,6 +187,8 @@ void CI_LAB_TaskInit(void)
     CFE_EVS_Register(CI_LAB_EventFilters, sizeof(CI_LAB_EventFilters) / sizeof(CFE_EVS_BinFilter_t),
                      CFE_EVS_EventFilter_BINARY);
 
+    CFE_SB_EDS_RegisterSelf(&CI_LAB_DATATYPE_DB);
+
     CFE_SB_CreatePipe(&CI_LAB_Global.CommandPipe, CI_LAB_PIPE_DEPTH, "CI_LAB_CMD_PIPE");
     CFE_SB_Subscribe(CI_LAB_CMD_MID, CI_LAB_Global.CommandPipe);
     CFE_SB_Subscribe(CI_LAB_SEND_HK_MID, CI_LAB_Global.CommandPipe);
@@ -178,7 +201,7 @@ void CI_LAB_TaskInit(void)
     else
     {
         OS_SocketAddrInit(&CI_LAB_Global.SocketAddress, OS_SocketDomain_INET);
-        DefaultListenPort = cfgCI_LAB_PORT + CFE_PSP_GetProcessorId() - 1;
+        DefaultListenPort = CI_LAB_DEFAULT_PORT + CFE_PSP_GetProcessorId() - 1;
         OS_SocketAddrSetPort(&CI_LAB_Global.SocketAddress, DefaultListenPort);
 
         status = OS_SocketBind(CI_LAB_Global.SocketID, &CI_LAB_Global.SocketAddress);
@@ -201,82 +224,12 @@ void CI_LAB_TaskInit(void)
     */
     OS_TaskInstallDeleteHandler(&CI_LAB_delete_callback);
 
-    CFE_SB_InitMsg(&CI_LAB_Global.HkBuffer.HkTlm, CI_LAB_HK_TLM_MID, CI_LAB_HK_TLM_LNGTH, true);
+    CFE_SB_InitMsg(&CI_LAB_Global.HkBuffer.MsgHdr, CI_LAB_HK_TLM_MID, sizeof(CI_LAB_Global.HkBuffer.HkTlm), true);
 
     CFE_EVS_SendEvent(CI_LAB_STARTUP_INF_EID, CFE_EVS_EventType_INFORMATION, "CI Lab Initialized.  Version %d.%d.%d.%d",
                       CI_LAB_MAJOR_VERSION, CI_LAB_MINOR_VERSION, CI_LAB_REVISION, CI_LAB_MISSION_REV);
 
 } /* End of CI_LAB_TaskInit() */
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*  Name:  CI_LAB_ProcessCommandPacket                                        */
-/*                                                                            */
-/*  Purpose:                                                                  */
-/*     This routine will process any packet that is received on the CI command*/
-/*     pipe. The packets received on the CI command pipe are listed here:     */
-/*                                                                            */
-/*        1. NOOP command (from ground)                                       */
-/*        2. Request to reset telemetry counters (from ground)                */
-/*        3. Request for housekeeping telemetry packet (from HS task)         */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
-void CI_LAB_ProcessCommandPacket(void)
-{
-    CFE_SB_MsgId_t MsgId;
-    MsgId = CFE_SB_GetMsgId(CI_LAB_Global.MsgPtr);
-
-    switch (MsgId)
-    {
-        case CI_LAB_CMD_MID:
-            CI_LAB_ProcessGroundCommand();
-            break;
-
-        case CI_LAB_SEND_HK_MID:
-            CI_LAB_ReportHousekeeping((const CCSDS_CommandPacket_t *)CI_LAB_Global.MsgPtr);
-            break;
-
-        default:
-            CI_LAB_Global.HkBuffer.HkTlm.Payload.CommandErrorCounter++;
-            CFE_EVS_SendEvent(CI_LAB_COMMAND_ERR_EID, CFE_EVS_EventType_ERROR, "CI: invalid command packet,MID = 0x%x",
-                              MsgId);
-            break;
-    }
-
-    return;
-
-} /* End CI_LAB_ProcessCommandPacket */
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*                                                                            */
-/* CI_LAB_ProcessGroundCommand() -- CI ground commands                        */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-
-void CI_LAB_ProcessGroundCommand(void)
-{
-    uint16 CommandCode;
-
-    CommandCode = CFE_SB_GetCmdCode(CI_LAB_Global.MsgPtr);
-
-    /* Process "known" CI task ground commands */
-    switch (CommandCode)
-    {
-        case CI_LAB_NOOP_CC:
-            CI_LAB_Noop((const CI_LAB_Noop_t *)CI_LAB_Global.MsgPtr);
-            break;
-
-        case CI_LAB_RESET_COUNTERS_CC:
-            CI_LAB_ResetCounters((const CI_LAB_ResetCounters_t *)CI_LAB_Global.MsgPtr);
-            break;
-
-        /* default case already found during FC vs length test */
-        default:
-            break;
-    }
-
-    return;
-
-} /* End of CI_LAB_ProcessGroundCommand() */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*  Name:  CI_LAB_Noop                                                         */
@@ -357,26 +310,42 @@ void CI_LAB_ResetCounters_Internal(void)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
 void CI_LAB_ReadUpLink(void)
 {
-    int i;
-    int32 status;
+    int    i;
+    int32  status;
+    uint32 DataSize;
 
     for (i = 0; i <= 10; i++)
     {
-        status = OS_SocketRecvFrom(CI_LAB_Global.SocketID, CI_LAB_Global.IngestBuffer.bytes, sizeof(CI_LAB_Global.IngestBuffer), &CI_LAB_Global.SocketAddress, OS_CHECK);
-        if (status >= ((int32)CFE_SB_CMD_HDR_SIZE) &&
-                status <= ((int32)CI_LAB_MAX_INGEST))
+        status = OS_SocketRecvFrom(CI_LAB_Global.SocketID, CI_LAB_Global.NetworkBuffer.bytes,
+                sizeof(CI_LAB_Global.NetworkBuffer), &CI_LAB_Global.SocketAddress, OS_CHECK);
+        if (status > CI_LAB_MAX_INGEST)
         {
-            CFE_ES_PerfLogEntry(CI_LAB_SOCKET_RCV_PERF_ID);
-            CI_LAB_Global.HkBuffer.HkTlm.Payload.IngestPackets++;
-            status = CFE_SB_SendMsg(&CI_LAB_Global.IngestBuffer.MsgHdr);
-            CFE_ES_PerfLogExit(CI_LAB_SOCKET_RCV_PERF_ID);
+            CI_LAB_Global.HkBuffer.HkTlm.Payload.IngestErrors++;
+            CFE_EVS_SendEvent(CI_LAB_INGEST_ERR_EID, CFE_EVS_EventType_ERROR,
+                    "CI: L%d, cmd %0x %0x dropped, too long\n", __LINE__,
+                    CI_LAB_Global.NetworkBuffer.hwords[0], CI_LAB_Global.NetworkBuffer.hwords[1]);
         }
         else if (status > 0)
         {
-            /* bad size, report as ingest error */
-            CI_LAB_Global.HkBuffer.HkTlm.Payload.IngestErrors++;
-            CFE_EVS_SendEvent(CI_LAB_INGEST_ERR_EID,CFE_EVS_EventType_ERROR, "CI: L%d, cmd %0x %0x dropped, bad length=%d\n", __LINE__,
-                    CI_LAB_Global.IngestBuffer.hwords[0], CI_LAB_Global.IngestBuffer.hwords[1], (int)status);
+            /* Packet is in external wire-format byte order - unpack it and copy */
+            DataSize = sizeof(CI_LAB_Global.MsgBuffer);
+            status   = CFE_SB_EDS_UnpackInputMessage(CFE_SB_Telecommand_Interface_ID, &CI_LAB_Global.MsgBuffer.MsgHdr,
+                    CI_LAB_Global.NetworkBuffer.bytes, &DataSize, status);
+
+            if (status != CFE_SUCCESS)
+            {
+                CI_LAB_Global.HkBuffer.HkTlm.Payload.IngestErrors++;
+                CFE_EVS_SendEvent(CI_LAB_INGEST_ERR_EID, CFE_EVS_EventType_ERROR,
+                        "CI: L%d, cmd %0x %0x dropped, undefined payload?\n", __LINE__,
+                        CI_LAB_Global.NetworkBuffer.hwords[0], CI_LAB_Global.NetworkBuffer.hwords[1]);
+            }
+            else
+            {
+                CFE_ES_PerfLogEntry(CI_LAB_SOCKET_RCV_PERF_ID);
+                CI_LAB_Global.HkBuffer.HkTlm.Payload.IngestPackets++;
+                status = CFE_SB_SendMsg(&CI_LAB_Global.MsgBuffer.MsgHdr);
+                CFE_ES_PerfLogExit(CI_LAB_SOCKET_RCV_PERF_ID);
+            }
         }
         else
         {
@@ -388,31 +357,3 @@ void CI_LAB_ReadUpLink(void)
 
 } /* End of CI_LAB_ReadUpLink() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*                                                                            */
-/* CI_LAB_VerifyCmdLength() -- Verify command packet length                   */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-bool CI_LAB_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 ExpectedLength)
-{
-    bool   result       = true;
-    uint16 ActualLength = CFE_SB_GetTotalMsgLength(msg);
-
-    /*
-    ** Verify the command packet length...
-    */
-    if (ExpectedLength != ActualLength)
-    {
-        CFE_SB_MsgId_t MessageID   = CFE_SB_GetMsgId(msg);
-        uint16         CommandCode = CFE_SB_GetCmdCode(msg);
-
-        CFE_EVS_SendEvent(CI_LAB_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
-                          "Invalid msg length: ID = 0x%X,  CC = %d, Len = %d, Expected = %d", MessageID, CommandCode,
-                          ActualLength, ExpectedLength);
-        result = false;
-        CI_LAB_Global.HkBuffer.HkTlm.Payload.CommandErrorCounter++;
-    }
-
-    return (result);
-
-} /* End of CI_LAB_VerifyCmdLength() */
