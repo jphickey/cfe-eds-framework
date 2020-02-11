@@ -30,44 +30,21 @@
 *************************************************************************/
 
 
-#include "cfe_sb_extern_typedefs.h"  /* for CFE_SB_MsgId_t */
+#include "sch_lab_eds_typedefs.h"
 #include "cfe_msgids.h"
 
 /*
 ** Include headers for message IDs here
 */
-#include "ci_lab_msgids.h"
-#include "to_lab_msgids.h"
+#include "cfe_mission_eds_parameters.h"
 
-#include "sample_app_msgids.h"
 
-#if 0
-#include "sc_msgids.h"
-#include "hs_msgids.h"
-#include "fm_msgids.h"
-#include "ds_msgids.h"
-#include "lc_msgids.h"
-#endif
 
 /*
 ** Defines
 */
 #define SCH_LAB_END_OF_TABLE          0
-#define SCH_LAB_MAX_SCHEDULE_ENTRIES  32
+#define SCH_LAB_MAX_SCHEDULE_ENTRIES  CFE_MISSION_SCH_LAB_MAX_SCHEDULE_ENTRIES
 #define SCH_TBL_DEFAULT_FILE          "/cf/sch_lab_table.tbl"
 
-/*
-** Typedefs
-*/
-typedef struct
-{
-    CFE_SB_MsgId_t  MessageID;  /* Message ID for the table entry */
-    uint32          PacketRate; /* Rate: Send packet every N seconds */
-} SCH_LAB_ScheduleTableEntry_t;
-
-
-typedef struct
-{
-    SCH_LAB_ScheduleTableEntry_t Config[SCH_LAB_MAX_SCHEDULE_ENTRIES];
-} SCH_LAB_ScheduleTable_t;
 

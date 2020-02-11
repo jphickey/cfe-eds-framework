@@ -37,21 +37,21 @@ SCH_LAB_ScheduleTable_t  SCH_TBL_Structure =
 {
         .Config =
         {
-                { CFE_ES_SEND_HK_MID, 4 },
-                { CFE_EVS_SEND_HK_MID, 4 },
-                { CFE_TIME_SEND_HK_MID, 4 },
-                { CFE_SB_SEND_HK_MID, 4 },
-                { CFE_TBL_SEND_HK_MID, 4 },
-                { CI_LAB_SEND_HK_MID, 4 },
-                { TO_LAB_SEND_HK_MID, 4 },
-                { SAMPLE_APP_SEND_HK_MID, 4 },
+                { CFE_MISSION_ES_SEND_HK_TOPICID, 4 },
+                { CFE_MISSION_EVS_SEND_HK_TOPICID, 4 },
+                { CFE_MISSION_TIME_SEND_HK_TOPICID, 4 },
+                { CFE_MISSION_SB_SEND_HK_TOPICID, 4 },
+                { CFE_MISSION_TBL_SEND_HK_TOPICID, 4 },
+                { CFE_MISSION_CI_LAB_SEND_HK_TOPICID, 4 },
+                { CFE_MISSION_TO_LAB_SEND_HK_TOPICID, 4 },
+                { CFE_MISSION_SAMPLE_APP_SEND_HK_TOPICID, 4 },
 #if 0
-                { SC_SEND_HK_MID,       4, 0 },
-                { SC_1HZ_WAKEUP_MID,    1, 0 },  /* Example of a 1hz packet */
-                { HS_SEND_HK_MID,       4, 0 },
-                { FM_SEND_HK_MID,       4, 0 },
-                { DS_SEND_HK_MID,       4, 0 },
-                { LC_SEND_HK_MID,       4, 0 },
+                { CFE_MISSION_SC_SEND_HK_TOPICID,       4, 0 },
+                { CFE_MISSION_SC_1HZ_WAKEUP_TOPICID,    1, 0 },  /* Example of a 1hz packet */
+                { CFE_MISSION_HS_SEND_HK_TOPICID,       4, 0 },
+                { CFE_MISSION_FM_SEND_HK_TOPICID,       4, 0 },
+                { CFE_MISSION_DS_SEND_HK_TOPICID,       4, 0 },
+                { CFE_MISSION_LC_SEND_HK_TOPICID,       4, 0 },
 #endif
         }
 };
@@ -63,4 +63,4 @@ SCH_LAB_ScheduleTable_t  SCH_TBL_Structure =
 **    3) a brief description of the contents of the file image
 **    4) the desired name of the table image binary file that is cFE compatible
 */
-CFE_TBL_FILEDEF(SCH_TBL_Structure, SCH_LAB_APP.SCH_LAB_SchTbl, Schedule Lab MsgID Table, sch_lab_table.tbl )
+CFE_TBL_FILEDEF(SCH_TBL_Structure, "SCH_LAB_APP.SCH_LAB_SchTbl", "Schedule Lab Table", "sch_lab_table.tbl", "SCH_LAB/ScheduleTable" )

@@ -164,7 +164,8 @@ int32 SCH_LAB_AppInit(void)
     */
     Status = CFE_TBL_Register(&SCH_LAB_Global.TblHandle,
                               "SCH_LAB_SchTbl",
-                              sizeof(SCH_LAB_ScheduleTable_t), 
+                              EDS_INDEX(SCH_LAB),
+                              SCH_LAB_ScheduleTable_DATADICTIONARY,
                               CFE_TBL_OPT_DEFAULT, 
                               NULL);
 
@@ -214,7 +215,7 @@ int32 SCH_LAB_AppInit(void)
         if (ConfigEntry->PacketRate != 0)
         {
             CFE_SB_InitMsg(&LocalStateEntry->MsgBuf.MsgHdr,
-                    CFE_SB_ValueToMsgId(ConfigEntry->MessageID),
+                    CFE_SB_MsgId_From_TopicId(ConfigEntry->TopicID),
                     sizeof(LocalStateEntry->MsgBuf), true);
             LocalStateEntry->PacketRate = ConfigEntry->PacketRate;
         }
