@@ -30,53 +30,38 @@
 /* 
 ** Add the proper include file for the message IDs below
 */
-#include "cfe_msgids.h"
+#include <common_types.h>
+#include "cfe_mission_cfg.h"
+#include "cfe_mission_eds_parameters.h"
 
-/*
-** Common CFS app includes below are commented out
-*/
-#include "ci_lab_msgids.h"
 
-#include "sample_app_msgids.h"
+typedef struct {
+      uint16           TopicId;
+      CFE_SB_Qos_t     Qos;
+      uint16           BufLimit;
+ } TO_subscription_t;
 
-#if 0
-#include "hs_msgids.h"
-#include "fm_msgids.h"
-#include "sc_msgids.h"
-#include "ds_msgids.h"
-#include "lc_msgids.h"
-#endif
 
 static TO_subscription_t  TO_SubTable[] =
 {
             /* CFS App Subscriptions */
-            {TO_LAB_HK_TLM_MID,     {0,0},  4},
-            {TO_LAB_DATA_TYPES_MID, {0,0},  4},
-            {CI_LAB_HK_TLM_MID,     {0,0},  4},
-            {SAMPLE_APP_HK_TLM_MID, {0,0},  4},
+            {CFE_MISSION_TO_LAB_HK_TLM_TOPICID,     {0,0},  4},
+            {CFE_MISSION_TO_LAB_DATA_TYPES_TOPICID, {0,0},  4},
+            {CFE_MISSION_CI_LAB_HK_TLM_TOPICID,     {0,0},  4},
 
-#if 0
-            /* Add these if needed */
-            {HS_HK_TLM_MID,         {0,0},  4},
-            {FM_HK_TLM_MID,         {0,0},  4},
-            {SC_HK_TLM_MID,         {0,0},  4},
-            {DS_HK_TLM_MID,         {0,0},  4},
-            {LC_HK_TLM_MID,         {0,0},  4},
-#endif
-
-            /* cFE Core subscriptions */
-            {CFE_ES_HK_TLM_MID,          {0,0},  4},
-            {CFE_EVS_HK_TLM_MID,         {0,0},  4},
-            {CFE_SB_HK_TLM_MID,          {0,0},  4},
-            {CFE_TBL_HK_TLM_MID,         {0,0},  4},
-            {CFE_TIME_HK_TLM_MID,        {0,0},  4},
-            {CFE_TIME_DIAG_TLM_MID,      {0,0},  4},
-            {CFE_SB_STATS_TLM_MID,       {0,0},  4},
-            {CFE_TBL_REG_TLM_MID,        {0,0},  4},
-            {CFE_EVS_LONG_EVENT_MSG_MID, {0,0}, 32},
-            {CFE_ES_SHELL_TLM_MID,       {0,0}, 32},
-            {CFE_ES_APP_TLM_MID,         {0,0},  4},
-            {CFE_ES_MEMSTATS_TLM_MID,    {0,0},  4},
+            /* cFE Core subsciptions */
+            {CFE_MISSION_ES_HK_TLM_TOPICID,     {0,0},  4},
+            {CFE_MISSION_EVS_HK_TLM_TOPICID,    {0,0},  4},
+            {CFE_MISSION_SB_HK_TLM_TOPICID,     {0,0},  4},
+            {CFE_MISSION_TBL_HK_TLM_TOPICID,    {0,0},  4},
+            {CFE_MISSION_TIME_HK_TLM_TOPICID,   {0,0},  4},
+            {CFE_MISSION_TIME_DIAG_TLM_TOPICID, {0,0},  4},
+            {CFE_MISSION_SB_STATS_TLM_TOPICID,  {0,0},  4},
+            {CFE_MISSION_TBL_REG_TLM_TOPICID,   {0,0},  4},
+            {CFE_MISSION_EVS_LONG_EVENT_MSG_TOPICID, {0,0},  32},
+            {CFE_MISSION_ES_SHELL_TLM_TOPICID,  {0,0},  32},
+            {CFE_MISSION_ES_APP_TLM_TOPICID,    {0,0},   4},
+            {CFE_MISSION_ES_MEMSTATS_TLM_TOPICID,{0,0},  4},
 
             {TO_UNUSED,              {0,0},  0},
             {TO_UNUSED,              {0,0},  0},

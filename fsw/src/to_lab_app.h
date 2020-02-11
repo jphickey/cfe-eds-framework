@@ -44,14 +44,27 @@
 #include "common_types.h"
 #include "osapi.h"
 
+/* Use the EDS generated type definitions */
+#include "to_lab_eds_defines.h"
+#include "to_lab_eds_typedefs.h"
+
+
+
 /*****************************************************************************/
 
 #define TO_TASK_MSEC             500          /* run at 2 Hz */
 #define TO_UNUSED                  0
 
-#define cfgTLM_ADDR "192.168.1.81"
-#define cfgTLM_PORT 1235
+#define TO_LAB_DEFAULT_PORT 5021
 #define TO_LAB_VERSION_NUM "5.1.0"
+
+/*
+ * Size of output buffer
+ * This must be large enough to accommodate the largest
+ * possible encoded telemetry packet from the mission
+ */
+#define TO_LAB_MAX_OUTPUT                 2048
+
 
 /******************************************************************************/
 

@@ -29,12 +29,13 @@
 #ifndef _to_lab_msgids_h_
 #define _to_lab_msgids_h_
 
+#include "cfe_mission_eds_parameters.h"
 
-#define TO_LAB_CMD_MID            	0x1880
-#define TO_LAB_SEND_HK_MID        	0x1881
+#define TO_LAB_CMD_MID            	CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_CMD_TOPICID)
+#define TO_LAB_SEND_HK_MID        	CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_SEND_HK_TOPICID)
 
-#define TO_LAB_HK_TLM_MID		0x0880
-#define TO_LAB_DATA_TYPES_MID	0x0881
+#define TO_LAB_HK_TLM_MID		      CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_HK_TLM_TOPICID)
+#define TO_LAB_DATA_TYPES_MID	      CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_DATA_TYPES_TOPICID)
 
 #endif /* _to_lab_msgids_h_ */
 
