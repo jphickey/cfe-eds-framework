@@ -1,0 +1,7 @@
+# Backup files left around by some editors
+*~
+build*/
+.cproject
+.project
+.settings/
+.pydevproject
