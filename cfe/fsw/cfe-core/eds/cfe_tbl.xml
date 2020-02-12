@@ -48,7 +48,7 @@
           <Entry name="TableName" type="TableName" shortDescription="Name of Table as defined onboard" />
           <Entry name="Description" type="CFE_FS/FileDescription" shortDescription="Description of table image that is included in cFE File Header" />
           <Entry name="TgtFilename" type="BASE_TYPES/PathName" shortDescription="Default filename to be used for output of eds2cfetbl utility" />
-          <Entry name="ObjectType" type="BASE_TYPES/ApiName" shortDescription="Data type of the instantiated variable containing the table data" />
+          <Entry name="ObjectType" type="ObjectName" shortDescription="Data type of the instantiated variable containing the table data" />
         </EntryList>
       </ContainerDataType>
 

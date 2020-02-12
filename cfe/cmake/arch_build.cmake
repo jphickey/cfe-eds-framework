@@ -136,6 +136,10 @@ function(add_cfe_tables APP_NAME TBL_SRC_FILES)
   
     # Get name without extension (NAME_WE) and append to list of tables
     get_filename_component(TBLWE ${TBL} NAME_WE)
+
+    set(TBL_SRC)
+    set(TBL_LUA)
+    set(TBL_SO_FILE)
     
     foreach(TGT ${APP_INSTALL_LIST})
       set(TABLE_DESTDIR "${CMAKE_CURRENT_BINARY_DIR}/tables_${TGT}")
@@ -153,14 +157,13 @@ function(add_cfe_tables APP_NAME TBL_SRC_FILES)
         set(TBL_SRC "${MISSION_DEFS}/tables/${TBLWE}.c")
       elseif (EXISTS "${MISSION_SOURCE_DIR}/tables/${TBLWE}.c")
         set(TBL_SRC "${MISSION_SOURCE_DIR}/tables/${TBLWE}.c")
-      else()
-        set(TBL_SRC)
+      elseif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TBL}")
+        set(TBL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/${TBL}")
       endif()
 
       # Check if an lua script exists at the mission level (recommended practice)
       # This allows a mission to implement a customized table without modifying
       # the original - this also makes for easier merging/updating if needed.
-      set(TBL_LUA)
       if (EXISTS "${MISSION_DEFS}/tables/${TGT}_${TBLWE}.lua")
         list(APPEND TBL_LUA "${MISSION_DEFS}/tables/${TGT}_${TBLWE}.lua")
       endif()
@@ -175,6 +178,7 @@ function(add_cfe_tables APP_NAME TBL_SRC_FILES)
       endif()
     
       if (TBL_SRC)
+      	  message(STATUS "Using ${TBL_SRC} as legacy table definition for ${TBLWE}")
           add_custom_command(
            OUTPUT "${TABLE_DESTDIR}/${TBLWE}.so"
              COMMAND ${CMAKE_NATIVE_C_COMPILER} ${TBL_CFLAGS} -shared -o ${TBLWE}.so ${TBL_SRC}
@@ -182,8 +186,12 @@ function(add_cfe_tables APP_NAME TBL_SRC_FILES)
             WORKING_DIRECTORY ${TABLE_DESTDIR}
           )
           set(TBL_SO_FILE "${TABLE_DESTDIR}/${TBLWE}.so")
+      elseif(TBL_LUA)
+      	  message(STATUS "Using EDS table definition for ${TBLWE}")
       else()
-          set(TBL_SO_FILE)
+          # If neither a legacy C source nor a LUA source is found, then
+          # this is a mission configuration error. 
+      	  message(FATAL_ERROR "No table definition for ${TBLWE} found")
       endif (TBL_SRC)
     
       add_custom_command(
