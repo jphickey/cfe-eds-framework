@@ -4,7 +4,13 @@ A distribution of the open source CFE framework which includes CCSDS Electronic 
 This repository represents an assembly of CFE framework components, merged together into a single
 git repository using "git subtree".
 
-The following components are part of this repository:
+The following NASA open source releases are part of this repository:
+
+    GSC-18128-1, Core Flight Executive Version 6.7
+    GSC-18370-1, Operating System Abstraction Layer
+    LEW-19710-1, CCSDS SOIS Electronic Data Sheet Implementation
+
+This comprises the following individual subdirectories:
 
 - [cFE](https://github.com/nasa/cFE) in `./cfe` subtree  
 - [osal](https://github.com/nasa/osal) in `./osal` subtree
@@ -111,10 +117,65 @@ Then to view and decode the telemetry being sent:
     ./tlm_decode
 
 
+# Next Steps
+
+This distribution may serve as the baseline for a CFE mission.  It may be forked and extended
+for mission-specific needs while still retaining the relationship to the original component sources
+for future patching/upgrading as needed.
+
+## Changing the Name
+
+The distribution contains a configuration named "SampleMission" in the `sample_defs` directory.  
+Generally one of the first steps is to rename this to be more appropriate.
+
+- Rename the `sample_defs` directory to `${name}_defs` (retaining the _defs suffix)
+- Rename and update `sample_mission_cfg.h` and `sample_perfids.h` file accordingly
+- Update the `MISSION_NAME` and `SPACECRAFT_ID` within the targets.cmake file
+
+
+## Adding and Updating an App
+
+Third party CFS applications may be obtained through a variety of different channels.  The package 
+or upstream app repository should be typically placed as a subdirectory under `./apps`
+with a directory name matching the name of the application or library.
+
+If the upstream application is in a git repository, then the `git subtree add` command may be 
+used to add the application, which retains a relationship to the original source:
+
+    git remote add ${name} ${repo_url}
+    git fetch ${name}
+    git subtree add -P apps/${name} ${name}/master
+
+If/when a new version of the upstream app is released after the initial subtree add, it may be 
+merged, for example:
+
+    git fetch ${name}
+    git subtree merge -P apps/${name} ${name}/master
+
+If the application is distributed as a tarball or zipfile, then the distribution file may be
+simply extracted as a subdirectory within `./apps`.
+
+The application should then be added to `targets.cmake` and `cfe_es_startup.scr` within the 
+mission configuration directory (e.g. `sample_defs`) to build and execute it.
+
+**IMPORTANT**: The build scripts will search for applications and modules based on the name, so
+the directory name containing the module must match the name of the module listed in 
+`targets.cmake` exactly.  It is recommended to use all lowercase names to avoid issues with case
+senstivity in file systems, and avoid any sort of punctuation aside from underscores. 
+
+## Further information
+
+As this repository represents only an assemply of components without any additional code, any
+issues should be submitted to the upstream component whenever possible.
+
+Additional resources may be found at:
+
+- [STRS](https://strs.grc.nasa.gov/repository) contains an STRS OE and FCI app for CFE
+- [NASA Software Catalog](https://software.nasa.gov) contains some CFE-related software
+- [Subtree Tutorial](https://www.atlassian.com/git/tutorials/git-subtree) contains more information 
+about "git subtree" and the related commands.
 
 
 
-
- 
 
 
