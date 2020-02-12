@@ -177,15 +177,7 @@
  * This should be left disabled in a normal build as it may affect real time performance as
  * well as producing extra console output.
  */
-#undef OS_DEBUG_PRINTF
-
-/*
- * If OSAL_EXTRA_DEBUG is defined, this will include extra debug features into the
- * OSAL build.  These can help debug issues like not releasing a mutex or other resource
- * leaks, but may slightly affect realtime performance.  This should be left undefined in
- * a normal build.
- */
-#undef OSAL_EXTRA_DEBUG
+#define OS_DEBUG_PRINTF
 
 /*
  * If OSAL_DEBUG_PERMISSIVE_MODE is defined, this will enable features to make the
@@ -200,7 +192,7 @@
  * Leaving this undefined will produce the default behavior, which is to return errors to the caller
  * for these conditions.
  */
-#undef OSAL_DEBUG_PERMISSIVE_MODE
+#define OSAL_DEBUG_PERMISSIVE_MODE
 
 /*
  * If OSAL_DEBUG_DISABLE_TASK_PRIORITIES is defined, the "priority" argument
@@ -210,13 +202,6 @@
  * the entire system and make debugging difficult.
  */
 #undef OSAL_DEBUG_DISABLE_TASK_PRIORITIES
-
-/*
- * If OSAL_DEBUG_DISABLE_MUTEX_PRIO_INHERIT is defined, this will disable the priority
- * inheritance attribute used on by default on OSAL mutexes.  Some buggy pthreads
- * libraries do not properly implement this attribute.
- */
-#undef OSAL_DEBUG_DISABLE_MUTEX_PRIO_INHERIT
 
 
 #endif

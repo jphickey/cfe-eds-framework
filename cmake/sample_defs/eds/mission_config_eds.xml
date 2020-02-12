@@ -42,11 +42,43 @@
     </LongDescription>
   </Define>
   
-  <Define name="DATA_BYTE_ORDER" value="bigEndian" />
-  <Define name="SIGNED_INTEGER_ENCODING" value="twosComplement" />
-  <Define name="MAX_CPU_ADDRESS_SIZE" value="8" />
-  <Define name="TELEMETRY_SUBSECONDS_TYPE" value="BASE_TYPES/uint16" />
-  <Define name="FILE_CONTENT_ID" value="0x63464531" shortDescription="Magic Number for cFE compliant files (= cFE1)" />
+  <Define name="DATA_BYTE_ORDER" value="bigEndian">
+    <LongDescription>
+       The byte order for all commands and telemetry in the system.
+       
+       All packets will always be encoded into this order, and decoded from this
+       byte order.  Using a value which matches the native architecture of the CPU
+       may help performance by reducing the need to rewrite values, but is not
+       required.   
+    </LongDescription>
+  </Define>
+  
+  <Define name="SIGNED_INTEGER_ENCODING" value="twosComplement">
+    <LongDescription>
+       The type of encoding to use for signed integers
+    </LongDescription>
+  </Define>
+  
+  <Define name="MAX_CPU_ADDRESS_SIZE" value="8">
+    <LongDescription>
+       The size for elements containing CPU addresses.  If any 64 bit CPUs are
+       in use, then this value should be 8.  If only 32 bit CPUs are in use, this
+       may be reduced to 4 to reduce message sizes.
+    </LongDescription>
+  </Define>
+  
+  <Define name="TELEMETRY_SUBSECONDS_TYPE" value="BASE_TYPES/uint16">
+    <LongDescription>
+       The data type to use for the subseconds field in telemetry messages.
+       This may be a uint16 or uint32 depending on precision needs
+    </LongDescription>
+  </Define>
+  
+  <Define name="FILE_CONTENT_ID" value="0x63464531" shortDescription="Magic Number for cFE compliant files (= cFE1)"> 
+    <LongDescription>
+       The fixed value to use for the content ID in the CFE FS file header 
+    </LongDescription>
+  </Define>
 
   <Define name="EVS_MAX_MESSAGE_LENGTH" value="122" >
     <LongDescription>
@@ -62,6 +94,7 @@
      
     </LongDescription>
   </Define>
+  
   <Define name="ES_MAX_SHELL_CMD" value="64" >
     <LongDescription>
     
@@ -80,6 +113,7 @@
             
     </LongDescription>
   </Define>
+  
   <Define name="ES_MAX_SHELL_PKT" value="64" >
     <LongDescription>
     
@@ -121,6 +155,7 @@
      
     </LongDescription>
   </Define>
+  
   <Define name="ES_CDS_MAX_FULL_NAME_LEN" value="38" >
     <LongDescription>
     
@@ -157,6 +192,7 @@
      
     </LongDescription>
   </Define>
+  
   <Define name="FS_HDR_DESC_MAX_LEN" value="32" >
     <LongDescription>
     
@@ -167,6 +203,7 @@
       
     </LongDescription>
   </Define>
+  
   <Define name="ES_MAX_APPLICATIONS" value="16" >
     <LongDescription>
     
@@ -185,6 +222,7 @@
      
     </LongDescription>
   </Define>
+  
   <Define name="ES_PERF_MAX_IDS" value="128">
     <LongDescription>
     
@@ -228,6 +266,7 @@
      
     </LongDescription>
   </Define>
+  
   <Define name="MAX_API_LEN" value="20" >
     <LongDescription>
     
@@ -250,6 +289,7 @@
      
     </LongDescription>
   </Define>
+  
   <Define name="SB_MAX_PIPES" value="64" >
     <LongDescription>
     
@@ -269,9 +309,14 @@
      
     </LongDescription>
   </Define>
-
-  <Define name="MAX_NUM_OPEN_FILES" value="50"  shortDescription="This is the maximum number of open file descriptors allowed at a time" />
   
+  <Define name="SCH_LAB_MAX_SCHEDULE_ENTRIES" value="8">
+    <LongDescription>
+       The maximum number of entries in the SCH_LAB schedule table
+    </LongDescription>
+  </Define>
+  
+
 </Package>
 </DesignParameters>
 
