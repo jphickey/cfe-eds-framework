@@ -1,2 +1,120 @@
-# cfe-eds-framework
-A distribution of the open source CFE framework which includes CCSDS Electronic Data Sheet support
+# Core Flight System with Electronic Data Sheets
+
+A distribution of the open source CFE framework which includes CCSDS Electronic Data Sheet support.
+This repository represents an assembly of CFE framework components, merged together into a single
+git repository using "git subtree".
+
+The following components are part of this repository:
+
+- [cFE](https://github.com/nasa/cFE) in `./cfe` subtree  
+- [osal](https://github.com/nasa/osal) in `./osal` subtree
+- [psp](https://github.com/nasa/psp) in `./psp` subtree
+- [EdsLib](https://github.com/nasa/EdsLib) in `./tools/eds` subtree
+- [ci_lab](https://github.com/nasa/ci_lab) in `./apps/ci_lab` subtree
+- [to_lab](https://github.com/nasa/to_lab) in `./apps/to_lab` subtree
+- [sch_lab](https://github.com/nasa/sch_lab) in `./apps/sch_lab` subtree
+- [sample_app](https://github.com/nasa/sample_app) in `./apps/sample_app` subtree
+- [sample_lib](https://github.com/nasa/sample_app) in `./apps/sample_lib` subtree
+
+Each component contains a LICENSE file in its respective directory.
+
+
+# Getting Started
+
+## Prerequisites
+
+The system can be developed on any GNU/Linux development host, although most testing takes place
+on Ubuntu "LTS" distributions.  The following development packages must be installed on the host.
+Note these are names of Debian/Ubuntu packages; other Linux distributions should provide a similar 
+set but the package names may vary. 
+
+- `build-essential` (contains gcc, libc-dev, make, etc.) 
+- `cmake` (at least v2.8.12 recommended)
+- `libexpat1-dev`
+- `liblua5.3-dev` (older versions of Lua may work, at least v5.1 is required)
+- `libjson-c-dev` (optional; for JSON bindings)
+- `python3-dev` (optional; for python bindings)
+
+
+## Initial Setup
+
+The distribution contains a "sample" configuration and wrapper Makefile which is intended as a
+starting point for users.  This configuration may be copied to the top level and extended from
+there.  
+
+Commands:
+
+    cp -r ./cfe/cmake/sample_defs .
+    cp -r ./cfe/cmake/Makefile.sample Makefile
+
+The `sample_defs` directory contains a complete CFE and OSAL configuration.  Once cloned, it can
+be modified or extended with project-specific items as needed.  In particular the `targets.cmake`
+file controls which applications are built.
+
+
+## Building the Software
+
+The software uses CMake to generate Unix Makefiles to perform the build.  However, due to the fact
+that a CFE mission may contain multiple different targets and several different architectures, the
+build is implemented in several tiers.  The "mission" is the top-tier, and the "arch" is the lower-
+tier, and multiple different "arch" tiers may exist.  A "mission-all" custom target is defined at 
+the top level which builds all tiers.
+ 
+The sample `Makefile` contains wrapper targets for both executing CMake to prepare the build tree,
+and for the actual software build.  This wrapper makes it easy to integrate into various IDEs, even
+if the IDE is not CMake-aware.
+
+The variable `SIMULATION` may be used to override the system architecture in the configuration
+files.  The special keyword `native` is recognized to indicate the native system.  In this mode, 
+the default host compiler (e.g. `/usr/bin/cc`) is used to build all binaries, regardless of the
+target architecture.  This feature builds an executable suitable for running and debugging directly
+on the development host.  
+
+To prepare a build tree, which will be generated in `./build` by default:
+
+    make SIMULATION=native prep
+
+To build all binaries:
+
+    make all
+
+To stage the software for execution:
+
+    make install
+
+The "install" target stages the output by default into `./build/exe`
+
+## Executing the software
+
+If the `SIMULATION=native` flag is supplied in the initial setup, then the resulting binaries can
+be executed directly on the development host.  Note that OSAL uses a virtualized file system which
+is rooted in the current working directoy (cwd) so one should always `cd` into the staging tree
+prior to executing CFE.
+
+To execute the software on the development host:
+
+    cd build/exe/cpu1
+    ./core-cpu1
+
+Commands may be sent to the software using the `cmdUtil` host tool.  This is installed in the 
+`host` subdirectory.  From another terminal/window:
+
+    cd build/exe/host
+    ./cmdUtil -D CFE_ES/Application/CMD.Noop
+
+To view telemetry, first enable telemetry output in TO_LAB and send to localhost:
+
+    ./cmdUtil -D TO_LAB/Application/EnableOutput dest_IP=127.0.0.1
+
+Then to view and decode the telemetry being sent:
+
+    ./tlm_decode
+
+
+
+
+
+
+ 
+
+
