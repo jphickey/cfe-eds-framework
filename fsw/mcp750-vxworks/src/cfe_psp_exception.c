@@ -1,5 +1,5 @@
 /*
-**  GSC-18128-1, "Core Flight Executive Version 6.6"
+**  GSC-18128-1, "Core Flight Executive Version 6.7"
 **
 **  Copyright (c) 2006-2019 United States Government as represented by
 **  the Administrator of the National Aeronautics and Space Administration.
@@ -87,7 +87,7 @@ char                  CFE_PSP_ExceptionReasonString[256];
 **
 */
 
-void CFE_PSP_ExceptionHook ( TASK_ID task_id, int vector, void* pEsf );
+void CFE_PSP_ExceptionHook ( TASK_ID task_id, int vector, void* vpEsf );
 
 
 /***************************************************************************

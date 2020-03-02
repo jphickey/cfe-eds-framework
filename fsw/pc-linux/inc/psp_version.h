@@ -1,5 +1,5 @@
 /*
-**  GSC-18128-1, "Core Flight Executive Version 6.6"
+**  GSC-18128-1, "Core Flight Executive Version 6.7"
 **
 **  Copyright (c) 2006-2019 United States Government as represented by
 **  the Administrator of the National Aeronautics and Space Administration.
@@ -35,8 +35,7 @@
 */
 #define CFE_PSP_IMPL_MAJOR_VERSION          1
 #define CFE_PSP_IMPL_MINOR_VERSION          4
-#define CFE_PSP_IMPL_REVISION               0
+#define CFE_PSP_IMPL_REVISION               5
 #define CFE_PSP_IMPL_MISSION_REV            0
 
 #endif  /* _psp_version_ */
-
