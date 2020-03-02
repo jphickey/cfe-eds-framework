@@ -107,7 +107,7 @@ typedef struct
     CFE_EVS_BinFilter_t  EventFilters[SAMPLE_EVENT_COUNTS];
     CFE_TBL_Handle_t     TblHandles[SAMPLE_NUMBER_OF_TABLES];
 
-} SAMPLE_GlobalData_t;
+} SAMPLE_AppData_t;
 
 /****************************************************************************/
 /*
