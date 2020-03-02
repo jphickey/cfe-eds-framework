@@ -151,6 +151,11 @@
               \cfetlmmnemonic  \SB_DUPSUBCNT
             </LongDescription>
           </Entry>
+          <Entry name="GetPipeIdByNameErrorCounter" type="BASE_TYPES/uint8" shortDescription="Count of errors in get pipe id by name API">
+            <LongDescription>
+              \cfetlmmnemonic  \SB_GETPIPEIDBYNAMEEC
+            </LongDescription>
+          </Entry>
           <Entry name="PipeOverflowErrorCounter" type="BASE_TYPES/uint16" shortDescription="Count of pipe overflow errors">
             <LongDescription>
               \cfetlmmnemonic  \SB_PIPEOVREC
