@@ -8,6 +8,15 @@ ci_lab is a simple command uplink application that accepts CCSDS telecommand pac
 
 ## Version Notes
 
+- 2.3.3: DEVELOPMENT
+  - Offset UDP base port in multi-cpu configurations
+  - Minor changes, see https://github.com/nasa/ci_lab/pull/44
+- 2.3.2: DEVELOPMENT
+  - Use OSAL socket API instead of BSD sockets
+  - Remove PDU introspection code
+  - Update command and telemetry logic
+  - Collect globals as a single top-level global structure
+  - Minor changes, see https://github.com/nasa/ci_lab/pull/38
 - 2.3.1: DEVELOPMENT
   - Code style and enforcement (see https://github.com/nasa/ci_lab/pull/31)
 - **2.3.0 OFFICIAL RELEASE**:
@@ -26,4 +35,3 @@ Dependence on cfe platform config header is undesirable, and the check is not en
 For best results, submit issues:questions or issues:help wanted requests at https://github.com/nasa/cFS.
 
 Official cFS page: http://cfs.gsfc.nasa.gov
-

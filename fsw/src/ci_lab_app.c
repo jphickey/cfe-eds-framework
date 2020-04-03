@@ -47,44 +47,42 @@
 
 /*
  * Declaring the CI_LAB_IngestBuffer as a union
- * ensures it is aligned appropriately to 
+ * ensures it is aligned appropriately to
  * store a CFE_SB_Msg_t type.
  */
 typedef union
 {
-   CFE_SB_Msg_t      MsgHdr;
-   uint8             bytes[CI_LAB_MAX_INGEST];
-   uint16            hwords[2];
+    CFE_SB_Msg_t MsgHdr;
+    uint8        bytes[CI_LAB_MAX_INGEST];
+    uint16       hwords[2];
 } CI_LAB_IngestBuffer_t;
 
 typedef union
 {
-    CFE_SB_Msg_t        MsgHdr;
-    CI_LAB_HkTlm_t      HkTlm;
+    CFE_SB_Msg_t   MsgHdr;
+    CI_LAB_HkTlm_t HkTlm;
 } CI_LAB_HkTlm_Buffer_t;
 
 typedef struct
 {
-    bool               SocketConnected;
-    CFE_SB_PipeId_t    CommandPipe;
-    CFE_SB_MsgPtr_t    MsgPtr;
-    uint32             SocketID;
-    OS_SockAddr_t      SocketAddress;
+    bool            SocketConnected;
+    CFE_SB_PipeId_t CommandPipe;
+    CFE_SB_MsgPtr_t MsgPtr;
+    uint32          SocketID;
+    OS_SockAddr_t   SocketAddress;
 
     CI_LAB_HkTlm_Buffer_t   HkBuffer;
     CI_LAB_IngestBuffer_t   MsgBuffer;
     CI_LAB_IngestBuffer_t   NetworkBuffer;
 } CI_LAB_GlobalData_t;
 
-
 CI_LAB_GlobalData_t CI_LAB_Global;
 
-static CFE_EVS_BinFilter_t CI_LAB_EventFilters[] = {/* Event ID    mask */
-                                                {CI_LAB_SOCKETCREATE_ERR_EID, 0x0000}, {CI_LAB_SOCKETBIND_ERR_EID, 0x0000},
-                                                {CI_LAB_STARTUP_INF_EID, 0x0000},      {CI_LAB_COMMAND_ERR_EID, 0x0000},
-                                                {CI_LAB_COMMANDNOP_INF_EID, 0x0000},   {CI_LAB_COMMANDRST_INF_EID, 0x0000},
-                                                {CI_LAB_INGEST_INF_EID, 0x0000},       {CI_LAB_INGEST_ERR_EID, 0x0000}};
-
+static CFE_EVS_BinFilter_t CI_LAB_EventFilters[] =
+    {/* Event ID    mask */
+     {CI_LAB_SOCKETCREATE_ERR_EID, 0x0000}, {CI_LAB_SOCKETBIND_ERR_EID, 0x0000}, {CI_LAB_STARTUP_INF_EID, 0x0000},
+     {CI_LAB_COMMAND_ERR_EID, 0x0000},      {CI_LAB_COMMANDNOP_INF_EID, 0x0000}, {CI_LAB_COMMANDRST_INF_EID, 0x0000},
+     {CI_LAB_INGEST_INF_EID, 0x0000},       {CI_LAB_INGEST_ERR_EID, 0x0000}};
 
 /*
  * Individual message handler function prototypes
@@ -177,7 +175,7 @@ void CI_LAB_delete_callback(void)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
 void CI_LAB_TaskInit(void)
 {
-    int32 status;
+    int32  status;
     uint16 DefaultListenPort;
 
     memset(&CI_LAB_Global, 0, sizeof(CI_LAB_Global));
@@ -196,19 +194,21 @@ void CI_LAB_TaskInit(void)
     status = OS_SocketOpen(&CI_LAB_Global.SocketID, OS_SocketDomain_INET, OS_SocketType_DATAGRAM);
     if (status != OS_SUCCESS)
     {
-        CFE_EVS_SendEvent(CI_LAB_SOCKETCREATE_ERR_EID,CFE_EVS_EventType_ERROR,"CI: create socket failed = %d", (int)status);
+        CFE_EVS_SendEvent(CI_LAB_SOCKETCREATE_ERR_EID, CFE_EVS_EventType_ERROR, "CI: create socket failed = %d",
+                          (int)status);
     }
     else
     {
         OS_SocketAddrInit(&CI_LAB_Global.SocketAddress, OS_SocketDomain_INET);
-        DefaultListenPort = CI_LAB_DEFAULT_PORT + CFE_PSP_GetProcessorId() - 1;
+        DefaultListenPort = CI_LAB_BASE_UDP_PORT + CFE_PSP_GetProcessorId() - 1;
         OS_SocketAddrSetPort(&CI_LAB_Global.SocketAddress, DefaultListenPort);
 
         status = OS_SocketBind(CI_LAB_Global.SocketID, &CI_LAB_Global.SocketAddress);
 
-        if ( status != OS_SUCCESS )
+        if (status != OS_SUCCESS)
         {
-            CFE_EVS_SendEvent(CI_LAB_SOCKETBIND_ERR_EID,CFE_EVS_EventType_ERROR,"CI: bind socket failed = %d", (int)status);
+            CFE_EVS_SendEvent(CI_LAB_SOCKETBIND_ERR_EID, CFE_EVS_EventType_ERROR, "CI: bind socket failed = %d",
+                              (int)status);
         }
         else
         {
@@ -248,7 +248,6 @@ int32 CI_LAB_Noop(const CI_LAB_Noop_t *data)
     return CFE_SUCCESS;
 }
 
-
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*  Name:  CI_LAB_ResetCounters                                                */
 /*                                                                             */
@@ -282,7 +281,7 @@ int32 CI_LAB_ReportHousekeeping(const CCSDS_CommandPacket_t *data)
 } /* End of CI_LAB_ReportHousekeeping() */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*  Name:  CI_LAB_ResetCounters                                               */
+/*  Name:  CI_LAB_ResetCounters_Internal                                      */
 /*                                                                            */
 /*  Purpose:                                                                  */
 /*         This function resets all the global counter variables that are     */
@@ -292,7 +291,7 @@ int32 CI_LAB_ReportHousekeeping(const CCSDS_CommandPacket_t *data)
 void CI_LAB_ResetCounters_Internal(void)
 {
     /* Status of commands processed by CI task */
-    CI_LAB_Global.HkBuffer.HkTlm.Payload.CommandCounter       = 0;
+    CI_LAB_Global.HkBuffer.HkTlm.Payload.CommandCounter      = 0;
     CI_LAB_Global.HkBuffer.HkTlm.Payload.CommandErrorCounter = 0;
 
     /* Status of packets ingested by CI task */
