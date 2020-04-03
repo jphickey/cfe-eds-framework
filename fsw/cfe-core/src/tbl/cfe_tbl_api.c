@@ -46,13 +46,9 @@
 ** Local Macros
 */
 
-/*******************************************************************
-**
-** CFE_TBL_Register() -- Register a table with cFE to obtain
-**                       Table Management Services
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
+/*
+ * Function: CFE_TBL_Register - See API and header file for details
+ */
 int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
                         const char *Name,
                         uint16  EdsAppIdx,
@@ -522,14 +518,9 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,
 }   /* End of CFE_TBL_Register() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_Share() -- Obtain handle of table registered by another
-**                    application
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_Share - See API and header file for details
+ */
 int32 CFE_TBL_Share( CFE_TBL_Handle_t *TblHandlePtr,
                      const char *TblName )
 {
@@ -625,14 +616,9 @@ int32 CFE_TBL_Share( CFE_TBL_Handle_t *TblHandlePtr,
 }   /* End of CFE_TBL_Share() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_Unregister() -- Unregister a previously registered
-**                         table and free associated resources
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_Unregister - See API and header file for details
+ */
 int32 CFE_TBL_Unregister ( CFE_TBL_Handle_t TblHandle )
 {
     int32   Status;
@@ -970,14 +956,9 @@ int32 CFE_TBL_Load( CFE_TBL_Handle_t TblHandle,
 }   /* End of CFE_TBL_Load() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_Update() -- Update contents of table if an update
-**                     is pending
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_Update - See API and header file for details
+ */
 int32 CFE_TBL_Update( CFE_TBL_Handle_t TblHandle )
 {
     int32                       Status;
@@ -1054,14 +1035,9 @@ int32 CFE_TBL_Update( CFE_TBL_Handle_t TblHandle )
 }   /* End of CFE_TBL_Update() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_GetAddress() -- Obtain the current address of the
-**                         contents of the specified table
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_GetAddress - See API and header file for details
+ */
 int32 CFE_TBL_GetAddress( void **TblPtr,
                           CFE_TBL_Handle_t TblHandle )
 {
@@ -1090,14 +1066,9 @@ int32 CFE_TBL_GetAddress( void **TblPtr,
     return Status;
 }   /* End of CFE_TBL_GetAddress() */
 
-/*******************************************************************
-**
-** CFE_TBL_ReleaseAddress() -- Release previously obtained pointer
-**                          to the contents of the specified table
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_ReleaseAddress - See API and header file for details
+ */
 int32 CFE_TBL_ReleaseAddress( CFE_TBL_Handle_t TblHandle )
 {
     int32   Status;
@@ -1127,15 +1098,9 @@ int32 CFE_TBL_ReleaseAddress( CFE_TBL_Handle_t TblHandle )
     return Status;
 }   /* End of CFE_TBL_ReleaseAddress() */
 
-/*******************************************************************
-**
-** CFE_TBL_GetAddresses() -- Obtain the current addresses of the contents of a collection of tables.
-**                           If an addsses.  Failure return codes
-**                           only apply to the first table that was unsuccessful.
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_GetAddresses() - See API and header file for details
+ */
 int32 CFE_TBL_GetAddresses( void **TblPtrs[],
                             uint16 NumTables,
                             const CFE_TBL_Handle_t TblHandles[] )
@@ -1178,14 +1143,9 @@ int32 CFE_TBL_GetAddresses( void **TblPtrs[],
     return Status;
 }   /* End of CFE_TBL_GetAddresses() */
 
-/*******************************************************************
-**
-** CFE_TBL_ReleaseAddresses() -- Release previously obtained
-**             pointers to the contents of the specified tables
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_ReleaseAddresses - See API and header file for details
+ */
 int32 CFE_TBL_ReleaseAddresses( uint16 NumTables,
                                 const CFE_TBL_Handle_t TblHandles[] )
 {
@@ -1211,13 +1171,9 @@ int32 CFE_TBL_ReleaseAddresses( uint16 NumTables,
 }   /* End of CFE_TBL_ReleaseAddresses() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_Validate() -- Validate a table image for the specified table
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_Validate - See API and header file for details
+ */
 int32 CFE_TBL_Validate( CFE_TBL_Handle_t TblHandle )
 {
     int32                       Status;
@@ -1363,14 +1319,9 @@ int32 CFE_TBL_Validate( CFE_TBL_Handle_t TblHandle )
 }   /* End of CFE_TBL_Validate() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_Manage() -- Perform standard table maintenance on the
-**                     specified table
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_Manage - See API and header file for details
+ */
 int32 CFE_TBL_Manage( CFE_TBL_Handle_t TblHandle )
 {
     int32   Status = CFE_SUCCESS;
@@ -1424,13 +1375,9 @@ int32 CFE_TBL_Manage( CFE_TBL_Handle_t TblHandle )
 }   /* End of CFE_TBL_Manage() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_GetStatus() -- Obtain pending action status for specified table
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_GetStatus - See API and header file for details
+ */
 int32 CFE_TBL_GetStatus( CFE_TBL_Handle_t TblHandle )
 {
     int32                       Status ;
@@ -1472,13 +1419,9 @@ int32 CFE_TBL_GetStatus( CFE_TBL_Handle_t TblHandle )
 }   /* End of CFE_TBL_GetStatus() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_GetInfo() -- Obtain characteristics/information for specified table
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_GetInfo - See API and header file for details
+ */
 int32 CFE_TBL_GetInfo( CFE_TBL_Info_t *TblInfoPtr, const char *TblName )
 {
     int32                    Status = CFE_SUCCESS;
@@ -1529,13 +1472,9 @@ int32 CFE_TBL_GetInfo( CFE_TBL_Info_t *TblInfoPtr, const char *TblName )
     return Status;
 }   /* End of CFE_TBL_GetInfo() */
 
-/*******************************************************************
-**
-** CFE_TBL_DumpToBuffer - Copy Dump Only table to buffer for later dump to file by table services
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_DumpToBuffer - See API and header file for details
+ */
 int32 CFE_TBL_DumpToBuffer( CFE_TBL_Handle_t TblHandle )
 {
     int32                       Status;
@@ -1573,13 +1512,9 @@ int32 CFE_TBL_DumpToBuffer( CFE_TBL_Handle_t TblHandle )
 }   /* End of CFE_TBL_DumpToBuffer() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_Modified - Notify TBL Services that the contents of the table has been modified by the application
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_Modified - See API and header file for details
+ */
 int32 CFE_TBL_Modified( CFE_TBL_Handle_t TblHandle )
 {
     int32                       Status;
@@ -1648,15 +1583,9 @@ int32 CFE_TBL_Modified( CFE_TBL_Handle_t TblHandle )
 } /* End of CFE_TBL_Modified() */
 
 
-/*******************************************************************
-**
-** CFE_TBL_NotifyByMessage - Instruct TBL Services to notify calling
-**                           application whenever the specified table
-**                           requires management.
-**
-** NOTE: For complete prolog information, see 'cfe_tbl.h'
-********************************************************************/
-
+/*
+ * Function: CFE_TBL_NotifyByMessage - See API and header file for details
+ */
 int32 CFE_TBL_NotifyByMessage(CFE_TBL_Handle_t TblHandle, CFE_SB_MsgId_t MsgId, uint16 CommandCode, uint32 Parameter)
 {
     int32                       Status;

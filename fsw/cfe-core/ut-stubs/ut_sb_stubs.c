@@ -34,7 +34,6 @@
 */
 #include <string.h>
 #include "cfe.h"
-#include "cfe_platform_cfg.h"
 #include "cfe_sb_eds.h" /* API calls for EDS extensions */
 #include "utstubs.h"
 
