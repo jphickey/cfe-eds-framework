@@ -34,9 +34,8 @@
 #include "sample_table.h"
 
 /* The sample_lib module provides the SAMPLE_Function() prototype */
-#include <sample_lib.h>
-
 #include <string.h>
+#include "sample_lib.h"
 
 #include "sample_eds_dispatcher.h"
 #include "sample_eds_dictionary.h"
