@@ -44,8 +44,9 @@
 /*
 ** Clock "state flag" definitions (state data converted to flags)...
 */
-/** \name Clock "state flag" values */
-/** \{ */
+/** \defgroup CFETIMEClkStates cFE Clock State Flag Defines
+ * \{
+ */
 #define CFE_TIME_FLAG_CLKSET     (0x8000 >> CFE_TIME_FlagBit_CLKSET)   /**< \brief The spacecraft time has been set */
 #define CFE_TIME_FLAG_FLYING     (0x8000 >> CFE_TIME_FlagBit_FLYING)   /**< \brief This instance of Time Services is flywheeling */
 #define CFE_TIME_FLAG_SRCINT     (0x8000 >> CFE_TIME_FlagBit_SRCINT)   /**< \brief The clock source is set to "internal" */
