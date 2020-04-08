@@ -13,3 +13,9 @@ aux_source_directory(fsw/src LIB_SRC_FILES)
 # Create the app module
 add_cfe_app(sample_lib ${LIB_SRC_FILES})
 
+if (ENABLE_UNIT_TESTS)
+  add_subdirectory(ut-stubs)
+  add_subdirectory(unit-test)
+endif (ENABLE_UNIT_TESTS)
+
+

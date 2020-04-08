@@ -18,25 +18,43 @@
 **      See the License for the specific language governing permissions and
 **      limitations under the License.
 **
-** File: sample_lib_version.h
+** File: sample_lib_internal.h
 **
-** Purpose:
-**  The SAMPLE Lib header file containing version number
+** Purpose: 
+**  An example of an internal (private) header file for SAMPLE Lib
 **
 ** Notes:
 **
 *************************************************************************/
-#ifndef _sample_lib_version_h_
-#define _sample_lib_version_h_
+#ifndef _sample_lib_internal_h_
+#define _sample_lib_internal_h_
+
+/* Include all external/public definitions */
+#include <sample_lib.h>
+
+/*************************************************************************
+** Macro Definitions
+*************************************************************************/
+
+#define SAMPLE_LIB_BUFFER_SIZE      16
 
 
-#define SAMPLE_LIB_MAJOR_VERSION    1
-#define SAMPLE_LIB_MINOR_VERSION    1
-#define SAMPLE_LIB_REVISION         2
-#define SAMPLE_LIB_MISSION_REV      0
+/*************************************************************************
+** Internal Data Structures
+*************************************************************************/
+extern char SAMPLE_Buffer[SAMPLE_LIB_BUFFER_SIZE];
 
+/*************************************************************************
+** Function Declarations
+*************************************************************************/
 
-#endif /* _sample_lib_version_h_ */
+/**
+ * Library initialization routine/entry point
+ */
+int32 SAMPLE_LibInit(void);
+
+      
+#endif /* _sample_lib_internal_h_ */
 
 /************************/
 /*  End of File Comment */

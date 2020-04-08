@@ -8,6 +8,9 @@ sample_lib implements SAMPLE_Function, as an example for how to build and link a
 
 ## Version Notes
 
+- 1.1.2: DEVELOPMENT
+  - Added coverage test and a stub library to facilitate unit test
+  - Minor updates (see https://github.com/nasa/sample_lib/pull/16)
 - 1.1.1: DEVELOPMENT
   - Minor updates (see https://github.com/nasa/sample_lib/pull/14)
 - **1.1.0 OFFICIAL RELEASE**:
@@ -25,4 +28,3 @@ As a lab library, extensive testing is not performed prior to release and only m
 For best results, submit issues:questions or issues:help wanted requests at https://github.com/nasa/cFS.
 
 Official cFS page: http://cfs.gsfc.nasa.gov
-
