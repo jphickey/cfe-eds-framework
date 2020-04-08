@@ -51,9 +51,9 @@
 
 /****************************************************************************/
 
-#define CI_LAB_DEFAULT_PORT 1235
-#define CI_LAB_MAX_INGEST   1024
-#define CI_LAB_PIPE_DEPTH   32
+#define CI_LAB_BASE_UDP_PORT 1235
+#define CI_LAB_MAX_INGEST    1024
+#define CI_LAB_PIPE_DEPTH    32
 
 /************************************************************************
 ** Type Definitions
