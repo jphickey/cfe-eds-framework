@@ -33,7 +33,9 @@
 **      combination of bits from the primary header SID (StreamId) and the secondary header APID Qualifiers
 **      
 **      Implementation is based on CCSDS Space Packet Protocol 133.0.B-1 with Technical Corrigendum 2, September 2012
-**      The extended secondary header is expected in an upcoming revision of 133.0.B-1
+**      Multi-mission Interoperable extended secondary headers should be registered in Space
+**      Assigned Numbers Authority (SANA). The process for SANA registration is documented in
+**      133.0.B-2. Mission specific headers need not be registered
 **
 **      For  MESSAGE_FORMAT_IS_CCSDS_VER_2 the default setup will combine:
 **       1 bit for the command/telemetry flag 
@@ -112,7 +114,7 @@
 */
 CFE_SB_MsgKey_t CFE_SB_ConvertMsgIdtoMsgKey( CFE_SB_MsgId_t MsgId)
 {
-    return CFE_SB_ValueToMsgKey(CFE_PLATFORM_SB_HIGHEST_VALID_MSGID - CFE_SB_MsgIdToValue(MsgId));
+    return CFE_SB_ValueToMsgKey(CFE_SB_MsgIdToValue(MsgId));
 }/* CFE_SB_ConvertMsgIdtoMsgKey */
 
 /*
@@ -135,6 +137,41 @@ void CFE_SB_SetMsgId(CFE_SB_MsgPtr_t MsgPtr,
     CFE_SB_Set_PubSub_Parameters(&MsgPtr->SpacePacket, &MsgId);
 }/* end CFE_SB_SetMsgId */
 
+/*
+ * Function: CFE_SB_GetPktType - See API and header file for details
+ */
+uint32 CFE_SB_GetPktType(CFE_SB_MsgId_t MsgId)
+{
+  uint8 PktType;
+
+  if (CFE_SB_IsValidMsgId(MsgId))
+  {
+      if (CFE_SB_PubSub_IsListenerComponent(&MsgId))
+      {
+          PktType = CFE_SB_PKTTYPE_CMD;
+      }
+      else
+      {
+          PktType = CFE_SB_PKTTYPE_TLM;
+      }
+  }
+  else
+  {
+      PktType = CFE_SB_PKTTYPE_INVALID;
+  }
+
+  return PktType;
+
+}/* end CFE_SB_GetPktType */
+
+/*
+ * Function: CFE_SB_IsValidMsgId - See API and header file for details
+ */
+bool CFE_SB_IsValidMsgId(CFE_SB_MsgId_t MsgId)
+{
+    return (!CFE_SB_MsgId_Equal(MsgId, CFE_SB_INVALID_MSG_ID) &&
+            CFE_SB_MsgIdToValue(MsgId) <= CFE_PLATFORM_SB_HIGHEST_VALID_MSGID);
+} /* end CFE_SB_IsValidMsgId */
 
 
 

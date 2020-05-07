@@ -278,7 +278,7 @@ CFE_SB_MsgId_t CFE_SB_GetMsgId(const CFE_SB_Msg_t *MsgPtr)
 
     UT_DEFAULT_IMPL(CFE_SB_GetMsgId);
 
-    if (UT_Stub_CopyToLocal(UT_KEY(CFE_SB_GetMsgId), &MsgId, sizeof(MsgId)) < sizeof(MsgId))
+    if (UT_Stub_CopyToLocal(UT_KEY(CFE_SB_GetMsgId), &Result, sizeof(Result)) < sizeof(Result))
     {
         MsgId.MsgId = (MsgPtr->Hdr.BaseHdr.AppId << 2) | (MsgPtr->Hdr.BaseHdr.SecHdrFlags & 0x03);
     }
@@ -963,5 +963,14 @@ void CFE_SB_SetTotalMsgLength (CFE_SB_MsgPtr_t MsgPtr,uint16 TotalLength)
     UT_DEFAULT_IMPL(CFE_SB_SetTotalMsgLength);
     CCSDS_WR_LEN(MsgPtr->Hdr,TotalLength);
     UT_Stub_CopyFromLocal(UT_KEY(CFE_SB_SetTotalMsgLength), &TotalLength, sizeof(TotalLength));
+}
+
+uint32 CFE_SB_GetPktType(CFE_SB_MsgId_t MsgId)
+{
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_SB_GetPktType);
+
+    return status;
 }
 

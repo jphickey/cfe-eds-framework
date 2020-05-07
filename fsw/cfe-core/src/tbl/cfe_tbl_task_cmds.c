@@ -121,7 +121,7 @@ int32 CFE_TBL_HousekeepingCmd(const CCSDS_CommandPacket_t *data)
                 {
                     Status = CFE_FS_SetTimestamp(FileDescriptor, DumpTime);
                     
-                    if (Status != OS_FS_SUCCESS)
+                    if (Status != OS_SUCCESS)
                     {
                         CFE_ES_WriteToSysLog("CFE_TBL:HkCmd-Unable to update timestamp in dump file '%s'\n", 
                                              DumpCtrlPtr->DumpBufferPtr->DataSource);
@@ -381,6 +381,14 @@ int32 CFE_TBL_LoadCmd(const CFE_TBL_Load_t *data)
     CFE_TBL_RegistryRec_t      *RegRecPtr;
     CFE_TBL_LoadBuff_t         *WorkingBufferPtr;
     char                        LoadFilename[OS_MAX_PATH_LEN];
+    uint32                      SelfAppId;
+    char                        AppName[OS_MAX_API_NAME]={"UNKNOWN"};
+
+    CFE_ES_GetAppID(&SelfAppId);
+
+    /* Translate AppID of caller into App Name */
+    CFE_ES_GetAppName(AppName, SelfAppId, OS_MAX_API_NAME);
+
 
     /* Make sure all strings are null terminated before attempting to process them */
     CFE_SB_MessageStringGet(LoadFilename, (char *)CmdPtr->LoadFilename, NULL,
@@ -448,7 +456,7 @@ int32 CFE_TBL_LoadCmd(const CFE_TBL_Load_t *data)
                             OS_close(FileDescriptor);
                             
                             /* Load the data from the file into the working buffer */
-                            Status = CFE_TBL_LoadFromFile(WorkingBufferPtr, RegRecPtr, LoadFilename);
+                            Status = CFE_TBL_LoadFromFileAndDecode(AppName, WorkingBufferPtr, RegRecPtr, LoadFilename);
                             if (Status == CFE_SUCCESS || Status == CFE_TBL_WARN_SHORT_FILE || 
                                 ((Status == CFE_TBL_WARN_PARTIAL_LOAD) && RegRecPtr->TableLoadedOnce))
                             {
@@ -725,7 +733,7 @@ CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile( const char *DumpFilename, const char *T
     /* Create a new dump file, overwriting anything that may have existed previously */
     FileDescriptor = OS_creat(DumpFilename, OS_WRITE_ONLY);
 
-    if (FileDescriptor >= OS_FS_SUCCESS)
+    if (FileDescriptor >= OS_SUCCESS)
     {
         /* Initialize the standard cFE File Header for the Dump File */
         CFE_FS_InitHeader(&NativeHeader.StdFile, "Table Dump Image", CFE_FS_SubType_TBL_IMG);
@@ -1111,7 +1119,7 @@ int32 CFE_TBL_DumpRegistryCmd(const CFE_TBL_DumpRegistry_t *data)
     /* Create a new dump file, overwriting anything that may have existed previously */
     FileDescriptor = OS_creat(DumpFilename, OS_WRITE_ONLY);
 
-    if (FileDescriptor >= OS_FS_SUCCESS)
+    if (FileDescriptor >= OS_SUCCESS)
     {
         /* Initialize the standard cFE File Header for the Dump File */
         CFE_FS_InitHeader(&StdFileHeader, "Table Registry", CFE_FS_SubType_TBL_REG);

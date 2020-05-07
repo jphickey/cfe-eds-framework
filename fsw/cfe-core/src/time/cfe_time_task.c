@@ -334,7 +334,7 @@ int32 CFE_TIME_TaskInit(void)
     }/* end if */
 
 
-    Status = CFE_SB_Subscribe(CFE_TIME_SEND_HK_MID,
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TIME_SEND_HK_TOPICID),
                               CFE_TIME_TaskData.CmdPipe);
     if(Status != CFE_SUCCESS)
     {
@@ -347,12 +347,12 @@ int32 CFE_TIME_TaskInit(void)
     ** Subscribe to time at the tone "signal" commands...
     */
     #if (CFE_PLATFORM_TIME_CFG_CLIENT == true)
-    Status = CFE_SB_Subscribe(CFE_TIME_TONE_CMD_MID,
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TIME_TONE_CMD_TOPICID),
                               CFE_TIME_TaskData.CmdPipe);
     #endif
     
     #if (CFE_PLATFORM_TIME_CFG_SERVER == true)
-    Status = CFE_SB_SubscribeLocal(CFE_TIME_TONE_CMD_MID,
+    Status = CFE_SB_SubscribeLocal(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TIME_TONE_CMD_TOPICID),
                               CFE_TIME_TaskData.CmdPipe,4);
     #endif
     if(Status != CFE_SUCCESS)
@@ -366,12 +366,12 @@ int32 CFE_TIME_TaskInit(void)
     ** Subscribe to time at the tone "data" commands...
     */
     #if (CFE_PLATFORM_TIME_CFG_CLIENT == true)
-    Status = CFE_SB_Subscribe(CFE_TIME_DATA_CMD_MID,
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TIME_DATA_CMD_TOPICID),
                               CFE_TIME_TaskData.CmdPipe);
     #endif
     
     #if (CFE_PLATFORM_TIME_CFG_SERVER == true)
-    Status = CFE_SB_SubscribeLocal(CFE_TIME_DATA_CMD_MID,
+    Status = CFE_SB_SubscribeLocal(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TIME_DATA_CMD_TOPICID),
                               CFE_TIME_TaskData.CmdPipe,4);
     #endif
     if(Status != CFE_SUCCESS)
@@ -385,12 +385,12 @@ int32 CFE_TIME_TaskInit(void)
     ** Subscribe to 1Hz signal commands...
     */
     #if (CFE_PLATFORM_TIME_CFG_CLIENT == true)
-    Status = CFE_SB_Subscribe(CFE_TIME_1HZ_CMD_MID,
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TIME_ONEHZ_CMD_TOPICID),
                               CFE_TIME_TaskData.CmdPipe);
     #endif
     
     #if (CFE_PLATFORM_TIME_CFG_SERVER == true)
-    Status = CFE_SB_SubscribeLocal(CFE_TIME_1HZ_CMD_MID,
+    Status = CFE_SB_SubscribeLocal(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TIME_ONEHZ_CMD_TOPICID),
                                    CFE_TIME_TaskData.CmdPipe,4);
     #endif
     
@@ -405,7 +405,7 @@ int32 CFE_TIME_TaskInit(void)
     ** Subscribe to time at the tone "request data" commands...
     */
     #if (CFE_PLATFORM_TIME_CFG_SERVER == true)
-    Status = CFE_SB_Subscribe(CFE_TIME_SEND_CMD_MID,
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TIME_SEND_CMD_TOPICID),
                                   CFE_TIME_TaskData.CmdPipe);
     if(Status != CFE_SUCCESS)
     {
@@ -417,7 +417,7 @@ int32 CFE_TIME_TaskInit(void)
     /*
     ** Subscribe to Time task ground command packets...
     */
-    Status = CFE_SB_Subscribe(CFE_TIME_CMD_MID,
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TIME_CMD_TOPICID),
                               CFE_TIME_TaskData.CmdPipe);
     if(Status != CFE_SUCCESS)
     {

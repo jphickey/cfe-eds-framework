@@ -248,17 +248,17 @@ int32 CFE_SB_AppInit(void){
     CFE_ES_WriteToSysLog("SB:Registered %d events for filtering\n",(int)CfgFileEventsToFilter);
 
     CFE_SB_InitMsg(&CFE_SB.HKTlmMsg,
-                   CFE_SB_HK_TLM_MID,
+                   CFE_SB_MsgId_From_TopicId(CFE_MISSION_SB_HK_TLM_TOPICID),
                    sizeof(CFE_SB.HKTlmMsg),
                    true);
 
     CFE_SB_InitMsg(&CFE_SB.PrevSubMsg,
-                   CFE_SB_ALLSUBS_TLM_MID,
+                   CFE_SB_MsgId_From_TopicId(CFE_MISSION_SB_ALLSUBS_TLM_TOPICID),
                    sizeof(CFE_SB.PrevSubMsg),
                    true);
 
     CFE_SB_InitMsg(&CFE_SB.SubRprtMsg,
-                   CFE_SB_ONESUB_TLM_MID,
+                   CFE_SB_MsgId_From_TopicId(CFE_MISSION_SB_ONESUB_TLM_TOPICID),
                    sizeof(CFE_SB.SubRprtMsg),
                    true);    
 
@@ -281,14 +281,14 @@ int32 CFE_SB_AppInit(void){
       return Status;
     }/* end if */                                
 
-    Status = CFE_SB_Subscribe(CFE_SB_CMD_MID,CFE_SB.CmdPipe);
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_SB_CMD_TOPICID),CFE_SB.CmdPipe);
 
     if(Status != CFE_SUCCESS){
       CFE_ES_WriteToSysLog("SB:Subscribe to Cmds Failed:RC=0x%08X\n",(unsigned int)Status);
       return Status;
     }/* end if */
         
-    Status = CFE_SB_Subscribe(CFE_SB_SEND_HK_MID,CFE_SB.CmdPipe);
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_SB_SEND_HK_TOPICID),CFE_SB.CmdPipe);
 
     if(Status != CFE_SUCCESS){
       CFE_ES_WriteToSysLog("SB:Subscribe to HK Request Failed:RC=0x%08X\n",(unsigned int)Status);
@@ -524,7 +524,8 @@ int32 CFE_SB_EnableRouteCmd(const CFE_SB_EnableRoute_t *data)
        (CFE_SB_ValidatePipeId(PipeId) != CFE_SUCCESS))
     {
         CFE_EVS_SendEvent(CFE_SB_ENBL_RTE3_EID,CFE_EVS_EventType_ERROR,
-                      "Enbl Route Cmd:Invalid Param.Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
+                      "Enbl Route Cmd:Invalid Param.Msg 0x%x,Pipe %d",
+                      (unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
         CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
         /*
          * returning "success" here as there is no other recourse;
@@ -536,7 +537,8 @@ int32 CFE_SB_EnableRouteCmd(const CFE_SB_EnableRoute_t *data)
     DestPtr = CFE_SB_GetDestPtr(CFE_SB_ConvertMsgIdtoMsgKey(MsgId), PipeId);
     if(DestPtr == NULL){
         CFE_EVS_SendEvent(CFE_SB_ENBL_RTE1_EID,CFE_EVS_EventType_ERROR,
-                "Enbl Route Cmd:Route does not exist.Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
+                "Enbl Route Cmd:Route does not exist.Msg 0x%x,Pipe %d",
+                (unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
         CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
         /*
          * returning "success" here as there is no other recourse;
@@ -547,7 +549,8 @@ int32 CFE_SB_EnableRouteCmd(const CFE_SB_EnableRoute_t *data)
 
     DestPtr->Active = CFE_SB_ACTIVE;
     CFE_EVS_SendEvent(CFE_SB_ENBL_RTE2_EID,CFE_EVS_EventType_DEBUG,
-                      "Enabling Route,Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
+                      "Enabling Route,Msg 0x%x,Pipe %d",
+                      (unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
 
     CFE_SB.HKTlmMsg.Payload.CommandCounter++;
 
@@ -585,7 +588,8 @@ int32 CFE_SB_DisableRouteCmd(const CFE_SB_DisableRoute_t *data)
     if(!CFE_SB_IsValidMsgId(MsgId) ||
        (CFE_SB_ValidatePipeId(PipeId) != CFE_SUCCESS)){
         CFE_EVS_SendEvent(CFE_SB_DSBL_RTE3_EID,CFE_EVS_EventType_ERROR,
-                   "Disable Route Cmd:Invalid Param.Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
+                   "Disable Route Cmd:Invalid Param.Msg 0x%x,Pipe %d",
+                   (unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
         CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
         /*
          * returning "success" here as there is no other recourse;
@@ -597,7 +601,8 @@ int32 CFE_SB_DisableRouteCmd(const CFE_SB_DisableRoute_t *data)
     DestPtr = CFE_SB_GetDestPtr(CFE_SB_ConvertMsgIdtoMsgKey(MsgId), PipeId);
     if(DestPtr == NULL){
         CFE_EVS_SendEvent(CFE_SB_DSBL_RTE1_EID,CFE_EVS_EventType_ERROR,
-            "Disable Route Cmd:Route does not exist,Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
+            "Disable Route Cmd:Route does not exist,Msg 0x%x,Pipe %d",
+            (unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
         CFE_SB.HKTlmMsg.Payload.CommandErrorCounter++;
         /*
          * returning "success" here as there is no other recourse;
@@ -609,7 +614,8 @@ int32 CFE_SB_DisableRouteCmd(const CFE_SB_DisableRoute_t *data)
     DestPtr->Active = CFE_SB_INACTIVE;
 
     CFE_EVS_SendEvent(CFE_SB_DSBL_RTE2_EID,CFE_EVS_EventType_DEBUG,
-                      "Route Disabled,Msg 0x%x,Pipe %d",(unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
+                      "Route Disabled,Msg 0x%x,Pipe %d",
+                      (unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)PipeId);
     CFE_SB.HKTlmMsg.Payload.CommandCounter++;
 
     return CFE_SUCCESS;
@@ -761,7 +767,7 @@ int32 CFE_SB_SendRtgInfo(const char *Filename)
     CFE_SB_DestinationD_t       *DestPtr;
 
     fd = OS_creat(Filename, OS_WRITE_ONLY);
-    if(fd < OS_FS_SUCCESS){
+    if(fd < OS_SUCCESS){
         CFE_EVS_SendEvent(CFE_SB_SND_RTG_ERR1_EID,CFE_EVS_EventType_ERROR,
                       "Error creating file %s, stat=0x%x",
                       Filename,(unsigned int)fd);
@@ -871,7 +877,7 @@ int32 CFE_SB_SendPipeInfo(const char *Filename)
 
     fd = OS_creat(Filename, OS_WRITE_ONLY);
 
-    if(fd < OS_FS_SUCCESS){
+    if(fd < OS_SUCCESS){
         CFE_EVS_SendEvent(CFE_SB_SND_RTG_ERR1_EID,CFE_EVS_EventType_ERROR,
                           "Error creating file %s, stat=0x%x",
                            Filename,(unsigned int)fd);
@@ -946,7 +952,7 @@ int32 CFE_SB_SendMapInfo(const char *Filename)
 
     fd = OS_creat(Filename, OS_WRITE_ONLY);
 
-    if (fd < OS_FS_SUCCESS){
+    if (fd < OS_SUCCESS){
         CFE_EVS_SendEvent(CFE_SB_SND_RTG_ERR1_EID,CFE_EVS_EventType_ERROR,
                           "Error creating file %s, stat=0x%x",
                            Filename,(unsigned int)fd);

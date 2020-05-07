@@ -28,7 +28,7 @@
 **     Flight Software Branch C Coding Standard Version 1.0a
 **     cFE Flight Software Application Developers Guide
 **
-**  Notes: 
+**  Notes:
 **
 */
 /*************************************************************************/
@@ -43,6 +43,7 @@
 #include "cfe_es_apps.h"
 #include "cfe_es_events.h"
 #include "cfe_es_msg.h"
+#include "cfe_es_perf.h"
 
 /*************************************************************************/
 
@@ -97,7 +98,7 @@ typedef struct
   */
   CFE_SB_MsgPtr_t       MsgPtr;
   CFE_SB_PipeId_t       CmdPipe;
-  
+
   /*
   ** ES Task initialization data (not reported in housekeeping)
   */
@@ -106,6 +107,16 @@ typedef struct
 
   uint8                 LimitHK;
   uint8                 LimitCmd;
+
+  /*
+   * Persistent state data associated with performance log data file writes
+   */
+  CFE_ES_PerfDumpGlobal_t    BackgroundPerfDumpState;
+
+  /*
+   * Persistent state data associated with background app table scans
+   */
+  CFE_ES_AppTableScanState_t BackgroundAppScanState;
 
 } CFE_ES_TaskData_t;
 
@@ -125,6 +136,14 @@ void  CFE_ES_TaskMain(void);
 int32 CFE_ES_TaskInit(void);
 void  CFE_ES_TaskPipe(CFE_SB_MsgPtr_t Msg);
 
+
+/*
+ * Functions related to the ES background helper task for low-priority tasks
+ */
+int32 CFE_ES_BackgroundInit(void);
+void  CFE_ES_BackgroundTask(void);
+void  CFE_ES_BackgroundWakeup(void);
+void  CFE_ES_BackgroundCleanup(void);
 
 /*
 ** ES Task message dispatch functions

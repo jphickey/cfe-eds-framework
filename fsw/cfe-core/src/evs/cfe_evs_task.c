@@ -124,7 +124,7 @@ int32 CFE_EVS_EarlyInit ( void )
    CFE_EVS_GlobalData.EVS_AppID = CFE_EVS_UNDEF_APPID;
 
    /* Initialize housekeeping packet */
-   CFE_SB_InitMsg(&CFE_EVS_GlobalData.EVS_TlmPkt, CFE_EVS_HK_TLM_MID,
+   CFE_SB_InitMsg(&CFE_EVS_GlobalData.EVS_TlmPkt, CFE_SB_MsgId_From_TopicId(CFE_MISSION_EVS_HK_TLM_TOPICID),
            sizeof(CFE_EVS_GlobalData.EVS_TlmPkt), false);
   
    /* Elements stored in the hk packet that have non-zero default values */
@@ -354,7 +354,7 @@ int32 CFE_EVS_TaskInit ( void )
    }
       
    /* Subscribe to command and telemetry requests coming in on the command pipe */
-   Status = CFE_SB_SubscribeEx(CFE_EVS_CMD_MID, CFE_EVS_GlobalData.EVS_CommandPipe,
+   Status = CFE_SB_SubscribeEx(CFE_SB_MsgId_From_TopicId(CFE_MISSION_EVS_CMD_TOPICID), CFE_EVS_GlobalData.EVS_CommandPipe,
                                CFE_SB_Default_Qos, CFE_EVS_MSG_LIMIT);
    if (Status != CFE_SUCCESS)
    {
@@ -362,7 +362,7 @@ int32 CFE_EVS_TaskInit ( void )
       return Status;
    }
   
-   Status = CFE_SB_SubscribeEx(CFE_EVS_SEND_HK_MID, CFE_EVS_GlobalData.EVS_CommandPipe,
+   Status = CFE_SB_SubscribeEx(CFE_SB_MsgId_From_TopicId(CFE_MISSION_EVS_SEND_HK_TOPICID), CFE_EVS_GlobalData.EVS_CommandPipe,
                                CFE_SB_Default_Qos, CFE_EVS_MSG_LIMIT);
    if (Status != CFE_SUCCESS)
    {
@@ -1561,7 +1561,7 @@ int32 CFE_EVS_WriteAppDataFileCmd(const CFE_EVS_WriteAppDataFile_t *data)
    /* Create Application Data File */
    FileHandle = OS_creat(LocalName, OS_WRITE_ONLY);
 
-   if (FileHandle < OS_FS_SUCCESS)
+   if (FileHandle < OS_SUCCESS)
    {
       EVS_SendEvent(CFE_EVS_ERR_CRDATFILE_EID, CFE_EVS_EventType_ERROR,
                    "Write App Data Command Error: OS_creat = 0x%08X, filename = %s",

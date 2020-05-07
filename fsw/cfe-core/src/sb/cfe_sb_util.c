@@ -158,11 +158,8 @@ void CFE_SB_SetUserDataLength(CFE_SB_MsgPtr_t MsgPtr, uint16 DataLength)
     CFE_SB_Get_PubSub_Parameters(&Params, &MsgPtr->SpacePacket);
     TotalMsgSize = CFE_SB_GetMsgHdrSize_Impl(&Params) + DataLength;
 
-#ifdef MESSAGE_FORMAT_IS_CCSDS
-
     CCSDS_WR_LEN(MsgPtr->Hdr,TotalMsgSize);
 
-#endif
 }/* end CFE_SB_SetUserDataLength */
 
 
@@ -171,11 +168,9 @@ void CFE_SB_SetUserDataLength(CFE_SB_MsgPtr_t MsgPtr, uint16 DataLength)
  */
 uint16 CFE_SB_GetTotalMsgLength(const CFE_SB_Msg_t *MsgPtr)
 {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
 
     return CCSDS_RD_LEN(MsgPtr->Hdr);
 
-#endif
 }/* end CFE_SB_GetTotalMsgLength */
 
 
@@ -184,11 +179,9 @@ uint16 CFE_SB_GetTotalMsgLength(const CFE_SB_Msg_t *MsgPtr)
  */
 void CFE_SB_SetTotalMsgLength(CFE_SB_MsgPtr_t MsgPtr,uint16 TotalLength)
 {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
 
     CCSDS_WR_LEN(MsgPtr->Hdr,TotalLength);
 
-#endif
 }/* end CFE_SB_SetTotalMsgLength */
 
 
@@ -200,8 +193,6 @@ CFE_TIME_SysTime_t CFE_SB_GetMsgTime(CFE_SB_MsgPtr_t MsgPtr)
     CFE_TIME_SysTime_t TimeFromMsg;
     uint32 LocalSecs32 = 0;
     uint32 LocalSubs32 = 0;
-
-#ifdef MESSAGE_FORMAT_IS_CCSDS
 
     CFE_SB_TlmHdr_t *TlmHdrPtr;
 
@@ -236,8 +227,6 @@ CFE_TIME_SysTime_t CFE_SB_GetMsgTime(CFE_SB_MsgPtr_t MsgPtr)
 
     }
 
-#endif
-
     /* return the packet time converted to CFE_TIME_SysTime_t format */
     TimeFromMsg.Seconds    = LocalSecs32;
     TimeFromMsg.Subseconds = LocalSubs32;
@@ -253,8 +242,6 @@ CFE_TIME_SysTime_t CFE_SB_GetMsgTime(CFE_SB_MsgPtr_t MsgPtr)
 int32 CFE_SB_SetMsgTime(CFE_SB_MsgPtr_t MsgPtr, CFE_TIME_SysTime_t NewTime)
 {
     int32 Result = CFE_SB_WRONG_MSG_TYPE;
-
-#ifdef MESSAGE_FORMAT_IS_CCSDS
 
     CFE_SB_TlmHdr_t *TlmHdrPtr;
 
@@ -283,8 +270,6 @@ int32 CFE_SB_SetMsgTime(CFE_SB_MsgPtr_t MsgPtr, CFE_TIME_SysTime_t NewTime)
         Result = CFE_SUCCESS;
     }
 
-    #endif
-
     return Result;
 
 }/* end CFE_SB_SetMsgTime */
@@ -305,8 +290,6 @@ void CFE_SB_TimeStampMsg(CFE_SB_MsgPtr_t MsgPtr)
  */
 uint16 CFE_SB_GetCmdCode(CFE_SB_MsgPtr_t MsgPtr)
 {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
-
     CFE_SB_CmdHdr_t     *CmdHdrPtr;
 
     /* if msg type is telemetry or there is no secondary hdr, return 0 */
@@ -318,8 +301,6 @@ uint16 CFE_SB_GetCmdCode(CFE_SB_MsgPtr_t MsgPtr)
     CmdHdrPtr = (CFE_SB_CmdHdr_t *)MsgPtr;
 
     return CCSDS_RD_FC(CmdHdrPtr->Sec);
-
-#endif
 }/* end CFE_SB_GetCmdCode */
 
 
@@ -329,8 +310,6 @@ uint16 CFE_SB_GetCmdCode(CFE_SB_MsgPtr_t MsgPtr)
 int32 CFE_SB_SetCmdCode(CFE_SB_MsgPtr_t MsgPtr,
                       uint16 CmdCode)
 {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
-
     CFE_SB_CmdHdr_t     *CmdHdrPtr;
 
     /* if msg type is telemetry or there is no secondary hdr... */
@@ -345,8 +324,6 @@ int32 CFE_SB_SetCmdCode(CFE_SB_MsgPtr_t MsgPtr,
 
     return CFE_SUCCESS;
 
-#endif
-
 }/* end CFE_SB_SetCmdCode */
 
 
@@ -355,7 +332,6 @@ int32 CFE_SB_SetCmdCode(CFE_SB_MsgPtr_t MsgPtr,
  */
 uint16 CFE_SB_GetChecksum(CFE_SB_MsgPtr_t MsgPtr)
 {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
 
     CFE_SB_CmdHdr_t     *CmdHdrPtr;
 
@@ -369,7 +345,6 @@ uint16 CFE_SB_GetChecksum(CFE_SB_MsgPtr_t MsgPtr)
 
     return CCSDS_RD_CHECKSUM(CmdHdrPtr->Sec);
 
-#endif
 }/* end CFE_SB_GetChecksum */
 
 
@@ -378,7 +353,6 @@ uint16 CFE_SB_GetChecksum(CFE_SB_MsgPtr_t MsgPtr)
  */
 void CFE_SB_GenerateChecksum(CFE_SB_MsgPtr_t MsgPtr)
 {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
 
     CCSDS_CommandPacket_t    *CmdPktPtr;
 
@@ -391,7 +365,6 @@ void CFE_SB_GenerateChecksum(CFE_SB_MsgPtr_t MsgPtr)
 
     CCSDS_LoadCheckSum(CmdPktPtr);
 
-#endif
 }/* end CFE_SB_GenerateChecksum */
 
 
@@ -400,7 +373,6 @@ void CFE_SB_GenerateChecksum(CFE_SB_MsgPtr_t MsgPtr)
  */
 bool CFE_SB_ValidateChecksum(CFE_SB_MsgPtr_t MsgPtr)
 {
-#ifdef MESSAGE_FORMAT_IS_CCSDS
 
     CCSDS_CommandPacket_t    *CmdPktPtr;
 
@@ -413,7 +385,6 @@ bool CFE_SB_ValidateChecksum(CFE_SB_MsgPtr_t MsgPtr)
 
     return CCSDS_ValidCheckSum (CmdPktPtr);
 
-#endif
 }/* end CFE_SB_ValidateChecksum */
 
 
