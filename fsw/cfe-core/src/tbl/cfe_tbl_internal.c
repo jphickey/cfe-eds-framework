@@ -1144,8 +1144,8 @@ int32 CFE_TBL_LoadFromFileAndDecode(const char *AppName, CFE_TBL_LoadBuff_t *Wor
             CFE_TBL_DecodeFromMemory(ScratchBufferPtr->BufferPtr, WorkingBufferPtr, RegRecPtr);
         }
 
-        strncpy(WorkingBufferPtr->DataSource, Filename, sizeof(WorkingBufferPtr->DataSource-1));
-        WorkingBufferPtr->DataSource[sizeof(WorkingBufferPtr->DataSource-1)] = 0;
+        strncpy(WorkingBufferPtr->DataSource, Filename, sizeof(WorkingBufferPtr->DataSource)-1);
+        WorkingBufferPtr->DataSource[sizeof(WorkingBufferPtr->DataSource)-1] = 0;
 
         /* Save file creation time for later storage into Registry */
         WorkingBufferPtr->FileCreateTimeSecs = ScratchBufferPtr->FileCreateTimeSecs;
@@ -1232,10 +1232,12 @@ int32 CFE_TBL_UpdateInternal( CFE_TBL_Handle_t TblHandle,
                 /* Save source description with active buffer */
                 strncpy(RegRecPtr->Buffers[0].DataSource,
                         CFE_TBL_TaskData.LoadBuffs[RegRecPtr->LoadInProgress].DataSource,
-                        OS_MAX_PATH_LEN);
+                        sizeof(RegRecPtr->Buffers[0].DataSource)-1);
+                RegRecPtr->Buffers[0].DataSource[sizeof(RegRecPtr->Buffers[0].DataSource)-1] = 0;
                 strncpy(RegRecPtr->LastFileLoaded,
                         CFE_TBL_TaskData.LoadBuffs[RegRecPtr->LoadInProgress].DataSource,
-                        OS_MAX_PATH_LEN);
+                        sizeof(RegRecPtr->LastFileLoaded)-1);
+                RegRecPtr->LastFileLoaded[sizeof(RegRecPtr->LastFileLoaded)-1] = 0;
                 
                 /* Save the file creation time from the loaded file into the Table Registry */
                 RegRecPtr->Buffers[0].FileCreateTimeSecs = 

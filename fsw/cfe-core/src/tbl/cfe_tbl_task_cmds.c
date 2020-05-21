@@ -745,7 +745,7 @@ CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile( const char *DumpFilename, const char *T
         {
             /* Initialize the Table Image Header for the Dump File */
             memset(&NativeHeader, 0, sizeof(NativeHeader));
-            strncpy(NativeHeader.TblFile.TableName, TableName, sizeof(NativeHeader.TblFile.TableName));
+            strncpy(NativeHeader.TblFile.TableName, TableName, sizeof(NativeHeader.TblFile.TableName)-1);
             NativeHeader.TblFile.NumBytes = TblSizeInBytes;
 
             EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CFE_TBL), CFE_TBL_File_Hdr_DATADICTIONARY);
@@ -786,7 +786,8 @@ CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile( const char *DumpFilename, const char *T
 
                     /* Save file information statistics for housekeeping telemetry */
                     strncpy(CFE_TBL_TaskData.HkPacket.Payload.LastFileDumped, DumpFilename,
-                            sizeof(CFE_TBL_TaskData.HkPacket.Payload.LastFileDumped));
+                            sizeof(CFE_TBL_TaskData.HkPacket.Payload.LastFileDumped)-1);
+                    CFE_TBL_TaskData.HkPacket.Payload.LastFileDumped[sizeof(CFE_TBL_TaskData.HkPacket.Payload.LastFileDumped)-1] = 0;
 
                     /* Increment Successful Command Counter */
                     ReturnCode = CFE_TBL_INC_CMD_CTR;
@@ -1178,8 +1179,8 @@ int32 CFE_TBL_DumpRegistryCmd(const CFE_TBL_DumpRegistry_t *data)
                     memset(DumpRecord.LastFileLoaded, 0, OS_MAX_PATH_LEN);
                     memset(DumpRecord.OwnerAppName, 0, OS_MAX_API_NAME);
 
-                    strncpy(DumpRecord.Name, RegRecPtr->Name, CFE_TBL_MAX_FULL_NAME_LEN);
-                    strncpy(DumpRecord.LastFileLoaded, RegRecPtr->LastFileLoaded, OS_MAX_PATH_LEN);
+                    strncpy(DumpRecord.Name, RegRecPtr->Name, sizeof(DumpRecord.Name)-1);
+                    strncpy(DumpRecord.LastFileLoaded, RegRecPtr->LastFileLoaded, sizeof(DumpRecord.LastFileLoaded)-1);
 
                     /* Walk the access descriptor list to determine the number of users */
                     DumpRecord.NumUsers = 0;
@@ -1193,11 +1194,11 @@ int32 CFE_TBL_DumpRegistryCmd(const CFE_TBL_DumpRegistry_t *data)
                     /* Determine the name of the owning application */
                     if (RegRecPtr->OwnerAppId != CFE_TBL_NOT_OWNED)
                     {
-                        CFE_ES_GetAppName(DumpRecord.OwnerAppName, RegRecPtr->OwnerAppId, OS_MAX_API_NAME);
+                        CFE_ES_GetAppName(DumpRecord.OwnerAppName, RegRecPtr->OwnerAppId, sizeof(DumpRecord.OwnerAppName));
                     }
                     else
                     {
-                        strncpy(DumpRecord.OwnerAppName, "--UNOWNED--", OS_MAX_API_NAME);
+                        strncpy(DumpRecord.OwnerAppName, "--UNOWNED--", sizeof(DumpRecord.OwnerAppName)-1);
                     }
 
                     /* Output Registry Dump Record to Registry Dump File */

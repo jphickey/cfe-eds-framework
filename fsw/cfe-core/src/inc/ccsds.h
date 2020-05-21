@@ -198,7 +198,7 @@
 
 /* Clear command secondary header. */
 #define CCSDS_CLR_CMDSEC_HDR(shdr) \
-  ( (shdr).FunctionCode = CCSDS_INIT_FC,\
+  ( (shdr).Command = CCSDS_INIT_FC,\
     (shdr).Checksum = CCSDS_INIT_CHECKSUM )
 
 

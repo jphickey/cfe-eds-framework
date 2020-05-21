@@ -62,16 +62,18 @@ const CFE_SB_Application_Component_Telecommand_DispatchTable_t CFE_SB_TC_DISPATC
 {
         .CMD = {
                 .DisableRoute_indication = CFE_SB_DisableRouteCmd,
-                .DisableSubReporting_indication = CFE_SB_DisableSubReportingCmd,
                 .EnableRoute_indication = CFE_SB_EnableRouteCmd,
-                .EnableSubReporting_indication = CFE_SB_EnableSubReportingCmd,
                 .Noop_indication = CFE_SB_NoopCmd,
                 .ResetCounters_indication = CFE_SB_ResetCountersCmd,
                 .SendMapInfo_indication = CFE_SB_SendMapInfoCmd,
                 .SendPipeInfo_indication = CFE_SB_SendPipeInfoCmd,
-                .SendPrevSubs_indication = CFE_SB_SendPrevSubsCmd,
                 .SendRoutingInfo_indication = CFE_SB_SendRoutingInfoCmd,
                 .SendSbStats_indication = CFE_SB_SendStatsCmd
+        },
+        .SUB_RPT_CTRL = {
+                .DisableSubReporting_indication = CFE_SB_DisableSubReportingCmd,
+                .EnableSubReporting_indication = CFE_SB_EnableSubReportingCmd,
+                .SendPrevSubs_indication = CFE_SB_SendPrevSubsCmd,
         },
         .SEND_HK = {
                 .indication = CFE_SB_SendHKTlmCmd
@@ -292,6 +294,13 @@ int32 CFE_SB_AppInit(void){
 
     if(Status != CFE_SUCCESS){
       CFE_ES_WriteToSysLog("SB:Subscribe to HK Request Failed:RC=0x%08X\n",(unsigned int)Status);
+      return Status;
+    }/* end if */
+
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_SB_SUB_RPT_CTRL_TOPICID),CFE_SB.CmdPipe);
+
+    if(Status != CFE_SUCCESS){
+      CFE_ES_WriteToSysLog("SB:Subscribe to Subscription Report Request Failed:RC=0x%08X\n",(unsigned int)Status);
       return Status;
     }/* end if */
      
