@@ -53,7 +53,7 @@
 /*****************************************************************************/
 
 #define TO_TASK_MSEC             500          /* run at 2 Hz */
-#define TO_UNUSED                  0
+#define TO_UNUSED                0
 
 #define TO_LAB_DEFAULT_PORT 5021
 #define TO_LAB_VERSION_NUM "5.1.0"

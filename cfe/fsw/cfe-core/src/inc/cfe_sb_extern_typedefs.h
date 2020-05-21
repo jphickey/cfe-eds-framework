@@ -112,13 +112,17 @@ typedef uint16 CFE_SB_MsgId_Atom_t;
  *
  * Software Bus message identifier used in many SB APIs
  *
- * Currently this is directly mapped to the underlying holding type (not wrapped) for
- * compatibility with existing usage semantics in apps (mainly switch/case statements)
- *
- * @note In a future version it could become a type-safe wrapper similar to the route index,
- * to avoid message IDs getting mixed between other integer values.
+ * This is a type safe abstract object and must only be accessed
+ * through the CFE SB API.  This prevents message IDs getting mixed 
+ * between other integer values.
+ * Code should not use the internal value directly.
  */
-typedef CFE_SB_MsgId_Atom_t CFE_SB_MsgId_t;
+
+/* In this mode, the integer value lies in an struct field */
+typedef struct
+{
+    CFE_SB_MsgId_Atom_t Value;
+} CFE_SB_MsgId_t;
 
 #endif /* CFE_EDS_ENABLED_BUILD */
 

@@ -313,7 +313,7 @@ int32 CFE_FS_ExtractFilenameFromPath(const char *OriginalPath, char *FileNameOnl
     return(ReturnCode);
 }
 
-
+#ifndef CFE_OMIT_DEPRECATED_6_7
 /*
 ** Function: CFE_FS_IsGzFile - See API and header file for details
 */
@@ -426,6 +426,7 @@ int32 CFE_FS_GetUncompressedFile(char *OutputNameBuffer, uint32 OutputNameBuffer
 
     return Status;
 }
+#endif /* CFE_OMIT_DEPRECATED_6_7 */
 
 /************************/
 /*  End of File Comment */

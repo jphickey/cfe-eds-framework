@@ -64,10 +64,10 @@
 #define CFE_ES_PERF_FILTERMASK_INT_SIZE     (sizeof(CFE_ES_ResetDataPtr->Perf.MetaData.FilterMask) / sizeof(uint32))
 #define CFE_ES_PERF_FILTERMASK_EXT_SIZE     (sizeof(CFE_ES_TaskData.HkPacket.Payload.PerfFilterMask) / sizeof(uint32))
 
-/* 
-** This define should be put in the OS API headers -- Right now it matches what the OS API uses 
+/*
+** This define should be put in the OS API headers -- Right now it matches what the OS API uses
 */
-#define OS_MAX_PRIORITY 255 
+#define OS_MAX_PRIORITY 255
 
 /*
 ** Executive Services (ES) task global data.
@@ -123,10 +123,9 @@ static const CFE_ES_Application_Component_Telecommand_DispatchTable_t CFE_ES_TC_
 void CFE_ES_TaskMain(void)
 {
     int32   Status;
-    uint32  TimeOut = CFE_PLATFORM_ES_APP_SCAN_RATE;
     uint32  AppRunStatus = CFE_ES_RunStatus_APP_RUN;
 
-    
+
     /*
     ** Performance Time Stamp Entry
     */
@@ -142,13 +141,13 @@ void CFE_ES_TaskMain(void)
        ** Create a syslog entry
        */
        CFE_ES_WriteToSysLog("ES:Application Init Failed,RC=0x%08X\n", (unsigned int)Status);
-      
+
 
        /*
-       ** Allow Core App to Exit 
+       ** Allow Core App to Exit
        */
        AppRunStatus = CFE_ES_RunStatus_CORE_APP_INIT_ERROR;
-       
+
     } /* end if */
 
     /*
@@ -171,7 +170,7 @@ void CFE_ES_TaskMain(void)
         **  use the RunLoop call.
         */
         CFE_ES_IncrementTaskCounter();
-        
+
         /*
         ** Performance Time Stamp Exit
         */
@@ -182,53 +181,47 @@ void CFE_ES_TaskMain(void)
         */
         Status = CFE_SB_RcvMsg(&CFE_ES_TaskData.MsgPtr,
                                   CFE_ES_TaskData.CmdPipe,
-                                  TimeOut);
+                                  CFE_SB_PEND_FOREVER);
 
         /*
         ** Performance Time Stamp Entry
         */
         CFE_ES_PerfLogEntry(CFE_MISSION_ES_MAIN_PERF_ID);
 
-        /*
-        ** Scan the App table for Application Deletion requests
-        */
-        if ( Status == CFE_SB_TIME_OUT )
-        {
-           CFE_ES_ScanAppTable();
-        }
-        else if (Status == CFE_SUCCESS)
+        if (Status == CFE_SUCCESS)
         {
            /*
            ** Process Software Bus message.
            */
            CFE_ES_TaskPipe(CFE_ES_TaskData.MsgPtr);
-           
+
            /*
-           ** Scan the App Table for changes after processing a command
-           */
-           CFE_ES_ScanAppTable();
+            * Wake up the background task, which includes the
+            * scanning of the ES app table for entries that may need cleanup
+            */
+           CFE_ES_BackgroundWakeup();
         }
         else
         {
             /*
-            ** SB Error: Write a SysLog Message 
+            ** SB Error: Write a SysLog Message
             */
             CFE_ES_WriteToSysLog("ES:Error reading cmd pipe,RC=0x%08X\n",(unsigned int)Status);
 
             /*
-            ** Allow Core App to Exit 
+            ** Allow Core App to Exit
             */
             AppRunStatus = CFE_ES_RunStatus_CORE_APP_RUNTIME_ERROR;
 
         }  /* end if */
-        
-    } /* end while */    
-    
+
+    } /* end while */
+
     /*
     ** Performance Time Stamp Exit
     */
     CFE_ES_PerfLogExit(CFE_MISSION_ES_MAIN_PERF_ID);
-       
+
     /*
     ** Exit the application, CFE_ES_ExitApp will not return.
     */
@@ -250,6 +243,7 @@ int32 CFE_ES_TaskInit(void)
     cpuaddr CfeSegmentAddr;
     char    EventBuffer[CFE_MISSION_EVS_MAX_MESSAGE_LENGTH];
     char    VersionBuffer[CFE_MISSION_EVS_MAX_MESSAGE_LENGTH];
+    uint32  Remaining;
 
     /*
     ** Register the Application
@@ -259,7 +253,7 @@ int32 CFE_ES_TaskInit(void)
     {
         CFE_ES_WriteToSysLog("ES:Call to CFE_ES_RegisterApp Failed, RC = 0x%08X\n", (unsigned int)Status);
         return(Status);
-    }    
+    }
 
     /*
     ** Register the message dictionary with SB
@@ -280,11 +274,18 @@ int32 CFE_ES_TaskInit(void)
 
     CFE_ES_TaskData.LimitHK   = 2;
     CFE_ES_TaskData.LimitCmd  = 4;
-    
+
     /*
-    ** Initialize systemlog to default mode
+    ** Initialize systemlog to default Power On or Processor Reset mode
     */
-    CFE_ES_ResetDataPtr->SystemLogMode = CFE_PLATFORM_ES_DEFAULT_SYSLOG_MODE;
+    if (CFE_ES_GetResetType(NULL) == CFE_PSP_RST_TYPE_POWERON)                                                                   
+    {
+        CFE_ES_ResetDataPtr->SystemLogMode = CFE_PLATFORM_ES_DEFAULT_POR_SYSLOG_MODE;
+    }
+    else
+    {
+        CFE_ES_ResetDataPtr->SystemLogMode = CFE_PLATFORM_ES_DEFAULT_PR_SYSLOG_MODE;
+    }
 
     /*
     ** Register event filter table.
@@ -299,23 +300,32 @@ int32 CFE_ES_TaskInit(void)
     /*
     ** Initialize housekeeping packet (clear user data area)
     */
-    CFE_SB_InitMsg(&CFE_ES_TaskData.HkPacket, CFE_ES_HK_TLM_MID, sizeof(CFE_ES_TaskData.HkPacket), true);
+    CFE_SB_InitMsg(&CFE_ES_TaskData.HkPacket,
+            CFE_SB_MsgId_From_TopicId(CFE_MISSION_ES_HK_TLM_TOPICID),
+            sizeof(CFE_ES_TaskData.HkPacket), true);
 
+#ifndef CFE_OMIT_DEPRECATED_6_7
     /*
     ** Initialize shell output packet (clear user data area)
     */
-    CFE_SB_InitMsg(&CFE_ES_TaskData.ShellPacket, CFE_ES_SHELL_TLM_MID, sizeof(CFE_ES_TaskData.ShellPacket), true);
+    CFE_SB_InitMsg(&CFE_ES_TaskData.ShellPacket,
+            CFE_SB_MsgId_From_TopicId(CFE_MISSION_ES_SHELL_TLM_TOPICID),
+            sizeof(CFE_ES_TaskData.ShellPacket), true);
+#endif
 
     /*
     ** Initialize single application telemetry packet
     */
-    CFE_SB_InitMsg(&CFE_ES_TaskData.OneAppPacket, CFE_ES_APP_TLM_MID, sizeof(CFE_ES_TaskData.OneAppPacket), true);
+    CFE_SB_InitMsg(&CFE_ES_TaskData.OneAppPacket,
+            CFE_SB_MsgId_From_TopicId(CFE_MISSION_ES_APP_TLM_TOPICID),
+            sizeof(CFE_ES_TaskData.OneAppPacket), true);
 
     /*
     ** Initialize memory pool statistics telemetry packet
     */
-    CFE_SB_InitMsg(&CFE_ES_TaskData.MemStatsPacket, CFE_ES_MEMSTATS_TLM_MID, 
-                   sizeof(CFE_ES_TaskData.MemStatsPacket), true);
+    CFE_SB_InitMsg(&CFE_ES_TaskData.MemStatsPacket,
+            CFE_SB_MsgId_From_TopicId(CFE_MISSION_ES_MEMSTATS_TLM_TOPICID),
+            sizeof(CFE_ES_TaskData.MemStatsPacket), true);
 
     /*
     ** Create Software Bus message pipe
@@ -326,11 +336,11 @@ int32 CFE_ES_TaskInit(void)
         CFE_ES_WriteToSysLog("ES:Cannot Create SB Pipe, RC = 0x%08X\n", (unsigned int)Status);
         return(Status);
     }
-    
+
     /*
     ** Subscribe to Housekeeping request commands
     */
-    Status = CFE_SB_SubscribeEx(CFE_ES_SEND_HK_MID, CFE_ES_TaskData.CmdPipe,
+    Status = CFE_SB_SubscribeEx(CFE_SB_MsgId_From_TopicId(CFE_MISSION_ES_SEND_HK_TOPICID), CFE_ES_TaskData.CmdPipe,
                                 CFE_SB_Default_Qos, CFE_ES_TaskData.LimitHK);
     if ( Status != CFE_SUCCESS )
     {
@@ -341,8 +351,8 @@ int32 CFE_ES_TaskInit(void)
     /*
     ** Subscribe to ES task ground command packets
     */
-    Status = CFE_SB_SubscribeEx(CFE_ES_CMD_MID, CFE_ES_TaskData.CmdPipe,
-                       CFE_SB_Default_Qos, CFE_ES_TaskData.LimitCmd);
+    Status = CFE_SB_SubscribeEx(CFE_SB_MsgId_From_TopicId(CFE_MISSION_ES_CMD_TOPICID), CFE_ES_TaskData.CmdPipe,
+                                CFE_SB_Default_Qos, CFE_ES_TaskData.LimitCmd);
     if ( Status != CFE_SUCCESS )
     {
         CFE_ES_WriteToSysLog("ES:Cannot Subscribe to ES ground commands, RC = 0x%08X\n", (unsigned int)Status);
@@ -351,12 +361,12 @@ int32 CFE_ES_TaskInit(void)
 
     /*
     ** Compute the CRC for the cfe core code segment and place
-    ** in ES Housekeeping pkt.   
+    ** in ES Housekeeping pkt.
     */
     Status = CFE_PSP_GetCFETextSegmentInfo( &CfeSegmentAddr, &SizeofCfeSegment);
-   
+
     if ( Status == CFE_PSP_SUCCESS )
-    { 
+    {
        CFE_ES_TaskData.HkPacket.Payload.CFECoreChecksum = CFE_ES_CalculateCRC(
                                   (void *)(CfeSegmentAddr), SizeofCfeSegment, 0, CFE_MISSION_ES_DEFAULT_CRC);
     }
@@ -387,12 +397,12 @@ int32 CFE_ES_TaskInit(void)
     {
         CFE_ES_WriteToSysLog("ES:Error sending init event:RC=0x%08X\n", (unsigned int)Status);
         return(Status);
-    }                      
+    }
 
     Status = CFE_EVS_SendEvent(CFE_ES_INITSTATS_INF_EID,
                       CFE_EVS_EventType_INFORMATION,
                       "Versions:cFE %d.%d.%d.%d, OSAL %d.%d.%d.%d, PSP %d.%d.%d.%d, chksm %d",
-                      CFE_MAJOR_VERSION,CFE_MINOR_VERSION,CFE_REVISION,CFE_MISSION_REV,                      
+                      CFE_MAJOR_VERSION,CFE_MINOR_VERSION,CFE_REVISION,CFE_MISSION_REV,
                       OS_MAJOR_VERSION,OS_MINOR_VERSION,OS_REVISION,OS_MISSION_REV,
                       CFE_PSP_MAJOR_VERSION,CFE_PSP_MINOR_VERSION,CFE_PSP_REVISION,CFE_PSP_MISSION_REV,
                       (int)CFE_ES_TaskData.HkPacket.Payload.CFECoreChecksum);
@@ -415,17 +425,21 @@ int32 CFE_ES_TaskInit(void)
        snprintf(EventBuffer, sizeof(EventBuffer), "Mission %s.%s",
                 GLOBAL_CONFIGDATA.MissionVersion, GLOBAL_CONFIGDATA.Config);
     }
-    if(strcmp(GLOBAL_CONFIGDATA.MissionVersion, GLOBAL_CONFIGDATA.CfeVersion))
+    Remaining = sizeof(EventBuffer)-strlen(EventBuffer)-1;
+    if(Remaining > 0 && strcmp(GLOBAL_CONFIGDATA.MissionVersion, GLOBAL_CONFIGDATA.CfeVersion))
     {
        snprintf(VersionBuffer, sizeof(VersionBuffer), ", CFE: %s",
                 GLOBAL_CONFIGDATA.CfeVersion);
-       strncat(EventBuffer, VersionBuffer, sizeof(EventBuffer)-strlen(EventBuffer)-1);
+       VersionBuffer[Remaining] = 0;
+       strcat(EventBuffer, VersionBuffer);
+       Remaining = sizeof(EventBuffer)-strlen(EventBuffer)-1;
     }
-    if(strcmp(GLOBAL_CONFIGDATA.MissionVersion, GLOBAL_CONFIGDATA.OsalVersion))
+    if(Remaining > 0 && strcmp(GLOBAL_CONFIGDATA.MissionVersion, GLOBAL_CONFIGDATA.OsalVersion))
     {
        snprintf(VersionBuffer, sizeof(VersionBuffer), ", OSAL: %s",
                 GLOBAL_CONFIGDATA.OsalVersion);
-       strncat(EventBuffer, VersionBuffer, sizeof(EventBuffer)-strlen(EventBuffer)-1);
+       VersionBuffer[Remaining] = 0;
+       strcat(EventBuffer, VersionBuffer);
     }
 
     Status = CFE_EVS_SendEvent(CFE_ES_VERSION_INF_EID,
@@ -446,9 +460,20 @@ int32 CFE_ES_TaskInit(void)
        return(Status);
     }
 
+    /*
+     * Initialize the "background task" which is a low priority child task
+     * devoted to maintence duties that do not need to execute on a 
+     * strict/precise schedule.
+     */
+    Status = CFE_ES_BackgroundInit();
+    if ( Status != CFE_SUCCESS )
+    {
+       CFE_ES_WriteToSysLog("ES:Error initializing background task:RC=0x%08X\n", (unsigned int)Status);
+       return(Status);
+    }
 
    return(CFE_SUCCESS);
-   
+
 } /* End of CFE_ES_TaskInit() */
 
 
@@ -517,7 +542,7 @@ int32 CFE_ES_HousekeepingCmd(const CCSDS_CommandPacket_t *data)
 
     CFE_ES_TaskData.HkPacket.Payload.ERLogIndex      = CFE_ES_ResetDataPtr->ERLogIndex;
     CFE_ES_TaskData.HkPacket.Payload.ERLogEntries    = CFE_ES_ResetDataPtr->ERLogEntries;
-    
+
     CFE_ES_TaskData.HkPacket.Payload.RegisteredCoreApps      = CFE_ES_Global.RegisteredCoreApps;
     CFE_ES_TaskData.HkPacket.Payload.RegisteredExternalApps  = CFE_ES_Global.RegisteredExternalApps;
     CFE_ES_TaskData.HkPacket.Payload.RegisteredTasks         = CFE_ES_Global.RegisteredTasks;
@@ -535,7 +560,7 @@ int32 CFE_ES_HousekeepingCmd(const CCSDS_CommandPacket_t *data)
     CFE_ES_TaskData.HkPacket.Payload.PerfDataStart = CFE_ES_ResetDataPtr->Perf.MetaData.DataStart;
     CFE_ES_TaskData.HkPacket.Payload.PerfDataEnd = CFE_ES_ResetDataPtr->Perf.MetaData.DataEnd;
     CFE_ES_TaskData.HkPacket.Payload.PerfDataCount = CFE_ES_ResetDataPtr->Perf.MetaData.DataCount;
-    CFE_ES_TaskData.HkPacket.Payload.PerfDataToWrite = CFE_ES_PerfLogDumpStatus.DataToWrite;
+    CFE_ES_TaskData.HkPacket.Payload.PerfDataToWrite = CFE_ES_GetPerfLogDumpRemaining();
 
     /*
      * Fill out the perf trigger/filter mask objects
@@ -626,10 +651,10 @@ int32 CFE_ES_NoopCmd(const CFE_ES_Noop_t *Cmd)
     CFE_ES_TaskData.CommandCounter++;
     CFE_EVS_SendEvent(CFE_ES_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION,
                      "No-op command. Versions:cFE %d.%d.%d.%d, OSAL %d.%d.%d.%d, PSP %d.%d.%d.%d",
-                     CFE_MAJOR_VERSION,CFE_MINOR_VERSION,CFE_REVISION,CFE_MISSION_REV,                      
+                     CFE_MAJOR_VERSION,CFE_MINOR_VERSION,CFE_REVISION,CFE_MISSION_REV,
                      OS_MAJOR_VERSION,OS_MINOR_VERSION,OS_REVISION,OS_MISSION_REV,
                      CFE_PSP_MAJOR_VERSION,CFE_PSP_MINOR_VERSION,CFE_PSP_REVISION,CFE_PSP_MISSION_REV);
-        
+
     return CFE_SUCCESS;
 } /* End of CFE_ES_NoopCmd() */
 
@@ -684,7 +709,7 @@ int32 CFE_ES_RestartCmd(const CFE_ES_Restart_t *data)
     return CFE_SUCCESS;
 } /* End of CFE_ES_RestartCmd() */
 
-
+#ifndef CFE_OMIT_DEPRECATED_6_7
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */
 /* CFE_ES_ShellCmd() -- Pass thru string to O/S shell              */
@@ -729,7 +754,7 @@ int32 CFE_ES_ShellCmd(const CFE_ES_Shell_t *data)
 
     return CFE_SUCCESS;
 } /* End of CFE_ES_ShellCmd() */
-
+#endif /* CFE_OMIT_DEPRECATED_6_7 */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */
@@ -811,7 +836,7 @@ int32 CFE_ES_StartAppCmd(const CFE_ES_StartApp_t *data)
        Result = CFE_ES_AppCreate(&AppID, LocalFile,
                    LocalEntryPt,
                    LocalAppName,
-                   (uint32) cmd->Priority, 
+                   (uint32) cmd->Priority,
                    (uint32) cmd->StackSize,
                    (uint32) cmd->ExceptionAction);
 
@@ -1124,7 +1149,7 @@ int32 CFE_ES_QueryAllCmd(const CFE_ES_QueryAll_t *data)
         {
             if(CFE_ES_Global.AppTable[i].AppState != CFE_ES_AppState_UNDEFINED)
             {
-                /* 
+                /*
                 ** zero out the local entry
                 */
                 memset(&AppInfo,0,sizeof(CFE_ES_AppInfo_t));
@@ -1249,7 +1274,7 @@ int32 CFE_ES_QueryAllTasksCmd(const CFE_ES_QueryAllTasks_t *data)
         {
             if(CFE_ES_Global.TaskTable[i].RecordUsed != false)
             {
-                /* 
+                /*
                 ** zero out the local entry
                 */
                 memset(&TaskInfo,0,sizeof(CFE_ES_TaskInfo_t));
@@ -1434,94 +1459,30 @@ int32 CFE_ES_ClearERLogCmd(const CFE_ES_ClearERLog_t *data)
 int32 CFE_ES_WriteERLogCmd(const CFE_ES_WriteERLog_t *data)
 {
     const CFE_ES_FileNameCmd_Payload_t *CmdPtr = &data->Payload;
-    int32                    Stat;
-    char                     LogFilename[OS_MAX_PATH_LEN];
 
-    CFE_SB_MessageStringGet(LogFilename, (char *)CmdPtr->FileName,
-            CFE_PLATFORM_ES_DEFAULT_ER_LOG_FILE, OS_MAX_PATH_LEN, sizeof(CmdPtr->FileName));
-
-    Stat = CFE_ES_ERLogDump(LogFilename);
-
-    if(Stat == CFE_SUCCESS)
+    if (CFE_ES_TaskData.BackgroundERLogDumpState.IsPending)
     {
-        CFE_ES_TaskData.CommandCounter++;
+        CFE_EVS_SendEvent(CFE_ES_ERLOG_PENDING_ERR_EID,CFE_EVS_EventType_ERROR,
+                "Error log write to file %s already in progress",
+                CFE_ES_TaskData.BackgroundERLogDumpState.DataFileName);
+
+        /* background dump already running, consider this an error */
+        CFE_ES_TaskData.CommandErrorCounter++;
     }
     else
     {
-        CFE_ES_TaskData.CommandErrorCounter++;
-    }/* end if */
+        CFE_SB_MessageStringGet(CFE_ES_TaskData.BackgroundERLogDumpState.DataFileName, (char *)CmdPtr->FileName,
+                CFE_PLATFORM_ES_DEFAULT_ER_LOG_FILE,
+                sizeof(CFE_ES_TaskData.BackgroundERLogDumpState.DataFileName), sizeof(CmdPtr->FileName));
+
+        CFE_ES_TaskData.BackgroundERLogDumpState.IsPending = true;
+        CFE_ES_TaskData.CommandCounter++;
+        CFE_ES_BackgroundWakeup();
+    }
 
     return CFE_SUCCESS;
 }/* end CFE_ES_WriteERLogCmd */
 
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-/*                                                                 */
-/* CFE_ES_ERLogDump() -- Write exception & reset log to a file.    */
-/*                                                                 */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-int32 CFE_ES_ERLogDump(const char *Filename)
-{
-
-    int32   fd;
-    int32   WriteStat,BspStat;
-    uint32  FileSize,i,ResetAreaSize;
-    CFE_FS_Header_t FileHdr;
-    cpuaddr ResetDataAddr;
-
-    fd = OS_creat(Filename, OS_WRITE_ONLY);
-    if(fd < 0)
-    {
-        CFE_EVS_SendEvent(CFE_ES_ERLOG2_ERR_EID,CFE_EVS_EventType_ERROR,
-                "Error creating file %s, RC = 0x%08X",
-                Filename,(unsigned int)fd);
-        return CFE_ES_FILE_IO_ERR;
-    }/* end if */
-
-    CFE_FS_InitHeader(&FileHdr, CFE_ES_ER_LOG_DESC, CFE_FS_SubType_ES_ERLOG);
-
-    /* write the cFE header to the file */
-    WriteStat = CFE_FS_WriteHeader(fd, &FileHdr);    
-    if(WriteStat != sizeof(CFE_FS_Header_t))
-    {
-        CFE_ES_FileWriteByteCntErr(Filename,sizeof(CFE_FS_Header_t),WriteStat);
-        OS_close(fd);
-        return CFE_ES_FILE_IO_ERR;        
-    }/* end if */
-    FileSize = WriteStat;
-
-    /* Get the pointer to the Reset Log from the BSP */
-    BspStat = CFE_PSP_GetResetArea (&ResetDataAddr, &ResetAreaSize);
-    if(BspStat != CFE_PSP_SUCCESS)
-    {
-        CFE_EVS_SendEvent(CFE_ES_RST_ACCESS_EID, CFE_EVS_EventType_ERROR,
-                "Error accessing ER Log,%s not written. RC = 0x%08X",Filename,(unsigned int)BspStat);
-        OS_close(fd);
-        return CFE_ES_RST_ACCESS_ERR;        
-    }/* end if */
-
-    /* write a single ER log entry on each pass */
-    for(i=0;i<CFE_PLATFORM_ES_ER_LOG_ENTRIES;i++)
-    {
-        WriteStat = OS_write(fd,(uint8 *)ResetDataAddr,sizeof(CFE_ES_ERLog_t));
-        if(WriteStat != sizeof(CFE_ES_ERLog_t))
-        {
-            CFE_ES_FileWriteByteCntErr(Filename,sizeof(CFE_ES_ERLog_t),WriteStat);
-            OS_close(fd);
-            return CFE_ES_FILE_IO_ERR;        
-        }/* end if */        
-        FileSize += WriteStat;
-        ResetDataAddr+=sizeof(CFE_ES_ERLog_t);
-    }/* end for */   
-
-    OS_close(fd);
-
-    CFE_EVS_SendEvent(CFE_ES_ERLOG2_EID, CFE_EVS_EventType_DEBUG,
-            "%s written:Size=%d",Filename,(int)FileSize);
-
-    return CFE_SUCCESS;
-
-} /* end CFE_ES_ERLogDump() */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */
@@ -1546,16 +1507,16 @@ int32 CFE_ES_ResetPRCountCmd(const CFE_ES_ResetPRCount_t *data)
     CFE_ES_TaskData.CommandCounter++;
 
     return CFE_SUCCESS;
-} /* End of CFE_ES_ResetPRCountCmd() */                                            
+} /* End of CFE_ES_ResetPRCountCmd() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */              
-/*                                                                 */              
-/* CFE_ES_SetMaxPRCountCmd() -- Set Maximum Processor reset count  */              
-/*                                                                 */              
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */              
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                                                                 */
+/* CFE_ES_SetMaxPRCountCmd() -- Set Maximum Processor reset count  */
+/*                                                                 */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 int32 CFE_ES_SetMaxPRCountCmd(const CFE_ES_SetMaxPRCount_t *data)
-{                                                                                  
+{
     const CFE_ES_SetMaxPRCountCmd_Payload_t *cmd = &data->Payload;
 
     /*
@@ -1572,16 +1533,16 @@ int32 CFE_ES_SetMaxPRCountCmd(const CFE_ES_SetMaxPRCount_t *data)
     CFE_ES_TaskData.CommandCounter++;
 
     return CFE_SUCCESS;
-} /* End of CFE_ES_RestartCmd() */ 
+} /* End of CFE_ES_RestartCmd() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */              
-/*                                                                 */              
-/* CFE_ES_DeleteCDSCmd() -- Delete Specified Critical Data Store   */              
-/*                                                                 */              
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */              
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                                                                 */
+/* CFE_ES_DeleteCDSCmd() -- Delete Specified Critical Data Store   */
+/*                                                                 */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 int32 CFE_ES_DeleteCDSCmd(const CFE_ES_DeleteCDS_t *data)
-{                                                                                  
+{
     int32   Status;
     const CFE_ES_DeleteCDSCmd_Payload_t *cmd = &data->Payload;
     char LocalCdsName[CFE_ES_CDS_MAX_FULL_NAME_LEN];
@@ -1630,19 +1591,19 @@ int32 CFE_ES_DeleteCDSCmd(const CFE_ES_DeleteCDS_t *data)
     }
 
     return CFE_SUCCESS;
-} /* End of CFE_ES_DeleteCDSCmd() */ 
+} /* End of CFE_ES_DeleteCDSCmd() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */              
-/*                                                                   */              
-/* CFE_ES_SendMemPoolStatsCmd() -- Telemeter Memory Pool Statistics  */              
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                   */
-/* Note: The "Application" parameter of the                          */ 
+/* CFE_ES_SendMemPoolStatsCmd() -- Telemeter Memory Pool Statistics  */
+/*                                                                   */
+/* Note: The "Application" parameter of the                          */
 /*       CFE_ES_TlmPoolStats_t structure is not used.                */
-/*                                                                   */              
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */              
+/*                                                                   */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 int32 CFE_ES_SendMemPoolStatsCmd(const CFE_ES_SendMemPoolStats_t *data)
-{                                                                                  
+{
     const CFE_ES_SendMemPoolStatsCmd_Payload_t *Cmd;
     CFE_ES_MemHandle_t        MemHandle;
     bool                      ValidHandle;
@@ -1680,13 +1641,13 @@ int32 CFE_ES_SendMemPoolStatsCmd(const CFE_ES_SendMemPoolStats_t *data)
     }
 
     return CFE_SUCCESS;
-} /* End of CFE_ES_SendMemPoolStatsCmd() */ 
+} /* End of CFE_ES_SendMemPoolStatsCmd() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */              
-/*                                                                 */              
-/* CFE_ES_DumpCDSRegistryCmd() -- Dump CDS Registry to a file           */              
-/*                                                                 */              
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */              
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                                                                 */
+/* CFE_ES_DumpCDSRegistryCmd() -- Dump CDS Registry to a file           */
+/*                                                                 */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 int32 CFE_ES_DumpCDSRegistryCmd(const CFE_ES_DumpCDSRegistry_t *data)
 {
@@ -1708,7 +1669,7 @@ int32 CFE_ES_DumpCDSRegistryCmd(const CFE_ES_DumpCDSRegistry_t *data)
     /* Create a new dump file, overwriting anything that may have existed previously */
     FileDescriptor = OS_creat(DumpFilename, OS_WRITE_ONLY);
 
-    if (FileDescriptor >= OS_FS_SUCCESS)
+    if (FileDescriptor >= OS_SUCCESS)
     {
         /* Initialize the standard cFE File Header for the Dump File */
         CFE_FS_InitHeader(&StdFileHeader, "CDS_Registry", CFE_FS_SubType_ES_CDS_REG);
@@ -1737,7 +1698,8 @@ int32 CFE_ES_DumpCDSRegistryCmd(const CFE_ES_DumpCDSRegistry_t *data)
                     DumpRecord.ByteAlignSpare1  = 0;
 
                     /* strncpy will zero out any unused buffer - memset not necessary */
-                    strncpy(DumpRecord.Name, RegRecPtr->Name, sizeof(DumpRecord.Name));
+                    strncpy(DumpRecord.Name, RegRecPtr->Name, sizeof(DumpRecord.Name)-1);
+                    DumpRecord.Name[sizeof(DumpRecord.Name)-1] = 0;
 
                     /* Output Registry Dump Record to Registry Dump File */
                     Status = OS_write(FileDescriptor,
@@ -1745,7 +1707,7 @@ int32 CFE_ES_DumpCDSRegistryCmd(const CFE_ES_DumpCDSRegistry_t *data)
                                       sizeof(CFE_ES_CDSRegDumpRec_t));
 
                     FileSize += Status;
-                    NumEntries++;      
+                    NumEntries++;
                 }
 
                 /* Look at the next entry in the Registry */
@@ -1760,7 +1722,7 @@ int32 CFE_ES_DumpCDSRegistryCmd(const CFE_ES_DumpCDSRegistry_t *data)
                         DumpFilename, (int)FileSize, (int)NumEntries);
 
                 /* Increment Successful Command Counter */
-                CFE_ES_TaskData.CommandCounter++;      
+                CFE_ES_TaskData.CommandCounter++;
             }
             else
             {
@@ -1769,8 +1731,8 @@ int32 CFE_ES_DumpCDSRegistryCmd(const CFE_ES_DumpCDSRegistry_t *data)
                         "Error writing CDS Registry to '%s', Status=0x%08X",
                         DumpFilename, (unsigned int)Status);
 
-                /* Increment Command Error Counter */      
-                CFE_ES_TaskData.CommandErrorCounter++;      
+                /* Increment Command Error Counter */
+                CFE_ES_TaskData.CommandErrorCounter++;
             }
         }
         else
@@ -1780,8 +1742,8 @@ int32 CFE_ES_DumpCDSRegistryCmd(const CFE_ES_DumpCDSRegistry_t *data)
                     "Error writing cFE File Header to '%s', Status=0x%08X",
                     DumpFilename, (unsigned int)Status);
 
-            /* Increment Command Error Counter */      
-            CFE_ES_TaskData.CommandErrorCounter++;      
+            /* Increment Command Error Counter */
+            CFE_ES_TaskData.CommandErrorCounter++;
         }
 
         /* We are done outputting data to the dump file.  Close it. */
@@ -1794,8 +1756,8 @@ int32 CFE_ES_DumpCDSRegistryCmd(const CFE_ES_DumpCDSRegistry_t *data)
                 "Error creating CDS dump file '%s', Status=0x%08X",
                 DumpFilename, (unsigned int)FileDescriptor);
 
-        /* Increment Command Error Counter */      
-        CFE_ES_TaskData.CommandErrorCounter++;      
+        /* Increment Command Error Counter */
+        CFE_ES_TaskData.CommandErrorCounter++;
     }
 
     return CFE_SUCCESS;
@@ -1815,7 +1777,7 @@ void CFE_ES_FileWriteByteCntErr(const char *Filename,uint32 Requested,uint32 Act
                        Filename,(unsigned int)Requested,(unsigned int)Actual);
 
 
-}/* End of CFE_ES_FileWriteByteCntErr() */                                                
+}/* End of CFE_ES_FileWriteByteCntErr() */
 
 /************************/
 /*  End of File Comment */

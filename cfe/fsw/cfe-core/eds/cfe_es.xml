@@ -58,6 +58,7 @@
       <EnumeratedDataType name="RunStatus" shortDescription="Run Status and Exit Status identifiers">
         <IntegerDataEncoding sizeInBits="32" encoding="unsigned" />
         <EnumerationList>
+          <Enumeration label="UNDEFINED" value="0" shortDescription="Undefined status, reserved value" />
           <Enumeration label="APP_RUN" value="1" shortDescription="Indicates that the Application should continue to run" />
           <Enumeration label="APP_EXIT" value="2" shortDescription="Indicates that the Application wants to exit normally" />
           <Enumeration label="APP_ERROR" value="3" shortDescription="Indicates that the Application is quitting with an error" />
@@ -67,6 +68,7 @@
           <Enumeration label="SYS_DELETE" value="7" shortDescription="The system is requesting that the cFE App is stopped" />
           <Enumeration label="CORE_APP_INIT_ERROR" value="8" shortDescription="Indicates that the Core Application could not Init" />
           <Enumeration label="CORE_APP_RUNTIME_ERROR" value="9" shortDescription="Indicates that the Core Application had a runtime failure" />
+          <Enumeration label="MAX" value="10" shortDescription="Reserved, placeholder for maximum value" />
         </EnumerationList>
       </EnumeratedDataType>
       

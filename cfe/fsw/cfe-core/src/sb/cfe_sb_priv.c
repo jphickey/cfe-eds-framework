@@ -555,9 +555,7 @@ int32 CFE_SB_DuplicateSubscribeCheck(CFE_SB_MsgKey_t MsgKey,
 */
 void CFE_SB_SetMsgSeqCnt(CFE_SB_MsgPtr_t MsgPtr,uint32 Count){
 
-#ifdef MESSAGE_FORMAT_IS_CCSDS
     CCSDS_WR_SEQ(MsgPtr->Hdr,Count);
-#endif
 
 }/* end CFE_SB_SetMsgSeqCnt */
 
@@ -662,30 +660,6 @@ char *CFE_SB_GetAppTskName(uint32 TaskId,char *FullName){
     return FullName;
 
 }/* end CFE_SB_GetAppTskName */
-
-
-/******************************************************************************
-**  Function:  CFE_SB_GetPktType()
-**
-**  Purpose:
-**    For CCSDS packets, this function returns the state of the cmd/tlm bit(12).
-**    For cmd pkts, the state is 1. For tlm pkts, the state is 0.
-**
-**  Arguments:
-**
-**  Return:
-**    None
-*/
-uint8 CFE_SB_GetPktType(CFE_SB_MsgId_t MsgId)
-{
-    if (CFE_SB_PubSub_IsListenerComponent(&MsgId))
-    {
-        return CFE_SB_CMD;
-    }
-    return CFE_SB_TLM;
-
-}/* end CFE_SB_GetPktType */
-
 
 /******************************************************************************
 **  Function:  CFE_SB_RequestToSendEvent()
