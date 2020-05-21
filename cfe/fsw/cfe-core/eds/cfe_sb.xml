@@ -391,6 +391,13 @@
         -->
       </ContainerDataType>
 
+      <ContainerDataType name="SubReportBase" baseType="CCSDS/CommandPacket">
+        <!-- 
+        This container has no entries of its own, it just serves as a common base type for all command messages.  
+        Defined command messages must all use this container as a base type. 
+        -->
+      </ContainerDataType>
+
       <ContainerDataType name="HousekeepingTlm" baseType="CCSDS/TelemetryPacket">
         <EntryList>
           <Entry type="HousekeepingTlm_Payload" name="Payload" />
@@ -769,7 +776,7 @@
         </EntryList>
       </ContainerDataType>
 
-      <ContainerDataType name="EnableSubReporting" baseType="CommandBase">
+      <ContainerDataType name="EnableSubReporting" baseType="SubReportBase">
         <LongDescription>
           \cfesbcmd  Enable Subscription Reporting Command
 
@@ -805,7 +812,7 @@
         </ConstraintSet>
       </ContainerDataType>
 
-      <ContainerDataType name="DisableSubReporting" baseType="CommandBase">
+      <ContainerDataType name="DisableSubReporting" baseType="SubReportBase">
         <LongDescription>
           \cfesbcmd  Disable Subscription Reporting Command
 
@@ -841,7 +848,7 @@
         </ConstraintSet>
       </ContainerDataType>
 
-      <ContainerDataType name="SendPrevSubs" baseType="CommandBase">
+      <ContainerDataType name="SendPrevSubs" baseType="SubReportBase">
         <LongDescription>
           \cfesbcmd  Send Previous Subscriptions Command
 
@@ -1025,6 +1032,11 @@
               <GenericTypeMap name="TelecommandDataType" type="CommandBase" />
             </GenericTypeMapSet>
           </Interface>
+          <Interface name="SUB_RPT_CTRL" shortDescription="Subscription reporting interface" type="CFE_SB/Telecommand">
+            <GenericTypeMapSet>
+              <GenericTypeMap name="TelecommandDataType" type="SubReportBase" />
+            </GenericTypeMapSet>
+          </Interface>
           <Interface name="SEND_HK" shortDescription="Send telemetry command interface" type="CFE_SB/Telecommand">
             <!-- This uses a bare spacepacket with no payload -->
             <GenericTypeMapSet>
@@ -1059,6 +1071,7 @@
         <Implementation>
           <VariableSet>
             <Variable type="BASE_TYPES/uint16" readOnly="true" name="CmdTopicId" initialValue="${CFE_MISSION/SB_CMD_TOPICID}" />
+            <Variable type="BASE_TYPES/uint16" readOnly="true" name="SubReportTopicId" initialValue="${CFE_MISSION/SB_SUB_RPT_CTRL_TOPICID}" />
             <Variable type="BASE_TYPES/uint16" readOnly="true" name="SendHkTopicId" initialValue="${CFE_MISSION/SB_SEND_HK_TOPICID}" />
             <Variable type="BASE_TYPES/uint16" readOnly="true" name="HkTlmTopicId" initialValue="${CFE_MISSION/SB_HK_TLM_TOPICID}" />
             <Variable type="BASE_TYPES/uint16" readOnly="true" name="StatsTlmTopicId" initialValue="${CFE_MISSION/SB_STATS_TLM_TOPICID}" />
@@ -1068,6 +1081,7 @@
           <!-- Assign fixed numbers to the "TopicId" parameter of each interface -->
           <ParameterMapSet>
             <ParameterMap interface="CMD" parameter="TopicId" variableRef="CmdTopicId" />
+            <ParameterMap interface="SUB_RPT_CTRL" parameter="TopicId" variableRef="SubReportTopicId" />
             <ParameterMap interface="SEND_HK" parameter="TopicId" variableRef="SendHkTopicId" />
             <ParameterMap interface="HK_TLM" parameter="TopicId" variableRef="HkTlmTopicId" />
             <ParameterMap interface="STATS_TLM" parameter="TopicId" variableRef="StatsTlmTopicId" />

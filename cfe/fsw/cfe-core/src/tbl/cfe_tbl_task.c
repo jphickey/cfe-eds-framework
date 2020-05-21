@@ -193,7 +193,7 @@ int32 CFE_TBL_TaskInit(void)
     /*
     ** Subscribe to Housekeeping request commands
     */
-    Status = CFE_SB_Subscribe(CFE_TBL_SEND_HK_MID, CFE_TBL_TaskData.CmdPipe);
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TBL_SEND_HK_TOPICID), CFE_TBL_TaskData.CmdPipe);
 
     if(Status != CFE_SUCCESS)
     {
@@ -204,7 +204,7 @@ int32 CFE_TBL_TaskInit(void)
     /*
     ** Subscribe to Table task ground command packets
     */
-    Status = CFE_SB_Subscribe(CFE_TBL_CMD_MID, CFE_TBL_TaskData.CmdPipe);
+    Status = CFE_SB_Subscribe(CFE_SB_MsgId_From_TopicId(CFE_MISSION_TBL_CMD_TOPICID), CFE_TBL_TaskData.CmdPipe);
 
     if(Status != CFE_SUCCESS)
     {
@@ -248,12 +248,12 @@ void CFE_TBL_InitData(void)
 
     /* Initialize Packet Headers */
     CFE_SB_InitMsg(&CFE_TBL_TaskData.HkPacket,
-                   CFE_TBL_HK_TLM_MID,
+                   CFE_SB_MsgId_From_TopicId(CFE_MISSION_TBL_HK_TLM_TOPICID),
                    sizeof(CFE_TBL_TaskData.HkPacket),
                    true);
 
     CFE_SB_InitMsg(&CFE_TBL_TaskData.TblRegPacket,
-                   CFE_TBL_REG_TLM_MID,
+                   CFE_SB_MsgId_From_TopicId(CFE_MISSION_TBL_REG_TLM_TOPICID),
                    sizeof(CFE_TBL_TaskData.TblRegPacket),
                    true);
 

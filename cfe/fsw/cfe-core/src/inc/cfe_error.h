@@ -674,15 +674,18 @@
  */
 #define CFE_FS_FNAME_TOO_LONG           ((int32)0xc6000003)
 
+#ifndef CFE_OMIT_DEPRECATED_6_7
 /**
- * @brief GZIP File Bad Data
+ * @brief DEPRECATED: GZIP File Bad Data
+ * @deprecated
  *
  * The GZIP file contains invalid data and cannot be read
  */
 #define CFE_FS_GZIP_BAD_DATA            ((int32)0xc6000004)
 
 /**
- * @brief GZIP File Bad Code Block
+ * @brief DEPRECATED: GZIP File Bad Code Block
+ * @deprecated
  *
  * The GZIP file codeblock is bad, which means the file is 
  * most likely corrupted
@@ -690,7 +693,8 @@
 #define CFE_FS_GZIP_BAD_CODE_BLOCK      ((int32)0xc6000005)
 
 /**
- * @brief GZIP Memory Buffer Exhausted
+ * @brief DEPRECATED: GZIP Memory Buffer Exhausted
+ * @deprecated
  *
  * The memory buffer used by the decompression routine is 
  * exhausted.
@@ -698,7 +702,8 @@
 #define CFE_FS_GZIP_NO_MEMORY           ((int32)0xc6000006)
 
 /**
- * @brief GZIP CRC Error
+ * @brief DEPRECATED: GZIP CRC Error
+ * @deprecated
  *
  * There is a CRC error in the GZIP file, which means the 
  * file is most likely corrupted.
@@ -706,7 +711,8 @@
 #define CFE_FS_GZIP_CRC_ERROR           ((int32)0xc6000007)
 
 /**
- * @brief GZIP Length Error
+ * @brief DEPRECATED: GZIP Length Error
+ * @deprecated
  *
  * There is a length error in the GZIP internal data 
  * structures, which means the file is most likely corrupted.
@@ -714,7 +720,8 @@
 #define CFE_FS_GZIP_LENGTH_ERROR        ((int32)0xc6000008)
 
 /**
- * @brief GZIP Write Error
+ * @brief DEPRECATED: GZIP Write Error
+ * @deprecated
  *
  * An error occurred trying to write the uncompressed 
  * file.
@@ -722,14 +729,16 @@
 #define CFE_FS_GZIP_WRITE_ERROR         ((int32)0xc6000009)
 
 /**
- * @brief GZIP Read Error
+ * @brief DEPRECATED: GZIP Read Error
+ * @deprecated
  *
  * An error occurred trying to read the GZIP file
  */ 
 #define CFE_FS_GZIP_READ_ERROR          ((int32)0xc600000A)
 
 /**
- *  @brief GZIP Open Output Error
+ *  @brief DEPRECATED: GZIP Open Output Error
+ * @deprecated
  *
  * An error occurred trying to open the DestinationFile
  * where the GZIP file will be uncompressed. The 
@@ -739,7 +748,8 @@
 #define CFE_FS_GZIP_OPEN_OUTPUT         ((int32)0xc600000B)
 
 /**
- * @brief GZIP Open Input Error
+ * @brief DEPRECATED: GZIP Open Input Error
+ * @deprecated
  *
  * An error occurred trying to open the GZIP file 
  * to be decompressed. The function must be able to open
@@ -749,7 +759,8 @@
 #define CFE_FS_GZIP_OPEN_INPUT          ((int32)0xc600000C)
 
 /**
- * @brief GZIP Read Header Error
+ * @brief DEPRECATED: GZIP Read Header Error
+ * @deprecated
  *
  * An error occured trying to read the GZIP file header,
  * which means the file is most likely corrupted or 
@@ -758,7 +769,8 @@
 #define CFE_FS_GZIP_READ_ERROR_HEADER   ((int32)0xc600000D)
 
 /**
- * @brief GZIP Index Error
+ * @brief DEPRECATED: GZIP Index Error
+ * @deprecated
  *
  * An error occurred trying to read the GZIP index, 
  * which means the file is most likely corrupted.
@@ -766,11 +778,14 @@
 #define CFE_FS_GZIP_INDEX_ERROR         ((int32)0xc600000E)
 
 /**
- * @brief GZIP Not Zip File
+ * @brief DEPRECATED: GZIP Not Zip File
+ * @deprecated
  *
  * The file to be decompressed is not a valid GZIP file
  */
 #define CFE_FS_GZIP_NON_ZIP_FILE        ((int32)0xc600000F)
+
+#endif /* CFE_OMIT_DEPRECATED_6_7 */
 
 /**
  * @brief Not Implemented
@@ -783,37 +798,38 @@
  */
 #define CFE_FS_NOT_IMPLEMENTED  ((int32)0xc600ffff)
 
+#ifndef CFE_OMIT_DEPRECATED_6_7 
 /*
 ************* OSAPI STATUS CODES *************
 */
 
-#define CFE_OS_ERROR                    (OS_ERROR)  /**< @copydoc OS_ERROR */
-#define CFE_OS_INVALID_POINTER          (OS_INVALID_POINTER) /**< @copydoc OS_INVALID_POINTER */
-#define CFE_OS_ERROR_ADDRESS_MISALIGNED (OS_ERROR_ADDRESS_MISALIGNED) /**< @copydoc OS_ERROR_ADDRESS_MISALIGNED */
-#define CFE_OS_ERROR_TIMEOUT            (OS_ERROR_TIMEOUT) /**< @copydoc OS_ERROR_TIMEOUT */
-#define CFE_OS_INVALID_INT_NUM          (OS_INVALID_INT_NUM) /**< @copydoc OS_INVALID_INT_NUM */
-#define CFE_OS_SEM_FAILURE              (OS_SEM_FAILURE) /**< @copydoc OS_SEM_FAILURE */
-#define CFE_OS_SEM_TIMEOUT              (OS_SEM_TIMEOUT) /**< @copydoc OS_SEM_TIMEOUT */
-#define CFE_OS_QUEUE_EMPTY              (OS_QUEUE_EMPTY) /**< @copydoc OS_QUEUE_EMPTY */
-#define CFE_OS_QUEUE_FULL               (OS_QUEUE_FULL) /**< @copydoc OS_QUEUE_FULL */
-#define CFE_OS_QUEUE_TIMEOUT            (OS_QUEUE_TIMEOUT) /**< @copydoc OS_QUEUE_TIMEOUT */
-#define CFE_OS_QUEUE_INVALID_SIZE       (OS_QUEUE_INVALID_SIZE) /**< @copydoc OS_QUEUE_INVALID_SIZE */
-#define CFE_OS_QUEUE_ID_ERROR           (OS_QUEUE_ID_ERROR) /**< @copydoc OS_QUEUE_ID_ERROR */
-#define CFE_OS_ERR_NAME_TOO_LONG        (OS_ERR_NAME_TOO_LONG) /**< @copydoc OS_ERR_NAME_TOO_LONG */
-#define CFE_OS_ERR_NO_FREE_IDS          (OS_ERR_NO_FREE_IDS) /**< @copydoc OS_ERR_NO_FREE_IDS */
-#define CFE_OS_ERR_NAME_TAKEN           (OS_ERR_NAME_TAKEN) /**< @copydoc OS_ERR_NAME_TAKEN */
-#define CFE_OS_ERR_INVALID_ID           (OS_ERR_INVALID_ID) /**< @copydoc OS_ERR_INVALID_ID */
-#define CFE_OS_ERR_NAME_NOT_FOUND       (OS_ERR_NAME_NOT_FOUND) /**< @copydoc OS_ERR_NAME_NOT_FOUND */
-#define CFE_OS_ERR_SEM_NOT_FULL         (OS_ERR_SEM_NOT_FULL) /**< @copydoc OS_ERR_SEM_NOT_FULL */
-#define CFE_OS_ERR_INVALID_PRIORITY     (OS_ERR_INVALID_PRIORITY) /**< @copydoc OS_ERR_INVALID_PRIORITY */
-#define CFE_OS_ERROR_TASK_ID            (OS_ERROR_TASK_ID) /**< @brief This doesn't actually exist */
-#define CFE_OS_SEM_UNAVAILABLE          (OS_SEM_UNAVAILABLE) /**< @brief This doesn't actually exist */
-#define CFE_OS_FS_ERROR                 (OS_FS_ERROR) /**< @copydoc OS_FS_ERROR */
-#define CFE_OS_FS_ERR_INVALID_POINTER   (OS_FS_ERR_INVALID_POINTER) /**< @copydoc OS_FS_ERR_INVALID_POINTER */
-#define CFE_OS_FS_ERR_PATH_TOO_LONG     (OS_FS_ERR_PATH_TOO_LONG) /**< @copydoc OS_FS_ERR_PATH_TOO_LONG */
-#define CFE_OS_FS_ERR_NAME_TOO_LONG     (OS_FS_ERR_NAME_TOO_LONG) /**< @copydoc OS_FS_ERR_NAME_TOO_LONG */
-#define CFE_OS_FS_ERR_DRIVE_NOT_CREATED (OS_FS_ERR_DRIVE_NOT_CREATED) /**< @copydoc OS_FS_ERR_DRIVE_NOT_CREATED */
-#define CFE_OSAPI_NOT_IMPLEMENTED       (OS_FS_UNIMPLEMENTED) /**< @copydoc OS_FS_UNIMPLEMENTED */
+#define CFE_OS_ERROR                    (OS_ERROR)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_INVALID_POINTER          (OS_INVALID_POINTER)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_ERROR_ADDRESS_MISALIGNED (OS_ERROR_ADDRESS_MISALIGNED)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_ERROR_TIMEOUT            (OS_ERROR_TIMEOUT)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_INVALID_INT_NUM          (OS_INVALID_INT_NUM)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_SEM_FAILURE              (OS_SEM_FAILURE)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_SEM_TIMEOUT              (OS_SEM_TIMEOUT)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_QUEUE_EMPTY              (OS_QUEUE_EMPTY)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_QUEUE_FULL               (OS_QUEUE_FULL)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_QUEUE_TIMEOUT            (OS_QUEUE_TIMEOUT)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_QUEUE_INVALID_SIZE       (OS_QUEUE_INVALID_SIZE)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_QUEUE_ID_ERROR           (OS_QUEUE_ID_ERROR)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_ERR_NAME_TOO_LONG        (OS_ERR_NAME_TOO_LONG)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_ERR_NO_FREE_IDS          (OS_ERR_NO_FREE_IDS)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_ERR_NAME_TAKEN           (OS_ERR_NAME_TAKEN)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_ERR_INVALID_ID           (OS_ERR_INVALID_ID)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_ERR_NAME_NOT_FOUND       (OS_ERR_NAME_NOT_FOUND)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_ERR_SEM_NOT_FULL         (OS_ERR_SEM_NOT_FULL)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_ERR_INVALID_PRIORITY     (OS_ERR_INVALID_PRIORITY)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_FS_ERROR                 (OS_ERROR)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_FS_ERR_INVALID_POINTER   (OS_INVALID_POINTER)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_FS_ERR_PATH_TOO_LONG     (OS_FS_ERR_PATH_TOO_LONG)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_FS_ERR_NAME_TOO_LONG     (OS_FS_ERR_NAME_TOO_LONG)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OS_FS_ERR_DRIVE_NOT_CREATED (OS_FS_ERR_DRIVE_NOT_CREATED)  /**< @brief DEPRECATED @deprecated */
+#define CFE_OSAPI_NOT_IMPLEMENTED       (OS_ERR_NOT_IMPLEMENTED)  /**< @brief DEPRECATED @deprecated */
+
+#endif /* CFE_OMIT_DEPRECATED_6_7 */
 
 /*
 ************* SOFTWARE BUS SERVICES STATUS CODES *************
@@ -977,6 +993,16 @@
  *
  */
 #define CFE_SB_BUFFER_INVALID     ((int32)0xca00000e)
+
+
+/**
+ * @brief No Message Recieved
+ *
+ *  When trying to determine the last senders ID, this return 
+ *  value indicates that there was not a message recived on the pipe.
+ *
+ */
+#define CFE_SB_NO_MSG_RECV       ((int32)0xca00000f)
 
 
 /**
@@ -1408,6 +1434,18 @@
  *  successfully and that the error counter should be incremented.
  */
 #define CFE_TBL_MESSAGE_ERROR           ((int32)0xcc00002a)
+
+/**
+**  Error code indicating that the TBL file is shorter than
+**  indicated in the file header.
+*/
+#define CFE_TBL_ERR_SHORT_FILE          ((int32)0xcc00002b)
+
+/**
+**  Error code indicating that the TBL file could not be
+**  opened by the OS.
+*/
+#define CFE_TBL_ERR_ACCESS              ((int32)0xcc00002c)
 
 
 /**

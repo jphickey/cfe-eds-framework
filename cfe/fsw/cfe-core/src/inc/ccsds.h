@@ -146,14 +146,14 @@
 #define CCSDS_WR_LEN(phdr,value)   ((phdr).BaseHdr.Length = (value) - 7)
 
 /* Read function code from command secondary header. */
-#define CCSDS_RD_FC(shdr)           ((shdr).Command)
+#define CCSDS_RD_FC(shdr)           CCSDS_RD_BITS((shdr).Command, 0x7F, 0)
 /* Write function code to command secondary header. */
-#define CCSDS_WR_FC(shdr,value)     ((shdr).Command = value)
+#define CCSDS_WR_FC(shdr,value)     CCSDS_WR_BITS((shdr).Command, 0x7F, 0, value)
 
 /* Read checksum from command secondary header. */
 #define CCSDS_RD_CHECKSUM(shdr)     ((shdr).Checksum)
 /* Write checksum to command secondary header. */
-#define CCSDS_WR_CHECKSUM(shdr,val) ((shdr).Checksum = val)
+#define CCSDS_WR_CHECKSUM(shdr,val) ((shdr).Checksum = (val))
 
 /* Define additional APID Qualifier macros. */
 
@@ -198,7 +198,9 @@
 
 /* Clear command secondary header. */
 #define CCSDS_CLR_CMDSEC_HDR(shdr) \
-  ( (shdr).Command = CCSDS_INIT_FC, (shdr).Checksum = CCSDS_INIT_CHECKSUM )
+  ( (shdr).Command = CCSDS_INIT_FC,\
+    (shdr).Checksum = CCSDS_INIT_CHECKSUM )
+
 
 
 #define CCSDS_WR_SEC_HDR_SEC(shdr, value)    ((shdr).Time.Seconds = value)

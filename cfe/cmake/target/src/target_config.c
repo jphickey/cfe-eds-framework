@@ -37,6 +37,7 @@
 #include "cfe_platform_cfg.h"
 #include "cfe_es.h"
 #include "cfe_time.h"
+#include "private/cfe_es_resetdata_typedef.h"
 #include "cfecfs_version_info.h"
 #include "cfecfs_build_info.h"
 #include "edslib_api_types.h"
@@ -63,7 +64,7 @@ Target_CfeConfigData GLOBAL_CFE_CONFIGDATA =
        */
       .System1HzISR = CFE_TIME_Local1HzISR,
       .SystemMain = CFE_ES_Main,
-      .SystemExceptionISR = CFE_ES_ProcessCoreException,
+      .SystemNotify = CFE_ES_ProcessAsyncEvent,
 
       /*
        * Default values for Startup file.
@@ -75,7 +76,7 @@ Target_CfeConfigData GLOBAL_CFE_CONFIGDATA =
        * Sizes of other memory segments
        */
       .CdsSize = CFE_PLATFORM_ES_CDS_SIZE,
-      .ResetAreaSize = CFE_PLATFORM_ES_RESET_AREA_SIZE,
+      .ResetAreaSize = sizeof(CFE_ES_ResetData_t),
       .UserReservedSize = CFE_PLATFORM_ES_USER_RESERVED_SIZE,
 
       .RamDiskSectorSize = CFE_PLATFORM_ES_RAM_DISK_SECTOR_SIZE,
