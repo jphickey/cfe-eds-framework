@@ -243,9 +243,10 @@ void TO_LAB_init(void)
     /* Subscriptions for TLM pipe*/
     for (i=0; (i < (sizeof(TO_SubTable)/sizeof(TO_subscription_t))); i++)
     {
+       CFE_SB_MsgId_t MsgId = CFE_SB_MsgId_From_TopicId(TO_SubTable[i].TopicId);
        if(TO_SubTable[i].TopicId != TO_UNUSED )
        {
-          TO_LAB_Global.StreamIdTable[i] = CFE_SB_MsgId_From_TopicId(TO_SubTable[i].TopicId);
+          TO_LAB_Global.StreamIdTable[i] = MsgId;
           status = CFE_SB_SubscribeEx(TO_LAB_Global.StreamIdTable[i],
                                       TO_LAB_Global.Tlm_pipe,
                                       TO_SubTable[i].Qos,
@@ -261,6 +262,10 @@ void TO_LAB_init(void)
            TO_LAB_Global.StreamIdTable[i] = CFE_SB_INVALID_MSG_ID;
        }
 
+       if (status != CFE_SUCCESS)
+           CFE_EVS_SendEvent(TO_SUBSCRIBE_ERR_EID,CFE_EVS_EventType_ERROR,
+              "L%d TO Can't subscribe to stream 0x%x status %i", __LINE__,
+                             (unsigned int)CFE_SB_MsgIdToValue(MsgId),(int)status);
     }
     
     /*
@@ -465,12 +470,14 @@ int32 TO_LAB_AddPacket(const TO_LAB_AddPacket_t *data)
                                 pCmd->BufLimit);
 
     if(status != CFE_SUCCESS)
-        CFE_EVS_SendEvent(TO_ADDPKT_ERR_EID,CFE_EVS_EventType_ERROR, "L%d TO Can't subscribe 0x%x status %i",__LINE__,
-                (unsigned int)pCmd->Stream, (int)status);
+       CFE_EVS_SendEvent(TO_ADDPKT_ERR_EID,CFE_EVS_EventType_ERROR,
+                         "L%d TO Can't subscribe 0x%x status %i",__LINE__,
+                         (unsigned int)pCmd->Stream,
+                         (int)status);
     else
        CFE_EVS_SendEvent(TO_ADDPKT_INF_EID,CFE_EVS_EventType_INFORMATION,
                          "L%d TO AddPkt 0x%x, QoS %d.%d, limit %d",__LINE__,
-                         pCmd->Stream,
+                         (unsigned int)pCmd->Stream,
                          pCmd->Priority,
                          pCmd->Reliability,
                          pCmd->BufLimit);
@@ -493,10 +500,12 @@ int32 TO_LAB_RemovePacket(const TO_LAB_RemovePacket_t *data)
     if(status != CFE_SUCCESS)
        CFE_EVS_SendEvent(TO_REMOVEPKT_ERR_EID,CFE_EVS_EventType_ERROR,
            "L%d TO Can't Unsubscribe to Stream 0x%x on pipe %d, status %i",__LINE__,
-                         pCmd->Stream, TO_LAB_Global.Tlm_pipe, (int)status);
+           (unsigned int)pCmd->Stream,
+           TO_LAB_Global.Tlm_pipe, (int)status);
     else
        CFE_EVS_SendEvent(TO_REMOVEPKT_INF_EID,CFE_EVS_EventType_INFORMATION,
-           "L%d TO RemovePkt 0x%x",__LINE__, pCmd->Stream);
+           "L%d TO RemovePkt 0x%x",__LINE__, 
+           (unsigned int)pCmd->Stream);
     ++TO_LAB_Global.HkBuf.HkTlm.Payload.CommandCounter;
     return CFE_SUCCESS;
 } /* End of TO_LAB_RemovePacket() */
