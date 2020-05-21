@@ -1,29 +1,24 @@
 /*
- *      Copyright (c) 2019, United States government as represented by the
- *      administrator of the National Aeronautics Space Administration.
- *      All rights reserved. This software was created at NASA Goddard
- *      Space Flight Center pursuant to government contracts.
- *
- *      This is governed by the NASA Open Source Agreement and may be used,
- *      distributed and modified only according to the terms of that agreement.
- */
-
-/*
- * Filename: osapi_testcase_common.c
- *
- * Purpose: This file contains unit test cases for items in the "osapi-common" file
- *
- * Notes:
- *
+ * 
+ *    Copyright (c) 2020, United States government as represented by the
+ *    administrator of the National Aeronautics Space Administration.
+ *    All rights reserved. This software was created at NASA Goddard
+ *    Space Flight Center pursuant to government contracts.
+ * 
+ *    This is governed by the NASA Open Source Agreement and may be used,
+ *    distributed and modified only according to the terms of that agreement.
+ * 
  */
 
 
-/*
- * Includes
+/**
+ * \file     coveragetest-task.c
+ * \ingroup  shared
+ * \author   joseph.p.hickey@nasa.gov
+ *
  */
-
 #include "os-shared-coveragetest.h"
-#include "ut-osapi-task.h"
+#include "os-shared-task.h"
 
 #include <OCS_string.h>
 
@@ -297,24 +292,69 @@ void Test_OS_TaskInstallDeleteHandler(void)
     OS_task_table[1].delete_hook_pointer = NULL;
 }
 
+void Test_OS_TaskFindIdBySystemData(void)
+{
+    /*
+     * Test Case For:
+     * int32 OS_TaskFindIdBySystemData(uint32 *task_id, const void *sysdata, size_t sysdata_size)
+     */
 
-/* Osapi_Task_Setup
+    int32 expected;
+    int32 actual;
+    uint32 task_id;
+
+    /*
+     * Use a compound data struct for the system data.
+     * The intent is to intentionally make something bigger that will not fit into e.g. "uint32"
+     */
+    struct
+    {
+        unsigned long v;
+        void *p;
+    } test_sysdata;
+
+    memset(&test_sysdata, 'x', sizeof(test_sysdata));
+
+    expected = OS_SUCCESS;
+    actual = OS_TaskFindIdBySystemData(&task_id, &test_sysdata, sizeof(test_sysdata));
+    UtAssert_True(actual == expected, "OS_TaskFindIdBySystemData() (%ld) == OS_SUCCESS", (long)actual);
+
+    /* Test parameter validation branches */
+    expected = OS_INVALID_POINTER;
+    actual = OS_TaskFindIdBySystemData(NULL, &test_sysdata, sizeof(test_sysdata));
+    UtAssert_True(actual == expected, "OS_TaskFindIdBySystemData() (%ld) == OS_INVALID_POINTER", (long)actual);
+
+    UT_SetForceFail(UT_KEY(OS_TaskValidateSystemData_Impl), expected);
+    actual = OS_TaskFindIdBySystemData(&task_id, &test_sysdata, sizeof(test_sysdata));
+    UtAssert_True(actual == expected, "OS_TaskFindIdBySystemData() (%ld) == OS_INVALID_POINTER", (long)actual);
+    UT_ClearForceFail(UT_KEY(OS_TaskValidateSystemData_Impl));
+
+    /* Test search failure */
+    expected = OS_ERR_NAME_NOT_FOUND;
+    UT_SetForceFail(UT_KEY(OS_ObjectIdGetBySearch), expected);
+    actual = OS_TaskFindIdBySystemData(&task_id, &test_sysdata, sizeof(test_sysdata));
+    UtAssert_True(actual == expected, "OS_TaskFindIdBySystemData() (%ld) == OS_ERR_NAME_NOT_FOUND", (long)actual);
+    UT_ClearForceFail(UT_KEY(OS_ObjectIdGetBySearch));
+}
+
+
+/* Osapi_Test_Setup
  *
  * Purpose:
  *   Called by the unit test tool to set up the app prior to each test
  */
-void Osapi_Task_Setup(void)
+void Osapi_Test_Setup(void)
 {
     UT_ResetState(0);
 }
 
 /*
- * Osapi_TearDown
+ * Osapi_Test_Teardown
  *
  * Purpose:
  *   Called by the unit test tool to tear down the app after each test
  */
-void Osapi_TearDown(void)
+void Osapi_Test_Teardown(void)
 {
 
 }
@@ -337,6 +377,7 @@ void UtTest_Setup(void)
     ADD_TEST(OS_TaskGetIdByName);
     ADD_TEST(OS_TaskGetInfo);
     ADD_TEST(OS_TaskInstallDeleteHandler);
+    ADD_TEST(OS_TaskFindIdBySystemData);
 }
 
 

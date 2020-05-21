@@ -52,105 +52,27 @@ void UT_os_read_n_sort_dirs(uint32);
 ** Local function definitions
 **--------------------------------------------------------------------------------*/
 
-/* Test code template for testing a single OSAL API with multiple test cases */
-
-#if 0
-void UT_os_sample_test()
-{
-    /* Must declare these variables for each function. They can be renamed.
-     * They're referenced in the macros used to track test cases and their results. */
-    int32 idx = 0;
-    const char* testDesc;
-
-    /*-----------------------------------------------------*
-     * For each test case,
-     *   1. Assign testDesc a brief description of the test
-     *   2. Setup the test environment, if necessary
-     *   3. Run the test
-     *   4. Log result by calling UT_OS_SET_TEST_RESULT_MACRO
-     *   4. Reset the test environment, if neccessary
-     *
-     * NOTE: "Not implemented" is always checked first but not
-     *       being included as a test case.
-     *       "Nominal" test case is always the last test case.
-     *-----------------------------------------------------*/
-
-    /*-----------------------------------------------------*/
-    testDesc = "API not implemented";
-
-    /* TODO: Setup the test environment, if necessary */
-
-    if (OS_xxx() == OS_FS_UNIMPLEMENTED)
-    {
-        UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_NA);
-        goto UT_os_sample_test_exit_tag;
-    }
-
-    /* TODO: Reset the test environment here, if necessary */
-
-    /*-----------------------------------------------------*/
-    testDesc = "#1 Null-pointer-arg";
-
-    /* TODO: Setup the test environment here, if necessary */
-
-    if (OS_xxx(NULL,...) == OS_INVALID_POINTER)
-        UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_PASS);
-    else
-        UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_FAILURE);
-
-    /* TODO: Reset the test environment here, if necessary */
-
-    /*-----------------------------------------------------*/
-    testDesc = "#2 Name-too-long-arg";
-
-    /* TODO: Setup the test environment here, if necessary */
-
-    if (OS_xxx(aVeryLoooooongName) == OS_ERR_NAME_TOO_LONG)
-        UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_PASS);
-    else
-        UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_FAILURE);
-
-    /* TODO: Reset the test environment here, if necessary */
-
-    /*-----------------------------------------------------*/
-    testDesc = "#3 Nominal";
-
-    /* TODO: Setup the test environment here, if necessary */
-
-    if (OS_xxx(...) != OS_SUCCESS)
-        UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_PASS);
-    else
-        UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_PASS);
-
-    /* TODO: Reset the test environment here, if necessary */
-
-UT_os_sample_test_exit_tag:
-    return;
-    
-}
-#endif
-
 /*--------------------------------------------------------------------------------*
 ** Syntax: int32 OS_mkdir(const char *path, uint32 access)
 ** Purpose: Creates a directory specified by path
 ** Parameters: *path - pointer to the absolute pathname of the directory to be created
 **             access - directory access mode (unused)
-** Returns: OS_FS_SUCCESS if succeeded
-**          OS_FS_UNIMPLEMENTED if not implemented
-**          OS_FS_ERR_INVALID_POINTER if the pointer passed in is null
+** Returns: OS_SUCCESS if succeeded
+**          OS_ERR_NOT_IMPLEMENTED if not implemented
+**          OS_INVALID_POINTER if the pointer passed in is null
 **          OS_FS_ERR_PATH_TOO_LONG if the path is too long
 **          OS_FS_ERR_PATH_INVALID if the path is invalid
-**          OS_FS_ERROR if the OS call failed
+**          OS_ERROR if the OS call failed
 ** -----------------------------------------------------
 ** Test #0: Not-implemented condition
 **   1) Call this routine
-**   2) If the returned value is OS_FS_UNIMPLEMENTED, then exit test
+**   2) If the returned value is OS_ERR_NOT_IMPLEMENTED, then exit test
 **   3) Otherwise, continue
 ** -----------------------------------------------------
 ** Test #1: Null-pointer-arg condition
 **   1) Call this routine with a null pointer as argument
 **   2) Expect the returned value to be
-**        (a) OS_FS_ERR_INVALID_POINTER
+**        (a) OS_INVALID_POINTER
 ** -----------------------------------------------------
 ** Test #2: Path-too-long-arg condition
 **   1) Call this routine with a really long path as argument
@@ -166,12 +88,12 @@ UT_os_sample_test_exit_tag:
 **   1) Setup the test to fail the OS call inside this routine
 **   2) Call this routine
 **   3) Expect the returned value to be
-**        (a) OS_FS_ERROR
+**        (a) OS_ERROR
 ** -----------------------------------------------------
 ** Test #5: Nominal condition
 **   1) Call this routine to create a directory under /cf mount point
 **   2) Expect the returned value to be
-**        (a) OS_FS_SUCCESS
+**        (a) OS_SUCCESS
 **   3) Call OS_creat to create and open a file inside the directory created in #1
 **   4) Expect the returned value to be
 **        (a) a file descriptor value greater than or equal to 0
@@ -184,7 +106,7 @@ void UT_os_makedir_test()
     /*-----------------------------------------------------*/
     testDesc = "API not implemented";
 
-    if (OS_mkdir(NULL, 755) == OS_FS_UNIMPLEMENTED)
+    if (OS_mkdir(NULL, 755) == OS_ERR_NOT_IMPLEMENTED)
     {
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_NA);
         goto UT_os_makedir_test_exit_tag;
@@ -193,7 +115,7 @@ void UT_os_makedir_test()
     /*-----------------------------------------------------*/
     testDesc = "#1 Null-pointer-arg";
 
-    if (OS_mkdir(NULL, 755) == OS_FS_ERR_INVALID_POINTER)
+    if (OS_mkdir(NULL, 755) == OS_INVALID_POINTER)
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_PASS);
     else
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_FAILURE);
@@ -224,7 +146,7 @@ void UT_os_makedir_test()
 
     memset(g_dirName, '\0', sizeof(g_dirName));
     UT_os_sprintf(g_dirName, "%s/mkdir_Nominal", g_mntName);
-    if (OS_mkdir(g_dirName, 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_dirName, 755) != OS_SUCCESS)
     {
         testDesc = "#5 Nominal - File-system-create failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -255,14 +177,14 @@ UT_os_makedir_test_exit_tag:
 ** Parameters: *dir_id - pointer to directory id (set by this function)
 **             *path - pointer to the absolute pathname of the directory to be opened
 ** Returns: OS_SUCCESS if succeeded
-**          OS_FS_UNIMPLEMENTED if not implemented
+**          OS_ERR_NOT_IMPLEMENTED if not implemented
 **          OS_INVALID_POINTER if either pointer passed in is NULL
 **          OS_TranslatePath error response if failed
 **          OS_ObjectIdAllocateNew error response if failed
 ** -----------------------------------------------------
 ** Test #0: Not-implemented condition
 **   1) Call this routine
-**   2) If the returned value is OS_FS_UNIMPLEMENTED, then exit test
+**   2) If the returned value is OS_ERR_NOT_IMPLEMENTED, then exit test
 **   3) Otherwise, continue
 ** -----------------------------------------------------
 ** Test #1: Null-pointer-arg condition
@@ -289,7 +211,7 @@ UT_os_makedir_test_exit_tag:
 ** Test #5: Nominal condition
 **   1) Call OS_mkdir to create a directory under /cf mount point
 **   2) Expect the returned value to be
-**        (a) OS_FS_SUCCESS
+**        (a) OS_SUCCESS
 **   3) Call this routine with directory name used in #1 as argument
 **   4) Expect the returned value to be
 **        (a) a directory descriptor pointer that is __not__ NULL
@@ -302,7 +224,7 @@ void UT_os_opendir_test()
     /*-----------------------------------------------------*/
     testDesc = "API not implemented";
 
-    if (OS_DirectoryOpen(&dirh, NULL) == OS_FS_UNIMPLEMENTED)
+    if (OS_DirectoryOpen(&dirh, NULL) == OS_ERR_NOT_IMPLEMENTED)
     {
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_NA);
         goto UT_os_opendir_test_exit_tag;
@@ -342,7 +264,7 @@ void UT_os_opendir_test()
 
     memset(g_dirName, '\0', sizeof(g_dirName));
     UT_os_sprintf(g_dirName, "%s/opendir_Nominal", g_mntName);
-    if (OS_mkdir(g_dirName, 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_dirName, 755) != OS_SUCCESS)
     {
         testDesc = "#5 Nominal - Dir-create failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -368,31 +290,31 @@ UT_os_opendir_test_exit_tag:
 ** Purpose: Closes the specified directory for reading
 ** Parameters: dir_id - directory id that was returned from OS_DirectoryOpen()
 ** Returns: OS_SUCCESS if succeeded
-**          OS_FS_UNIMPLEMENTED if not implemented
+**          OS_ERR_NOT_IMPLEMENTED if not implemented
 **          OS_ObjectIdGetById return if failed
 **          OS_DirClose_Impl return if failed
 ** -----------------------------------------------------
 ** Test #0: Not-implemented condition
 **   1) Call this routine
-**   2) If the returned value is OS_FS_UNIMPLEMENTED, then exit test
+**   2) If the returned value is OS_ERR_NOT_IMPLEMENTED, then exit test
 **   3) Otherwise, continue
 ** -----------------------------------------------------
 ** Test #1: OS-call-failure condition
 **   1) Setup the test to fail the OS call inside this routine
 **   2) Call this routine
 **   3) Expect the returned value to be
-**        (a) OS_FS_ERROR
+**        (a) OS_ERROR
 ** -----------------------------------------------------
 ** Test #2: Nominal condition
 **   1) Call OS_mkdir() to create a directory under /cf mount point
 **   2) Expect the returned value to be
-**        (a) OS_FS_SUCCESS
+**        (a) OS_SUCCESS
 **   3) Call OS_DirectoryOpen() with directory name used in #1 as argument
 **   4) Expect the returned value to be
 **        (a) a non-zero directory id
 **   5) Call this routine with the directory descriptor pointer returned in #3 as argument
 **   6) Expect the returned value to be
-**        (a) OS_FS_SUCCESS
+**        (a) OS_SUCCESS
 **   7) Call OS_DirectoryRead() with the directory descriptor pointer returned in #3 as argument
 **   8) Expect to not get OS_SUCCESS (closed directory)
 **--------------------------------------------------------------------------------*/
@@ -405,7 +327,7 @@ void UT_os_closedir_test()
     /*-----------------------------------------------------*/
     testDesc = "API not implemented";
 
-    if (OS_DirectoryClose(0) == OS_FS_UNIMPLEMENTED)
+    if (OS_DirectoryClose(0) == OS_ERR_NOT_IMPLEMENTED)
     {
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_NA);
         goto UT_os_closedir_test_exit_tag;
@@ -421,7 +343,7 @@ void UT_os_closedir_test()
 
     memset(g_dirName, '\0', sizeof(g_dirName));
     UT_os_sprintf(g_dirName, "%s/closeDir3", g_mntName);
-    if (OS_mkdir(g_dirName, 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_dirName, 755) != OS_SUCCESS)
     {
         testDesc = "#2 Nominal - Dir-create failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -460,14 +382,14 @@ UT_os_closedir_test_exit_tag:
 ** Parameters: dir_id - directory id from OS_DirectoryOpen
 **             *dirent - pointer to the directory entry (set by this function)
 ** Returns: OS_SUCCESS if succeeded
-**          OS_FS_UNIMPLEMENTED if not implemented
-**          OS_FS_ERR_INVALID_POINTER if pointer passed in is NULL
+**          OS_ERR_NOT_IMPLEMENTED if not implemented
+**          OS_INVALID_POINTER if pointer passed in is NULL
 **          OS_ObjectIdGetById error response if failed
 **          OS_Unlock_Global_Impl error response if failed
 ** -----------------------------------------------------
 ** Test #0: Not-implemented condition
 **   1) Call this routine
-**   2) If the returned value is OS_FS_UNIMPLEMENTED, then exit test
+**   2) If the returned value is OS_ERR_NOT_IMPLEMENTED, then exit test
 **   3) Otherwise, continue
 ** -----------------------------------------------------
 ** Test #1: Null-pointer-arg condition
@@ -484,7 +406,7 @@ UT_os_closedir_test_exit_tag:
 ** Test #3: Nominal condition
 **   1) Call OS_mkdir() to create a directory
 **   2) Expect the returned value to be
-**        (a) OS_FS_SUCCESS
+**        (a) OS_SUCCESS
 **   3) Call OS_DirectoryOpen() with directory name used in #1 as argument
 **   4) Expect the returned value to be
 **        (a) OS_SUCCESS
@@ -508,7 +430,7 @@ void UT_os_readdir_test()
     /*-----------------------------------------------------*/
     testDesc = "API not implemented";
 
-    if (OS_DirectoryRead(0, NULL) == OS_FS_UNIMPLEMENTED)
+    if (OS_DirectoryRead(0, NULL) == OS_ERR_NOT_IMPLEMENTED)
     {
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_NA);
         goto UT_os_readdir_test_exit_tag;
@@ -517,7 +439,7 @@ void UT_os_readdir_test()
     /*-----------------------------------------------------*/
     testDesc = "#1 Null-pointer-arg";
 
-    if (OS_DirectoryRead(0, NULL) == OS_FS_ERR_INVALID_POINTER)
+    if (OS_DirectoryRead(0, NULL) == OS_INVALID_POINTER)
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_PASS);
     else
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_FAILURE);
@@ -532,7 +454,7 @@ void UT_os_readdir_test()
 
     memset(g_dirName, '\0', sizeof(g_dirName));
     UT_os_sprintf(g_dirName, "%s/readdir_Nominal", g_mntName);
-    if (OS_mkdir(g_dirName, 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_dirName, 755) != OS_SUCCESS)
     {
         testDesc = "#3 Nominal - Dir-create failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -541,7 +463,7 @@ void UT_os_readdir_test()
 
     memset(g_subdirNames[0], '\0', sizeof(g_subdirNames[0]));
     UT_os_sprintf(g_subdirNames[0], "%s/%s", g_dirName, g_tgtSubdirs[0]);
-    if (OS_mkdir(g_subdirNames[0], 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_subdirNames[0], 755) != OS_SUCCESS)
     {
         testDesc = "#3 Nominal - Dir-create(subdir1) failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -551,7 +473,7 @@ void UT_os_readdir_test()
 
     memset(g_subdirNames[1], '\0', sizeof(g_subdirNames[1]));
     UT_os_sprintf(g_subdirNames[1], "%s/%s", g_dirName, g_tgtSubdirs[1]);
-    if (OS_mkdir(g_subdirNames[1], 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_subdirNames[1], 755) != OS_SUCCESS)
     {
         testDesc = "#3 Nominal - Dir-create(subdir2) failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -591,12 +513,12 @@ UT_os_readdir_test_exit_tag:
 ** Purpose: Rewinds the directory to the beginning
 ** Parameters: dir_id - directory id from OS_DirectoryOpen
 ** Returns: OS_SUCCESS if succeeded
-**          OS_FS_UNIMPLEMENTED if not implemented
+**          OS_ERR_NOT_IMPLEMENTED if not implemented
 **          OS_ObjectIdGetById error response if failed
 ** -----------------------------------------------------
 ** Test #0: Not-implemented condition
 **   1) Call this routine
-**   2) If the returned value is OS_FS_UNIMPLEMENTED, then exit test
+**   2) If the returned value is OS_ERR_NOT_IMPLEMENTED, then exit test
 **   3) Otherwise, continue
 ** -----------------------------------------------------
 ** Test #1: OS-call-failure condition
@@ -608,7 +530,7 @@ UT_os_readdir_test_exit_tag:
 ** Test #2: Nominal condition
 **   1) Call OS_mkdir() to create a directory
 **   2) Expect the returned value to be
-**        (a) OS_FS_SUCCESS
+**        (a) OS_SUCCESS
 **   3) Call OS_opendir() with directory name used in #1 as argument
 **   4) Expect the returned value to be
 **        (a) a directory descriptor pointer
@@ -637,7 +559,7 @@ void UT_os_rewinddir_test()
     /*-----------------------------------------------------*/
     testDesc = "API Not implemented";
 
-    if (OS_DirectoryRewind(0) == OS_FS_UNIMPLEMENTED)
+    if (OS_DirectoryRewind(0) == OS_ERR_NOT_IMPLEMENTED)
     {
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_NA);
         goto UT_os_rewinddir_test_exit_tag;
@@ -653,7 +575,7 @@ void UT_os_rewinddir_test()
 
     memset(g_dirName, '\0', sizeof(g_dirName));
     UT_os_sprintf(g_dirName, "%s/rewinddir_Nominal", g_mntName);
-    if (OS_mkdir(g_dirName, 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_dirName, 755) != OS_SUCCESS)
     {
         testDesc = "#2 Nominal - Dir-create failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -663,7 +585,7 @@ void UT_os_rewinddir_test()
 
     memset(g_subdirNames[0], '\0', sizeof(g_subdirNames[0]));
     UT_os_sprintf(g_subdirNames[0], "%s/%s", g_dirName, g_tgtSubdirs[0]);
-    if (OS_mkdir(g_subdirNames[0], 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_subdirNames[0], 755) != OS_SUCCESS)
     {
         testDesc = "#2 Nominal - Dir-create(subdir1) failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -673,7 +595,7 @@ void UT_os_rewinddir_test()
 
     memset(g_subdirNames[1], '\0', sizeof(g_subdirNames[1]));
     UT_os_sprintf(g_subdirNames[1], "%s/%s", g_dirName, g_tgtSubdirs[1]);
-    if (OS_mkdir(g_subdirNames[1], 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_subdirNames[1], 755) != OS_SUCCESS)
     {
         testDesc = "#2 Nominal - Dir-create(subdir2) failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -725,22 +647,22 @@ UT_os_rewinddir_test_exit_tag:
 ** Syntax: int32 OS_rmdir(const char *path)
 ** Purpose: Removes the specified directory
 ** Parameters: *path - pointer to the absolute pathname of the directory to be removed
-** Returns: OS_FS_ERR_INVALID_POINTER if pointer passed in is NULL
+** Returns: OS_INVALID_POINTER if pointer passed in is NULL
 **          OS_FS_ERR_PATH_TOO_LONG if path is too long
 **          OS_FS_ERR_PATH_INVALID if path is invalid
-**          OS_FS_ERROR if OS call failed
-**          OS_FS_SUCCESS if succeeded
-**          OS_FS_UNIMPLEMENTED if not implemented
+**          OS_ERROR if OS call failed
+**          OS_SUCCESS if succeeded
+**          OS_ERR_NOT_IMPLEMENTED if not implemented
 ** -----------------------------------------------------
 ** Test #0: Not-implemented condition
 **   1) Call this routine
-**   2) If the returned value is OS_FS_UNIMPLEMENTED, then exit test
+**   2) If the returned value is OS_ERR_NOT_IMPLEMENTED, then exit test
 **   3) Otherwise, continue
 ** -----------------------------------------------------
 ** Test #1: Null-pointer-arg condition
 **   1) Call this routine with a null pointer as argument
 **   2) Expect the returned value to be
-**        (a) OS_FS_ERR_INVALID_POINTER
+**        (a) OS_INVALID_POINTER
 ** -----------------------------------------------------
 ** Test #2: Path-too-long-arg condition
 **   1) Call this routine with a really long path as argument
@@ -756,18 +678,18 @@ UT_os_rewinddir_test_exit_tag:
 **   1) Setup the test to fail the OS call inside this routine
 **   2) Call this routine
 **   3) Expect the returned value to be
-**        (a) OS_FS_ERROR
+**        (a) OS_ERROR
 ** -----------------------------------------------------
 ** Test #5: Nominal condition
 **   1) Call OS_mkdir to create a directory under /cf mount point
 **   2) Expect the returned value to be
-**        (a) OS_FS_SUCCESS
+**        (a) OS_SUCCESS
 **   3) Call OS_creat() to create and open a file under the directory created in #1
 **   4) Expect the returned value to be
 **        (a) a file descriptor value greater than or equal to 0
 **   5) Call this routine with directory name used in #1
 **   6) Expect the returned value to be
-**        (a) OS_FS_SUCCESS
+**        (a) OS_SUCCESS
 **   7) Call OS_close() with the file descriptor returned in #3 as argument
 **   8) Call OS_remove() with the file name used in #3 as argument
 **   9) Call OS_creat() to create and open another file under the directory deleted in #5
@@ -782,7 +704,7 @@ void UT_os_removedir_test()
     /*-----------------------------------------------------*/
     testDesc = "API not implemented";
 
-    if (OS_rmdir(NULL) == OS_FS_UNIMPLEMENTED)
+    if (OS_rmdir(NULL) == OS_ERR_NOT_IMPLEMENTED)
     {
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_NA);
         goto UT_os_removedir_test_exit_tag;
@@ -791,7 +713,7 @@ void UT_os_removedir_test()
     /*-----------------------------------------------------*/
     testDesc = "#1 Null-pointer-arg";
 
-    if (OS_rmdir(NULL) == OS_FS_ERR_INVALID_POINTER)
+    if (OS_rmdir(NULL) == OS_INVALID_POINTER)
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_PASS);
     else
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_FAILURE);
@@ -822,7 +744,7 @@ void UT_os_removedir_test()
 
     memset(g_dirName, '\0', sizeof(g_dirName));
     UT_os_sprintf(g_dirName, "%s/rmdir_Nominal", g_mntName);
-    if (OS_mkdir(g_dirName, 755) != OS_FS_SUCCESS)
+    if (OS_mkdir(g_dirName, 755) != OS_SUCCESS)
     {
         testDesc = "#5 Nominal - Dir-create failed";
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_TSF);
@@ -842,7 +764,7 @@ void UT_os_removedir_test()
     OS_close(fileDesc);
     OS_remove(g_fileName);
 
-    if (OS_rmdir(g_dirName) != OS_FS_SUCCESS)
+    if (OS_rmdir(g_dirName) != OS_SUCCESS)
     {
         UT_OS_TEST_RESULT( testDesc, UTASSERT_CASETYPE_FAILURE);
         goto UT_os_removedir_test_exit_tag;

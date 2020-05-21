@@ -13,11 +13,9 @@
 #     i.e. memset, strcmp, etc - these should be relevant for all
 #     supported operating systems as they are standard C
 # - Stub versions of internal "shared" OSAL implementation functions
-#     i.e. everything declared in os-impl.h.  These are needed by 
+#     i.e. everything declared in the internal API.  These are needed by 
 #     any coverage test referencing on the shared/ng OSAL layer.
 #
-
-include_directories(${OSAL_SOURCE_DIR}/src/ut-stubs)
 
 # The "ut_libc_stubs" target provides stub versions of C library calls.
 # They are prefixed with "OCS_" and target code must be recompiled to
@@ -38,6 +36,7 @@ include_directories(${OSAL_SOURCE_DIR}/src/ut-stubs)
 # the OCS functions that are actually used. 
 #
 add_library(ut_libc_stubs STATIC EXCLUDE_FROM_ALL
+    src/bsd-select-stubs.c
     src/libc-ctype-stubs.c
     src/libc-stdio-stubs.c
     src/libc-stdlib-stubs.c
@@ -58,6 +57,7 @@ add_library(ut_libc_stubs STATIC EXCLUDE_FROM_ALL
     src/vxworks-ataDrv-stubs.c
     src/vxworks-dosFsLib-stubs.c
     src/vxworks-errnoLib-stubs.c
+    src/vxworks-hostLib-stubs.c
     src/vxworks-intLib-stubs.c
     src/vxworks-loadLib-stubs.c
     src/vxworks-memPartLib-stubs.c
@@ -72,17 +72,59 @@ add_library(ut_libc_stubs STATIC EXCLUDE_FROM_ALL
     src/vxworks-taskVarLib-stubs.c
     src/vxworks-xbdBlkDev-stubs.c)
     
+target_include_directories(ut_libc_stubs PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc
+)
+    
+    
 # The "ut_osapi_impl_stubs" provides stub functions for internal
 # OSAL calls used by or implemented by the shared layer.  These
 # are not public API calls.   This is only compiled if used. 
 add_library(ut_osapi_impl_stubs STATIC EXCLUDE_FROM_ALL
-    src/osapi-base-impl-stubs.c 
-    src/osapi-file-impl-stubs.c 
-    src/osapi-filesys-impl-stubs.c 
-    src/osapi-loader-impl-stubs.c 
+    src/osapi-binsem-impl-stubs.c
+    src/osapi-common-impl-stubs.c
+    src/osapi-console-impl-stubs.c
+    src/osapi-countsem-impl-stubs.c
+    src/osapi-error-impl-stubs.c
+    src/osapi-file-impl-stubs.c
+    src/osapi-filesys-impl-stubs.c
+    src/osapi-fpu-impl-stubs.c
+    src/osapi-heap-impl-stubs.c
+    src/osapi-idmap-impl-stubs.c
+    src/osapi-loader-impl-stubs.c
+    src/osapi-mutex-impl-stubs.c
     src/osapi-network-impl-stubs.c
-    src/osapi-select-impl-stubs.c 
-    src/osapi-timer-impl-stubs.c)
+    src/osapi-queue-impl-stubs.c
+    src/osapi-select-impl-stubs.c
+    src/osapi-shared-common-stubs.c
+    src/osapi-shared-debug-stubs.c
+    src/osapi-shared-idmap-stubs.c
+    src/osapi-task-impl-stubs.c
+    src/osapi-timer-impl-stubs.c
+    src/portable-console-bsp-impl-stubs.c
+)
 
-list(APPEND OSALCOVERAGE_STUB_LIB_LIST ut_osapi_impl_stubs ut_libc_stubs)
-set(OSALCOVERAGE_STUB_LIB_LIST ${OSALCOVERAGE_STUB_LIB_LIST} PARENT_SCOPE)
+# The "ut_osapi_shared_stubs" provides stub objects for shared
+# objects used by the implementation layer.  These
+# are not public.   This is only compiled if used. 
+add_library(ut_osapi_shared_stubs STATIC EXCLUDE_FROM_ALL
+    src/osapi-shared-common-stubs.c
+    src/osapi-shared-idmap-stubs.c
+    src/osapi-shared-binsem-table-stubs.c
+    src/osapi-shared-console-table-stubs.c
+    src/osapi-shared-countsem-table-stubs.c
+    src/osapi-shared-dir-table-stubs.c
+    src/osapi-shared-filesys-table-stubs.c
+    src/osapi-shared-module-table-stubs.c
+    src/osapi-shared-mutex-table-stubs.c
+    src/osapi-shared-queue-table-stubs.c
+    src/osapi-shared-stream-table-stubs.c
+    src/osapi-shared-task-table-stubs.c
+    src/osapi-shared-timebase-table-stubs.c
+    src/osapi-shared-timecb-table-stubs.c
+    src/osapi-shared-debug-stubs.c 
+)
+
+add_library(ut_bsp_impl_stubs STATIC EXCLUDE_FROM_ALL
+    src/bsp-console-impl-stubs.c
+)

@@ -205,6 +205,10 @@ void UtTest_Setup(void)
     UtTest_Add(UT_os_queue_get_id_by_name_test, NULL, NULL, "OS_QueueGetIdByName");
     UtTest_Add(UT_os_queue_get_info_test, NULL, NULL, "OS_QueueGetInfo");
 
+    UtTest_Add(UT_os_select_fd_test, NULL, NULL, "OS_SelectFd");
+    UtTest_Add(UT_os_select_single_test, NULL, NULL, "OS_SelectSingle");
+    UtTest_Add(UT_os_select_multi_test, NULL, NULL, "OS_SelectMultiple");
+
     UtTest_Add(
             NULL,
             UT_os_init_task_misc,
@@ -270,17 +274,6 @@ void UtTest_Setup(void)
     UtTest_Add(UT_os_setlocaltime_test, NULL, NULL, "OS_SetLocalTime");
 
     UtTest_Add(UT_os_heapgetinfo_test, NULL, NULL, "OS_HeapGetInfo");
-
-    UtTest_Add(UT_os_int_attachhandler_test, NULL, NULL, "OS_IntAttachHandler");
-    UtTest_Add(UT_os_int_enable_test, NULL, NULL, "OS_IntEnable");
-    UtTest_Add(UT_os_int_disable_test, NULL, NULL, "OS_IntDisable");
-    UtTest_Add(UT_os_int_lock_test, NULL, NULL, "OS_IntLock");
-    UtTest_Add(UT_os_int_unlock_test, NULL, NULL, "OS_IntUnlock");
-
-    UtTest_Add(UT_os_fpuexc_setmask_test, NULL, NULL, "OS_FPUExcSetMask");
-    UtTest_Add(UT_os_fpuexc_getmask_test, NULL, NULL, "OS_FPUExcGetMask");
-
-
 }
 
 /*================================================================================*

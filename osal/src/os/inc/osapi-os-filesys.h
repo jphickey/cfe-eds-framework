@@ -59,6 +59,15 @@
 #define OS_FS_PHYS_NAME_LEN 64  /**< Physical drive name length */
 #define OS_FS_VOL_NAME_LEN  32  /**< Volume name length */
 
+/**
+ * @brief Maximum length of a local/native path name string
+ *
+ * This is a concatenation of the OSAL virtual path with the system
+ * mount point or device name
+ */
+#define OS_MAX_LOCAL_PATH_LEN       (OS_MAX_PATH_LEN + OS_FS_PHYS_NAME_LEN)
+
+
 /** @addtogroup OSReturnCodes
  * @{
  */
@@ -76,20 +85,21 @@
 #define OS_FS_ERR_DEVICE_NOT_FREE      (-107)  /**< @brief FS device not free */
 #define OS_FS_ERR_PATH_INVALID         (-108)  /**< @brief FS path invalid */
 
-
+#ifndef OSAL_OMIT_DEPRECATED
 /* 
  * Map some codes used by the file API back to the generic counterparts 
  * where there is overlap between them.  Do not duplicate error codes.
  */
-#define OS_FS_SUCCESS                  OS_SUCCESS               /**< @brief Successful execution */
-#define OS_FS_ERROR                    OS_ERROR                 /**< @brief Failed execution */
-#define OS_FS_ERR_INVALID_POINTER      OS_INVALID_POINTER       /**< @brief Invalid pointer */
-#define OS_FS_ERR_NO_FREE_FDS          OS_ERR_NO_FREE_IDS       /**< @brief No free IDs */
-#define OS_FS_ERR_INVALID_FD           OS_ERR_INVALID_ID        /**< @brief Invalid ID */
-#define OS_FS_UNIMPLEMENTED            OS_ERR_NOT_IMPLEMENTED   /**< @brief Not implemented */
+#define OS_FS_SUCCESS                  OS_SUCCESS               /**< @deprecated Successful execution */
+#define OS_FS_ERROR                    OS_ERROR                 /**< @deprecated Failed execution */
+#define OS_FS_ERR_INVALID_POINTER      OS_INVALID_POINTER       /**< @deprecated Invalid pointer */
+#define OS_FS_ERR_NO_FREE_FDS          OS_ERR_NO_FREE_IDS       /**< @deprecated No free IDs */
+#define OS_FS_ERR_INVALID_FD           OS_ERR_INVALID_ID        /**< @deprecated Invalid ID */
+#define OS_FS_UNIMPLEMENTED            OS_ERR_NOT_IMPLEMENTED   /**< @deprecated Not implemented */
+#endif
 /**@}*/
 
-
+#ifndef OSAL_OMIT_DEPRECATED
 /* This typedef is for OS_FS_GetErrorName(), to ensure
  * everyone is making an array of the same length
  *
@@ -103,7 +113,7 @@
  * os_err_name_t.
  */
 typedef os_err_name_t os_fs_err_name_t;
-
+#endif
 
 /**
  * @brief Internal structure of the OS volume table for 
@@ -189,7 +199,7 @@ enum
 /** @brief Directory entry */
 typedef struct
 {
-   char FileName[OS_MAX_PATH_LEN];
+   char FileName[OS_MAX_FILE_NAME];
 } os_dirent_t;
 
 #ifndef OSAL_OMIT_DEPRECATED
@@ -775,7 +785,7 @@ int32           OS_FileSysAddFixedMap(uint32 *filesys_id, const char *phys_path,
  * @retval #OS_INVALID_POINTER if devname is NULL
  * @retval #OS_FS_ERR_DRIVE_NOT_CREATED if the OS calls to create the the drive failed
  * @retval #OS_FS_ERR_DEVICE_NOT_FREE if the volume table is full
- * @retval #OS_FS_SUCCESS on creating the disk
+ * @retval #OS_SUCCESS on creating the disk
  */
 int32           OS_mkfs        (char *address, const char *devname, const char *volname,
                                 uint32 blocksize, uint32 numblocks);

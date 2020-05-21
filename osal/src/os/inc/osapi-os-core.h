@@ -73,7 +73,9 @@ typedef struct
     uint32 creator;
     uint32 stack_size;
     uint32 priority;
-    uint32 OStask_id;
+#ifndef OSAL_OMIT_DEPRECATED
+    uint32 OStask_id;   /**< @deprecated */
+#endif
 }OS_task_prop_t;
     
 /** @brief OSAL queue properties */
@@ -137,6 +139,21 @@ typedef struct
 {
    uint8 object_ids[(OS_MAX_NUM_OPEN_FILES + 7) / 8];
 } OS_FdSet;
+
+/**
+ * @brief For the OS_SelectSingle() function's in/out StateFlags parameter,
+ * the state(s) of the stream and the result of the select is a combination
+ * of one or more of these states.
+ *
+ * @sa OS_SelectSingle()
+ */
+typedef enum
+{
+    OS_STREAM_STATE_BOUND      = 0x01, /**< @brief whether the stream is bound     */
+    OS_STREAM_STATE_CONNECTED  = 0x02, /**< @brief whether the stream is connected */
+    OS_STREAM_STATE_READABLE   = 0x04, /**< @brief whether the stream is readable  */
+    OS_STREAM_STATE_WRITABLE   = 0x08, /**< @brief whether the stream is writable  */
+} OS_StreamState_t;
 
 /**
  * @brief For the @ref OS_GetErrorName() function, to ensure
@@ -327,7 +344,7 @@ void OS_ForEachObject           (uint32 creator_id, OS_ArgCallback_t callback_pt
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER if any of the necessary pointers are NULL
- * @retval #OS_ERR_NAME_TOO_LONG if the name of the task is too long to be copied
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_INVALID_PRIORITY if the priority is bad
  * @retval #OS_ERR_NO_FREE_IDS if there can be no more tasks created
  * @retval #OS_ERR_NAME_TAKEN if the name specified is already used by a task
@@ -442,7 +459,7 @@ uint32 OS_TaskGetId            (void);
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER if the pointers passed in are NULL
- * @retval #OS_ERR_NAME_TOO_LONG if the name to found is too long to begin with
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NAME_NOT_FOUND if the name wasn't found in the table
  */
 int32 OS_TaskGetIdByName       (uint32 *task_id, const char *task_name);
@@ -464,6 +481,29 @@ int32 OS_TaskGetIdByName       (uint32 *task_id, const char *task_name);
  * @retval #OS_INVALID_POINTER if the task_prop pointer is NULL
  */
 int32 OS_TaskGetInfo           (uint32 task_id, OS_task_prop_t *task_prop);          
+
+
+/*-------------------------------------------------------------------------------------*/
+/**
+ * @brief Reverse-lookup the OSAL task ID from an operating system ID
+ *
+ * This provides a method by which an external entity may find the OSAL task
+ * ID corresponding to a system-defined identifier (e.g. TASK_ID, pthread_t, rtems_id, etc).
+ *
+ * Normally OSAL does not expose the underlying OS-specific values to the application,
+ * but in some circumstances, such as exception handling, the OS may provide this information
+ * directly to handler outside of the normal OSAL API.
+ *
+ * @param[out]  task_id         The buffer where the task id output is stored
+ * @param[in]   sysdata         Pointer to the system-provided identification data
+ * @param[in]   sysdata_size    Size of the system-provided identification data
+ *
+ * @return Execution status, see @ref OSReturnCodes
+ * @retval #OS_SUCCESS @copybrief OS_SUCCESS
+ */
+int32 OS_TaskFindIdBySystemData(uint32 *task_id, const void *sysdata, size_t sysdata_size);
+
+
 /**@}*/
 
 /** @defgroup OSAPIMsgQueue OSAL Message Queue APIs
@@ -489,7 +529,7 @@ int32 OS_TaskGetInfo           (uint32 task_id, OS_task_prop_t *task_prop);
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER if a pointer passed in is NULL
- * @retval #OS_ERR_NAME_TOO_LONG if the name passed in is too long
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NO_FREE_IDS if there are already the max queues created
  * @retval #OS_ERR_NAME_TAKEN if the name is already being used on another queue
  * @retval #OS_ERROR if the OS create call fails
@@ -572,7 +612,7 @@ int32 OS_QueuePut              (uint32 queue_id, const void *data, uint32 size,
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER if the name or id pointers are NULL
- * @retval #OS_ERR_NAME_TOO_LONG the name passed in is too long
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NAME_NOT_FOUND the name was not found in the table
  */
 int32 OS_QueueGetIdByName      (uint32 *queue_id, const char *queue_name);
@@ -591,7 +631,6 @@ int32 OS_QueueGetIdByName      (uint32 *queue_id, const char *queue_name);
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER if queue_prop is NULL
  * @retval #OS_ERR_INVALID_ID if the ID given is not  a valid queue
- * @retval #OS_SUCCESS if the info was copied over correctly
  */
 int32 OS_QueueGetInfo          (uint32 queue_id, OS_queue_prop_t *queue_prop);
 /**@}*/
@@ -616,7 +655,7 @@ int32 OS_QueueGetInfo          (uint32 queue_id, OS_queue_prop_t *queue_prop);
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER if sen name or sem_id are NULL
- * @retval #OS_ERR_NAME_TOO_LONG if the name given is too long
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NO_FREE_IDS if all of the semaphore ids are taken
  * @retval #OS_ERR_NAME_TAKEN if this is already the name of a binary semaphore
  * @retval #OS_SEM_FAILURE if the OS call failed
@@ -729,7 +768,7 @@ int32 OS_BinSemDelete          (uint32 sem_id);
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER is semid or sem_name are NULL pointers
- * @retval #OS_ERR_NAME_TOO_LONG if the name given is to long to have been stored
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NAME_NOT_FOUND if the name was not found in the table
  */
 int32 OS_BinSemGetIdByName     (uint32 *sem_id, const char *sem_name);
@@ -768,7 +807,7 @@ int32 OS_BinSemGetInfo         (uint32 sem_id, OS_bin_sem_prop_t *bin_prop);
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER if sen name or sem_id are NULL
- * @retval #OS_ERR_NAME_TOO_LONG if the name given is too long
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NO_FREE_IDS if all of the semaphore ids are taken
  * @retval #OS_ERR_NAME_TAKEN if this is already the name of a counting semaphore
  * @retval #OS_SEM_FAILURE if the OS call failed
@@ -863,7 +902,7 @@ int32 OS_CountSemDelete          (uint32 sem_id);
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER is semid or sem_name are NULL pointers
- * @retval #OS_ERR_NAME_TOO_LONG if the name given is to long to have been stored
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NAME_NOT_FOUND if the name was not found in the table
  */
 int32 OS_CountSemGetIdByName     (uint32 *sem_id, const char *sem_name);
@@ -899,7 +938,7 @@ int32 OS_CountSemGetInfo         (uint32 sem_id, OS_count_sem_prop_t *count_prop
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER if sem_id or sem_name are NULL
- * @retval #OS_ERR_NAME_TOO_LONG if the sem_name is too long to be stored
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NO_FREE_IDS if there are no more free mutex Ids
  * @retval #OS_ERR_NAME_TAKEN if there is already a mutex with the same name
  * @retval #OS_SEM_FAILURE if the OS call failed
@@ -972,7 +1011,7 @@ int32 OS_MutSemDelete           (uint32 sem_id);
  * @return Execution status, see @ref OSReturnCodes
  * @retval #OS_SUCCESS @copybrief OS_SUCCESS
  * @retval #OS_INVALID_POINTER is semid or sem_name are NULL pointers
- * @retval #OS_ERR_NAME_TOO_LONG if the name given is to long to have been stored
+ * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NAME_NOT_FOUND if the name was not found in the table
  */
 int32 OS_MutSemGetIdByName      (uint32 *sem_id, const char *sem_name); 
@@ -1057,6 +1096,8 @@ int32  OS_GetLocalTime         (OS_time_t *time_struct);
  */
 int32  OS_SetLocalTime         (OS_time_t *time_struct);  
 /**@}*/
+
+#ifndef OSAL_OMIT_DEPRECATED
 
 /**
  * @defgroup OSAPIExc OSAL Exception APIs
@@ -1182,11 +1223,14 @@ int32 OS_FPUExcGetMask         (uint32 *mask);
 
 /** @defgroup OSAPIInterrupt OSAL Interrupt APIs
  * @{
+ * @deprecated Platform dependencies
  */
 
 /*-------------------------------------------------------------------------------------*/
 /**
- * @brief Associate an interrupt number to a specified handler routine
+ * @brief DEPRECATED; Associate an interrupt number to a specified handler routine
+ *
+ * @deprecated platform dependencies, removing from OSAL
  *
  * The call associates a specified C routine to a specified interrupt
  * number. Upon occurring of the InterruptNumber, the InerruptHandler
@@ -1205,7 +1249,9 @@ int32 OS_IntAttachHandler  (uint32 InterruptNumber, osal_task_entry InterruptHan
 
 /*-------------------------------------------------------------------------------------*/
 /**
- * @brief Enable interrupts
+ * @brief DEPRECATED; Enable interrupts
+ *
+ * @deprecated platform dependencies, removing from OSAL
  *
  * @param[in] IntLevel value from previous call to OS_IntLock()
  *
@@ -1217,7 +1263,9 @@ int32 OS_IntUnlock         (int32 IntLevel);
 
 /*-------------------------------------------------------------------------------------*/
 /**
- * @brief Disable interrupts
+ * @brief DEPRECATED; Disable interrupts
+ *
+ * @deprecated platform dependencies, removing from OSAL
  *
  * @return An key value to be passed to OS_IntUnlock() to restore interrupts or error
  *         status, see @ref OSReturnCodes
@@ -1228,7 +1276,9 @@ int32 OS_IntLock           (void);
 
 /*-------------------------------------------------------------------------------------*/
 /**
- * @brief Enables interrupts through Level
+ * @brief DEPRECATED; Enables interrupts through Level
+ *
+ * @deprecated platform dependencies, removing from OSAL
  *
  * @param[in] Level  the interrupts to enable
  *
@@ -1240,7 +1290,9 @@ int32 OS_IntEnable         (int32 Level);
 
 /*-------------------------------------------------------------------------------------*/
 /**
- * @brief Disable interrupts through Level
+ * @brief DEPRECATED; Disable interrupts through Level
+ *
+ * @deprecated platform dependencies, removing from OSAL
  *
  * @param[in] Level  the interrupts to disable
  *
@@ -1252,7 +1304,9 @@ int32 OS_IntDisable        (int32 Level);
 
 /*-------------------------------------------------------------------------------------*/
 /**
- * @brief Set the CPU interrupt mask register
+ * @brief DEPRECATED; Set the CPU interrupt mask register
+ *
+ * @deprecated platform dependencies, removing from OSAL
  *
  * @note The interrupt bits are architecture-specific.
  *
@@ -1266,7 +1320,9 @@ int32 OS_IntSetMask        (uint32 mask);
 
 /*-------------------------------------------------------------------------------------*/
 /**
- * @brief Get the CPU interrupt mask register
+ * @brief DEPRECATED; Get the CPU interrupt mask register
+ *
+ * @deprecated platform dependencies, removing from OSAL
  *
  * @note The interrupt bits are architecture-specific.
  *
@@ -1280,7 +1336,9 @@ int32 OS_IntGetMask        (uint32 *mask);
 
 /*-------------------------------------------------------------------------------------*/
 /**
- * @brief Acknowledge the corresponding interrupt number.
+ * @brief DEPRECATED; Acknowledge the corresponding interrupt number.
+ *
+ * @deprecated platform dependencies, removing from OSAL
  *
  * @note: placeholder; not currently implemented in sample implementations
  *
@@ -1294,6 +1352,7 @@ int32 OS_IntGetMask        (uint32 *mask);
 int32 OS_IntAck             (int32 InterruptNumber);
 /**@}*/
 
+
 /**
  * @defgroup OSAPIShMem OSAL Shared memory APIs
  * @deprecated Not in current implementations
@@ -1302,41 +1361,43 @@ int32 OS_IntAck             (int32 InterruptNumber);
  */
 
 /*-------------------------------------------------------------------------------------*/
-/** @brief placeholder; not currently implemented
+/** @brief DEPRECATED - platform dependent, never implemented in framework OSALs
  * @deprecated Never implemented
  */
 int32 OS_ShMemInit          (void);
 
 /*-------------------------------------------------------------------------------------*/
-/** @brief placeholder; not currently implemented
+/** @brief DEPRECATED - platform dependent, never implemented in framework OSALs
  * @deprecated Never implemented
  */
 int32 OS_ShMemCreate        (uint32 *Id, uint32 NBytes, const char* SegName);
 
 /*-------------------------------------------------------------------------------------*/
-/** @brief placeholder; not currently implemented
+/** @brief DEPRECATED - platform dependent, never implemented in framework OSALs
  * @deprecated Never implemented
  */
 int32 OS_ShMemSemTake       (uint32 Id);
 
 /*-------------------------------------------------------------------------------------*/
-/** @brief placeholder; not currently implemented
+/** @brief DEPRECATED - platform dependent, never implemented in framework OSALs
  * @deprecated Never implemented
  */
 int32 OS_ShMemSemGive       (uint32 Id);
 
 /*-------------------------------------------------------------------------------------*/
-/** @brief placeholder; not currently implemented
+/** @brief DEPRECATED - platform dependent, never implemented in framework OSALs
  * @deprecated Never implemented
  */
 int32 OS_ShMemAttach        (cpuaddr * Address, uint32 Id);
 
 /*-------------------------------------------------------------------------------------*/
-/** @brief placeholder; not currently implemented
+/** @brief DEPRECATED - platform dependent, never implemented in framework OSALs
  * @deprecated Never implemented
  */
 int32 OS_ShMemGetIdByName   (uint32 *ShMemId, const char *SegName );
 /**@}*/
+
+#endif /* OSAL_OMIT_DEPRECATED */
 
 /** @defgroup OSAPIHeap OSAL Heap APIs
  * @{
@@ -1409,9 +1470,9 @@ int32 OS_SelectMultiple(OS_FdSet *ReadSet, OS_FdSet *WriteSet, int32 msecs);
  *
  * This function can be used to wait for a single OSAL stream ID
  * to become readable or writable.   On entry, the "StateFlags"
- * parameter should be set to the desired state (readble or writable)
- * and upon return the flags will be set to the state actually
- * detected.
+ * parameter should be set to the desired state (OS_STREAM_STATE_READABLE
+ * and/or OS_STREAM_STATE_WRITABLE) and upon return the flags
+ * will be set to the state actually detected.
  *
  * As this operates on a single ID, the filehandle is protected
  * during this call, such that another thread accessing the same
@@ -1482,7 +1543,9 @@ bool OS_SelectFdIsSet(OS_FdSet *Set, uint32 objid);
  * Operates in a manner similar to the printf() call defined by the standard C
  * library and takes all the parameters and formatting options of printf.
  * This abstraction may implement additional buffering, if necessary,
- * to improve the real-time performance of the call.
+ * to improve the real-time performance of the call. 
+ * 
+ * Strings (including terminator) longer than #OS_BUFFER_SIZE will be truncated.
  *
  * The output of this routine also may be dynamically enabled or disabled by
  * the OS_printf_enable() and OS_printf_disable() calls, respectively.
@@ -1504,5 +1567,60 @@ void OS_printf_disable(void);
  */
 void OS_printf_enable(void);
 /**@}*/
+
+
+/****************************************************************************************
+                    BSP LOW-LEVEL IMPLEMENTATION FUNCTIONS
+ ****************************************************************************************/
+
+/*----------------------------------------------------------------
+   Function: OS_BSP_GetArgC
+
+    Purpose: Obtain the number of boot arguments passed from the bootloader
+             or shell if supported by the platform
+
+    Returns: The number of boot arguments, or 0 if no arguments were passed
+             or not supported by the BSP.
+ ------------------------------------------------------------------*/
+uint32 OS_BSP_GetArgC(void);
+
+/*----------------------------------------------------------------
+   Function: OS_BSP_GetArgV
+
+    Purpose: Obtain an array of boot argument strings passed from the bootloader
+             or shell if supported by the platform
+
+    Returns: Pointer to char* array containing the argument strings, or NULL if
+             no arguments are available or not supported by the BSP.
+
+             The array is sized according to OS_BSP_GetArgC()
+ ------------------------------------------------------------------*/
+char * const * OS_BSP_GetArgV(void);
+
+/*----------------------------------------------------------------
+   Function: OS_BSP_SetExitCode
+
+    Purpose: Sets the status to be returned to the shell or bootloader
+             if supported by the platform.  The value is an integer with
+             platform and application-defined meaning, but BSP's should
+             attempt to provide consistent meaning for the following values
+
+             OS_SUCCESS: normal status (default)
+             OS_ERROR: any abnormal status
+
+             Other more specific status values may be passed, with
+             implementation-defined behavior.  Depending on the system
+             capabilities, the BSP implementation may either pass the
+             value through as-is, translate it to defined value, or
+             ignore it.
+
+             Note this does NOT cause the application to exit, it only
+             sets the state that will be returned if/when the application
+             exits itself at a future time.
+
+ ------------------------------------------------------------------*/
+void OS_BSP_SetExitCode(int32 code);
+
+
 
 #endif
