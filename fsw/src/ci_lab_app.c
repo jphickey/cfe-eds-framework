@@ -71,9 +71,9 @@ typedef struct
     uint32          SocketID;
     OS_SockAddr_t   SocketAddress;
 
-    CI_LAB_HkTlm_Buffer_t   HkBuffer;
-    CI_LAB_IngestBuffer_t   MsgBuffer;
-    CI_LAB_IngestBuffer_t   NetworkBuffer;
+    CI_LAB_HkTlm_Buffer_t HkBuffer;
+    CI_LAB_IngestBuffer_t IngestBuffer;
+    CI_LAB_IngestBuffer_t NetworkBuffer;
 } CI_LAB_GlobalData_t;
 
 CI_LAB_GlobalData_t CI_LAB_Global;
@@ -327,8 +327,8 @@ void CI_LAB_ReadUpLink(void)
         else if (status > 0)
         {
             /* Packet is in external wire-format byte order - unpack it and copy */
-            DataSize = sizeof(CI_LAB_Global.MsgBuffer);
-            status   = CFE_SB_EDS_UnpackInputMessage(CFE_SB_Telecommand_Interface_ID, &CI_LAB_Global.MsgBuffer.MsgHdr,
+            DataSize = sizeof(CI_LAB_Global.IngestBuffer);
+            status   = CFE_SB_EDS_UnpackInputMessage(CFE_SB_Telecommand_Interface_ID, &CI_LAB_Global.IngestBuffer.MsgHdr,
                     CI_LAB_Global.NetworkBuffer.bytes, &DataSize, status);
 
             if (status != CFE_SUCCESS)
@@ -342,7 +342,7 @@ void CI_LAB_ReadUpLink(void)
             {
                 CFE_ES_PerfLogEntry(CI_LAB_SOCKET_RCV_PERF_ID);
                 CI_LAB_Global.HkBuffer.HkTlm.Payload.IngestPackets++;
-                status = CFE_SB_SendMsg(&CI_LAB_Global.MsgBuffer.MsgHdr);
+                status = CFE_SB_SendMsg(&CI_LAB_Global.IngestBuffer.MsgHdr);
                 CFE_ES_PerfLogExit(CI_LAB_SOCKET_RCV_PERF_ID);
             }
         }
@@ -355,4 +355,5 @@ void CI_LAB_ReadUpLink(void)
     return;
 
 } /* End of CI_LAB_ReadUpLink() */
+
 
