@@ -80,10 +80,10 @@ IMPORT void sysPciWrite32 (UINT32, UINT32);
 
 
 /******************************************************************************
-**  Function:  CFE_PSP_Main()
+**  Function:  OS_Application_Startup()
 **
 **  Purpose:
-**    vxWorks/BSP Application entry point.
+**    Application startup entry point from OSAL BSP.
 **
 **  Arguments:
 **    (none)
@@ -91,14 +91,12 @@ IMPORT void sysPciWrite32 (UINT32, UINT32);
 **  Return:
 **    (none)
 */
-
-void CFE_PSP_Main( void )
+void OS_Application_Startup(void)
 {
    int    TicksPerSecond;
    uint32 reset_type;
    uint32 reset_subtype;
    char   reset_register;
-   cpuaddr memaddr;
    int32  Status;
 
 
@@ -129,14 +127,8 @@ void CFE_PSP_Main( void )
    /*
    ** Setup the pointer to the reserved area in vxWorks.
    ** This must be done before any of the reset variables are used.
-   **
-   ** Note: this uses a "cpuaddr" (integer address) as an intermediate
-   ** to avoid a warning about alignment.  The output of sysMemTop()
-   ** should be aligned to hold any data type, being the very start
-   ** of the memory space.
    */
-   memaddr = (cpuaddr) sysMemTop();
-   CFE_PSP_ReservedMemoryPtr = (CFE_PSP_ReservedMemory_t *) memaddr;
+   CFE_PSP_SetupReservedMemoryMap();
 
    /*
    ** Determine Reset type by reading the hardware reset register.
@@ -184,7 +176,7 @@ void CFE_PSP_Main( void )
       ** reboot functions use this reset type, we want to use this for a software
       ** commanded processor or Power on reset.
       */
-      if ( CFE_PSP_ReservedMemoryPtr->bsp_reset_type == CFE_PSP_RST_TYPE_POWERON)
+      if ( CFE_PSP_ReservedMemoryMap.BootPtr->bsp_reset_type == CFE_PSP_RST_TYPE_POWERON)
       {
          OS_printf("CFE_PSP: POWERON Reset: Software Hard Reset.\n");
          reset_type = CFE_PSP_RST_TYPE_POWERON;
@@ -203,6 +195,15 @@ void CFE_PSP_Main( void )
       reset_type = CFE_PSP_RST_TYPE_POWERON;
       reset_subtype = CFE_PSP_RST_SUBTYPE_UNDEFINED_RESET; 
    }   
+ 
+   /*
+    * If CFE fails to boot with a processor reset, 
+    * then make sure next time it uses a power on reset.
+    */
+   if ( reset_type == CFE_PSP_RST_TYPE_PROCESSOR ) 
+   {
+       CFE_PSP_ReservedMemoryMap.BootPtr->bsp_reset_type = CFE_PSP_RST_TYPE_POWERON;
+   }
 
    /*
    ** Initialize the reserved memory 
@@ -215,6 +216,24 @@ void CFE_PSP_Main( void )
    ** is complete.
    */
    CFE_PSP_MAIN_FUNCTION(reset_type,reset_subtype, 1, CFE_PSP_NONVOL_STARTUP_FILE);
+
+}
+
+/******************************************************************************
+**  Function:  OS_Application_Run()
+**
+**  Purpose:
+**    Idle Loop entry point from OSAL BSP.
+**
+**  Arguments:
+**    (none)
+**
+**  Return:
+**    (none)
+*/
+void OS_Application_Run(void)
+{
+   int    TicksPerSecond;
 
    /*
    ** Main loop for default task and simulated 1hz 
