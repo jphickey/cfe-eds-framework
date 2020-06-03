@@ -3707,6 +3707,7 @@ void TestAPI(void)
     uint32 Id;
     uint32 TestObjId;
     char AppName[32];
+    uint32 StackBuf[8];
     char CounterName[11];
     char CDSName[CFE_MISSION_ES_CDS_MAX_NAME_LENGTH + 2];
     int i;
@@ -4073,8 +4074,8 @@ void TestAPI(void)
     Return = CFE_ES_CreateChildTask(&TaskId,
                                     "TaskName",
                                     TestAPI,
-                                    (uint32*) AppName,
-                                    32,
+                                    StackBuf,
+                                    sizeof(StackBuf),
                                     400,
                                     0);
     UT_Report(__FILE__, __LINE__,
@@ -4089,8 +4090,8 @@ void TestAPI(void)
     Return = CFE_ES_CreateChildTask(&TaskId,
                                     "TaskName",
                                     TestAPI,
-                                    (uint32*) AppName,
-                                    32,
+                                    StackBuf,
+                                    sizeof(StackBuf),
                                     400,
                                     0);
     UT_Report(__FILE__, __LINE__,
@@ -4103,8 +4104,8 @@ void TestAPI(void)
     Return = CFE_ES_CreateChildTask(NULL,
                                     "TaskName",
                                     TestAPI,
-                                    (uint32*) AppName,
-                                    32,
+                                    StackBuf,
+                                    sizeof(StackBuf),
                                     400,
                                     0);
     UT_Report(__FILE__, __LINE__,
@@ -4117,8 +4118,8 @@ void TestAPI(void)
     Return = CFE_ES_CreateChildTask(&TaskId,
                                     NULL,
                                     TestAPI,
-                                    (uint32*) AppName,
-                                    32,
+                                    StackBuf,
+                                    sizeof(StackBuf),
                                     400,
                                     0);
     UT_Report(__FILE__, __LINE__,
@@ -4131,8 +4132,8 @@ void TestAPI(void)
     Return = CFE_ES_CreateChildTask(NULL,
                                     NULL,
                                     TestAPI,
-                                    (uint32*) AppName,
-                                    32,
+                                    StackBuf,
+                                    sizeof(StackBuf),
                                     400,
                                     0);
     UT_Report(__FILE__, __LINE__,
@@ -4145,8 +4146,8 @@ void TestAPI(void)
     Return = CFE_ES_CreateChildTask(&TaskId,
                                     "TaskName",
                                     NULL,
-                                    (uint32*) AppName,
-                                    32,
+                                    StackBuf,
+                                    sizeof(StackBuf),
                                     2,
                                     0);
     UT_Report(__FILE__, __LINE__,
@@ -4165,8 +4166,8 @@ void TestAPI(void)
     Return = CFE_ES_CreateChildTask(&TaskId,
                                     "TaskName",
                                     TestAPI,
-                                    (uint32*) AppName,
-                                    32,
+                                    StackBuf,
+                                    sizeof(StackBuf),
                                     400,
                                     0);
     UT_Report(__FILE__, __LINE__,
@@ -4185,8 +4186,8 @@ void TestAPI(void)
     Return = CFE_ES_CreateChildTask(&TaskId,
                                     "TaskName",
                                     TestAPI,
-                                    (uint32*) AppName,
-                                    32,
+                                    StackBuf,
+                                    sizeof(StackBuf),
                                     400,
                                     0);
     UT_Report(__FILE__, __LINE__,
@@ -5572,8 +5573,8 @@ void TestESMempool(void)
 {
     CFE_ES_MemHandle_t    HandlePtr;
     uint8                 Buffer[CFE_PLATFORM_ES_MAX_BLOCK_SIZE];
-    uint8                 *address = NULL;
-    uint8                 *address2 = NULL;
+    uint32                *address = NULL;
+    uint32                *address2 = NULL;
     Pool_t                *PoolPtr;
     CFE_ES_MemPoolStats_t Stats;
     uint32                BlockSizes[4];
@@ -5632,7 +5633,7 @@ void TestESMempool(void)
     /* Test successfully getting the size of an existing pool buffer */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBufInfo(HandlePtr, (uint32 *) address) > 0,
+              CFE_ES_GetPoolBufInfo(HandlePtr, address) > 0,
               "CFE_ES_GetPoolBufInfo",
               "Get pool buffer size; successful");
 
@@ -5642,7 +5643,7 @@ void TestESMempool(void)
     ES_ResetUnitTest();
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_NO_MUTEX;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBufInfo(HandlePtr, (uint32 *) address) > 0,
+              CFE_ES_GetPoolBufInfo(HandlePtr, address) > 0,
               "CFE_ES_GetPoolBufInfo",
               "Get pool buffer size; successful (no mutex)");
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_USE_MUTEX;
@@ -5650,14 +5651,14 @@ void TestESMempool(void)
     /* Test successfully returning a pool buffer to the memory pool */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_PutPoolBuf(HandlePtr, (uint32 *) address) > 0,
+              CFE_ES_PutPoolBuf(HandlePtr, address) > 0,
               "CFE_ES_PutPoolBuf",
               "Return buffer to the memory pool; successful");
 
     /* Test successfully allocating an additional pool buffer */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBuf((uint32 **) &address, HandlePtr, 256) > 0,
+              CFE_ES_GetPoolBuf(&address, HandlePtr, 256) > 0,
               "CFE_ES_GetPoolBuf",
               "Allocate pool buffer [2]; successful");
 
@@ -5667,7 +5668,7 @@ void TestESMempool(void)
     ES_ResetUnitTest();
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_NO_MUTEX;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_PutPoolBuf(HandlePtr, (uint32 *) address) > 0,
+              CFE_ES_PutPoolBuf(HandlePtr, address) > 0,
               "CFE_ES_PutPoolBuf",
               "Return buffer to the second memory pool; successful");
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_USE_MUTEX;
@@ -5697,7 +5698,7 @@ void TestESMempool(void)
      */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBuf((uint32 **) &address,
+              CFE_ES_GetPoolBuf(&address,
                                 HandlePtr2,
                                 256) == CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_GetPoolBuf",
@@ -5718,7 +5719,7 @@ void TestESMempool(void)
      */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBuf((uint32 **) &address,
+              CFE_ES_GetPoolBuf(&address,
                                 HandlePtr,
                                 75000) == CFE_ES_ERR_MEM_BLOCK_SIZE,
               "CFE_ES_GetPoolBuf",
@@ -5729,7 +5730,7 @@ void TestESMempool(void)
      */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBufInfo(HandlePtr, (uint32 *) address) ==
+              CFE_ES_GetPoolBufInfo(HandlePtr, address) ==
                   CFE_ES_BUFFER_NOT_IN_POOL,
               "CFE_ES_GetPoolBufInfo",
               "Invalid memory pool handle");
@@ -5738,7 +5739,7 @@ void TestESMempool(void)
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
               CFE_ES_PutPoolBuf(HandlePtr,
-                                (uint32 *) address) == CFE_ES_ERR_MEM_HANDLE,
+                                address) == CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_PutPoolBuf",
               "Invalid memory block");
 
@@ -5857,7 +5858,7 @@ void TestESMempool(void)
     BdPtr->Allocated = 717;
     UT_Report(__FILE__, __LINE__,
               CFE_ES_GetPoolBufInfo(HandlePtr,
-                                    (uint32 *) address) ==
+                                    address) ==
                   CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_GetPoolBufInfo",
               "Invalid memory pool handle; unallocated block");
@@ -5870,8 +5871,7 @@ void TestESMempool(void)
     BdPtr = ((BD_t *)address) - 1;
     BdPtr->Allocated = 717;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBufInfo(HandlePtr,
-                                    (uint32 *) address) ==
+              CFE_ES_GetPoolBufInfo(HandlePtr, address) ==
                   CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_GetPoolBufInfo",
               "Invalid memory pool handle; unallocated block (no mutex)");
@@ -5880,8 +5880,7 @@ void TestESMempool(void)
     /* Test returning a pool buffer using an unallocated block */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_PutPoolBuf(HandlePtr,
-                                (uint32 *) address) == CFE_ES_ERR_MEM_HANDLE,
+              CFE_ES_PutPoolBuf(HandlePtr, address) == CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_PutPoolBuf",
               "Deallocate an unallocated block");
 
@@ -5891,8 +5890,7 @@ void TestESMempool(void)
     ES_ResetUnitTest();
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_NO_MUTEX;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_PutPoolBuf(HandlePtr,
-                                (uint32 *) address) == CFE_ES_ERR_MEM_HANDLE,
+              CFE_ES_PutPoolBuf(HandlePtr, address) == CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_PutPoolBuf",
               "Deallocate an unallocated block (no mutex)");
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_USE_MUTEX;
@@ -5904,8 +5902,7 @@ void TestESMempool(void)
     BdPtr->Allocated = 0xaaaa;
     BdPtr->CheckBits = 717;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBufInfo(HandlePtr,
-                                    (uint32 *) address) ==
+              CFE_ES_GetPoolBufInfo(HandlePtr, address) ==
                   CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_GetPoolBufInfo",
               "Invalid memory pool handle; check bit pattern");
@@ -5919,8 +5916,7 @@ void TestESMempool(void)
     BdPtr->Allocated = 0xaaaa;
     BdPtr->CheckBits = 717;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBufInfo(HandlePtr,
-                                    (uint32 *) address) ==
+              CFE_ES_GetPoolBufInfo(HandlePtr, address) ==
                   CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_GetPoolBufInfo",
               "Invalid memory pool handle; check bit pattern (no mutex)");
@@ -5931,8 +5927,7 @@ void TestESMempool(void)
      */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_PutPoolBuf(HandlePtr,
-                                (uint32 *) address) ==
+              CFE_ES_PutPoolBuf(HandlePtr, address) ==
                   CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_PutPoolBuf",
               "Invalid/corrupted memory descriptor");
@@ -5943,8 +5938,7 @@ void TestESMempool(void)
     ES_ResetUnitTest();
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_NO_MUTEX;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_PutPoolBuf(HandlePtr,
-                                (uint32 *) address) ==
+              CFE_ES_PutPoolBuf(HandlePtr, address) ==
                   CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_PutPoolBuf",
               "Invalid/corrupted memory descriptor (no mutex)");
@@ -5967,7 +5961,7 @@ void TestESMempool(void)
     ES_ResetUnitTest();
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_NO_MUTEX;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBuf((uint32 **) &address, HandlePtr, 256) > 0,
+              CFE_ES_GetPoolBuf(&address, HandlePtr, 256) > 0,
               "CFE_ES_GetPoolBuf",
               "Allocate pool buffer [4]; successful");
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_USE_MUTEX;
@@ -5979,8 +5973,7 @@ void TestESMempool(void)
     BdPtr->CheckBits = 0x5a5a;
     BdPtr->Size =CFE_PLATFORM_ES_MAX_BLOCK_SIZE +1;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_PutPoolBuf(HandlePtr,
-                                (uint32 *) address) == CFE_ES_ERR_MEM_HANDLE,
+              CFE_ES_PutPoolBuf(HandlePtr, address) == CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_PutPoolBuf",
               "Pool buffer size exceeds maximum");
 
@@ -5992,8 +5985,7 @@ void TestESMempool(void)
     BdPtr->CheckBits = 0x5a5a;
     BdPtr->Size =CFE_PLATFORM_ES_MAX_BLOCK_SIZE +1;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_PutPoolBuf(HandlePtr,
-                                (uint32 *) address) == CFE_ES_ERR_MEM_HANDLE,
+              CFE_ES_PutPoolBuf(HandlePtr, address) == CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_PutPoolBuf",
               "Pool buffer size exceeds maximum (no mutex)");
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_USE_MUTEX;
@@ -6003,7 +5995,7 @@ void TestESMempool(void)
      */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBuf((uint32 **) &address2,
+              CFE_ES_GetPoolBuf(&address2,
                                 HandlePtr,
                                 99000) == CFE_ES_ERR_MEM_BLOCK_SIZE,
               "CFE_ES_GetPoolBuf",
@@ -6019,15 +6011,14 @@ void TestESMempool(void)
     /* Test returning a pool buffer using a null handle */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_PutPoolBuf(0,
-                                (uint32 *) address) == CFE_ES_ERR_MEM_HANDLE,
+              CFE_ES_PutPoolBuf(0, address) == CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_PutPoolBuf",
               "NULL memory handle");
 
     /* Test allocating a pool buffer using a null handle */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBuf((uint32 **) &address,
+              CFE_ES_GetPoolBuf(&address,
                                 0,
                                 256) == CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_GetPoolBuf",
@@ -6036,8 +6027,7 @@ void TestESMempool(void)
     /* Test getting the size of an existing pool buffer using a null handle */
     ES_ResetUnitTest();
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBufInfo(0,
-                                    (uint32 *) address) ==
+              CFE_ES_GetPoolBufInfo(0, address) ==
                   CFE_ES_ERR_MEM_HANDLE,
               "CFE_ES_GetPoolBufInfo",
               "NULL memory handle");
@@ -6062,7 +6052,7 @@ void TestESMempool(void)
     ES_ResetUnitTest();
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_NO_MUTEX;
     UT_Report(__FILE__, __LINE__,
-              CFE_ES_GetPoolBuf((uint32 **) &address2,
+              CFE_ES_GetPoolBuf(&address2,
                                 HandlePtr,
                                 32) == CFE_ES_ERR_MEM_BLOCK_SIZE,
               "CFE_ES_GetPoolBuf",
@@ -6087,8 +6077,7 @@ void TestESMempool(void)
     ((Pool_t *) HandlePtr)->UseMutex = CFE_ES_NO_MUTEX;
     for (i=0; i < 25; ++i)
     {
-        if (CFE_ES_GetPoolBuf((uint32 **) &address,
-                          HandlePtr,
+        if (CFE_ES_GetPoolBuf(&address, HandlePtr,
                           12) == CFE_ES_ERR_MEM_BLOCK_SIZE)
         {
             break;
