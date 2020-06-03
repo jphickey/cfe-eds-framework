@@ -20,7 +20,7 @@
 **
 ** File: to_lab_msgids.h
 **
-** Purpose: 
+** Purpose:
 **  Define TO Lab Message IDs
 **
 ** Notes:
@@ -31,11 +31,11 @@
 
 #include "cfe_mission_eds_parameters.h"
 
-#define TO_LAB_CMD_MID            	CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_CMD_TOPICID)
-#define TO_LAB_SEND_HK_MID        	CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_SEND_HK_TOPICID)
+#define TO_LAB_CMD_MID     CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_CMD_TOPICID)
+#define TO_LAB_SEND_HK_MID CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_SEND_HK_TOPICID)
 
-#define TO_LAB_HK_TLM_MID		      CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_HK_TLM_TOPICID)
-#define TO_LAB_DATA_TYPES_MID	      CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_DATA_TYPES_TOPICID)
+#define TO_LAB_HK_TLM_MID     CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_HK_TLM_TOPICID)
+#define TO_LAB_DATA_TYPES_MID CFE_SB_MsgId_From_TopicId(CFE_MISSION_TO_LAB_DATA_TYPES_TOPICID)
 
 #endif /* _to_lab_msgids_h_ */
 
