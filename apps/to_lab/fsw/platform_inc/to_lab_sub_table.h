@@ -20,54 +20,51 @@
 **
 ** File: to_sub_table.h
 **
-** Purpose: 
-**  Define TO Lab CPU specific subscription table 
+** Purpose:
+**  Define TO Lab CPU specific subscription table
 **
 ** Notes:
 **
 *************************************************************************/
 
-/* 
+/*
 ** Add the proper include file for the message IDs below
 */
 #include <common_types.h>
 #include "cfe_mission_cfg.h"
 #include "cfe_mission_eds_parameters.h"
 
-
-typedef struct {
-      uint16           TopicId;
-      CFE_SB_Qos_t     Qos;
-      uint16           BufLimit;
- } TO_subscription_t;
-
-
-static TO_subscription_t  TO_SubTable[] =
+typedef struct
 {
-            /* CFS App Subscriptions */
-            {CFE_MISSION_TO_LAB_HK_TLM_TOPICID,     {0,0},  4},
-            {CFE_MISSION_TO_LAB_DATA_TYPES_TOPICID, {0,0},  4},
-            {CFE_MISSION_CI_LAB_HK_TLM_TOPICID,     {0,0},  4},
+    uint16       TopicId;
+    CFE_SB_Qos_t Qos;
+    uint16       BufLimit;
+} TO_subscription_t;
 
-            /* cFE Core subsciptions */
-            {CFE_MISSION_ES_HK_TLM_TOPICID,     {0,0},  4},
-            {CFE_MISSION_EVS_HK_TLM_TOPICID,    {0,0},  4},
-            {CFE_MISSION_SB_HK_TLM_TOPICID,     {0,0},  4},
-            {CFE_MISSION_TBL_HK_TLM_TOPICID,    {0,0},  4},
-            {CFE_MISSION_TIME_HK_TLM_TOPICID,   {0,0},  4},
-            {CFE_MISSION_TIME_DIAG_TLM_TOPICID, {0,0},  4},
-            {CFE_MISSION_SB_STATS_TLM_TOPICID,  {0,0},  4},
-            {CFE_MISSION_TBL_REG_TLM_TOPICID,   {0,0},  4},
-            {CFE_MISSION_EVS_LONG_EVENT_MSG_TOPICID, {0,0},  32},
-            {CFE_MISSION_ES_SHELL_TLM_TOPICID,  {0,0},  32},
-            {CFE_MISSION_ES_APP_TLM_TOPICID,    {0,0},   4},
-            {CFE_MISSION_ES_MEMSTATS_TLM_TOPICID,{0,0},  4},
+static TO_subscription_t TO_SubTable[] = {
+    /* CFS App Subscriptions */
+    {CFE_MISSION_TO_LAB_HK_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_TO_LAB_DATA_TYPES_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_CI_LAB_HK_TLM_TOPICID, {0, 0}, 4},
 
-            {TO_UNUSED,              {0,0},  0},
-            {TO_UNUSED,              {0,0},  0},
-            {TO_UNUSED,              {0,0},  0}
-};
+    /* cFE Core subsciptions */
+    {CFE_MISSION_ES_HK_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_EVS_HK_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_SB_HK_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_TBL_HK_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_TIME_HK_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_TIME_DIAG_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_SB_STATS_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_TBL_REG_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_EVS_LONG_EVENT_MSG_TOPICID, {0, 0}, 32},
+    {CFE_MISSION_ES_SHELL_TLM_TOPICID, {0, 0}, 32},
+    {CFE_MISSION_ES_APP_TLM_TOPICID, {0, 0}, 4},
+    {CFE_MISSION_ES_MEMSTATS_TLM_TOPICID, {0, 0}, 4},
+
+    {TO_UNUSED, {0, 0}, 0},
+    {TO_UNUSED, {0, 0}, 0},
+    {TO_UNUSED, {0, 0}, 0}};
 
 /************************
-** End of File Comment ** 
+** End of File Comment **
 ************************/

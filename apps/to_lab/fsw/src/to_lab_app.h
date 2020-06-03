@@ -20,7 +20,7 @@
 **
 ** File: to_lab_app.h
 **
-** Purpose: 
+** Purpose:
 **  Define TO Lab Application header file
 **
 ** Notes:
@@ -48,14 +48,23 @@
 #include "to_lab_eds_defines.h"
 #include "to_lab_eds_typedefs.h"
 
-
-
 /*****************************************************************************/
 
-#define TO_TASK_MSEC             500          /* run at 2 Hz */
-#define TO_UNUSED                0
+#define TO_TASK_MSEC 500 /* run at 2 Hz */
+#define TO_UNUSED    0
 
 #define TO_LAB_DEFAULT_PORT 5021
+
+/**
+ * Depth of pipe for commands to the TO_LAB application itself
+ */
+#define TO_LAB_CMD_PIPE_DEPTH 8
+
+/**
+ * Depth of pipe for telemetry forwarded through the TO_LAB application
+ */
+#define TO_LAB_TLM_PIPE_DEPTH OS_QUEUE_MAX_DEPTH
+
 #define TO_LAB_VERSION_NUM "5.1.0"
 
 /*
@@ -63,8 +72,7 @@
  * This must be large enough to accommodate the largest
  * possible encoded telemetry packet from the mission
  */
-#define TO_LAB_MAX_OUTPUT                 2048
-
+#define TO_LAB_MAX_OUTPUT 2048
 
 /******************************************************************************/
 
@@ -75,5 +83,4 @@ void TO_Lab_AppMain(void);
 
 /******************************************************************************/
 
-#endif  /* _to_lab_app_h_ */
-
+#endif /* _to_lab_app_h_ */
