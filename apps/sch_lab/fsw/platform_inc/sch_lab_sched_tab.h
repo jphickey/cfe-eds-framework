@@ -20,7 +20,7 @@
 **
 ** File: sch_lab_sched_tab.h
 **
-** Purpose: 
+** Purpose:
 **  This file contains the schedule tables for the SCH Lab app.
 **  It is intended to go in the platform include directory so the SCH_LAB
 **  app source code does not have to be modified.
@@ -28,7 +28,6 @@
 ** Notes:
 **
 *************************************************************************/
-
 
 #include "sch_lab_eds_typedefs.h"
 #include "cfe_msgids.h"
@@ -38,13 +37,9 @@
 */
 #include "cfe_mission_eds_parameters.h"
 
-
-
 /*
 ** Defines
 */
-#define SCH_LAB_END_OF_TABLE          0
-#define SCH_LAB_MAX_SCHEDULE_ENTRIES  CFE_MISSION_SCH_LAB_MAX_SCHEDULE_ENTRIES
-#define SCH_TBL_DEFAULT_FILE          "/cf/sch_lab_table.tbl"
-
-
+#define SCH_LAB_END_OF_TABLE         0
+#define SCH_LAB_MAX_SCHEDULE_ENTRIES CFE_MISSION_SCH_LAB_MAX_SCHEDULE_ENTRIES
+#define SCH_TBL_DEFAULT_FILE         "/cf/sch_lab_table.tbl"
