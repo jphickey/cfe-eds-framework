@@ -55,7 +55,7 @@
 ** NOTE: For complete prolog information, see 'cfe_tbl_task_cmds.h'
 ********************************************************************/
 
-int32 CFE_TBL_HousekeepingCmd(const CCSDS_CommandPacket_t *data)
+int32 CFE_TBL_HousekeepingCmd(const CFE_SB_CmdHdr_t *data)
 {
     int32                     Status;
     uint32                    i;
@@ -330,8 +330,7 @@ void CFE_TBL_GetTblRegData(void)
 int32 CFE_TBL_NoopCmd(const CFE_TBL_Noop_t *data)
 {
     /* Acknowledge receipt of NOOP with Event Message */
-    CFE_EVS_SendEvent(CFE_TBL_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION, "No-op command. cFE Version %d.%d.%d.%d",
-                      CFE_MAJOR_VERSION,CFE_MINOR_VERSION,CFE_REVISION,CFE_MISSION_REV);
+    CFE_EVS_SendEvent(CFE_TBL_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION, "No-op command. %s", CFE_VERSION_STRING);
 
     return CFE_TBL_INC_CMD_CTR;
 

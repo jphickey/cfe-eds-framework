@@ -12,11 +12,6 @@
 
 project(CFETARGET C)
 
-# The CFE core target to link to MUST be given 
-if (NOT CFE_CORE_TARGET)
-  message(FATAL_ERROR "CFE_CORE_TARGET must be defined to link a final exe")
-endif (NOT CFE_CORE_TARGET)
-
 # Create a file for the statically-linked module list for this target
 # do this for both PSP and CFS static modules
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/psp_module_list.inc.tmp" 
@@ -43,16 +38,16 @@ file (REMOVE "${CMAKE_CURRENT_BINARY_DIR}/cfs_static_symbol_list.inc.tmp")
 # Include the current binary dir for the driver list
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-# Include the CFE core-specific configuration
-include_directories(${CMAKE_BINARY_DIR}/${CFE_CORE_TARGET}/inc)
-
 # Reference the EDSLIB includes to instantiate the EDS-related objects
 include_directories(${EDSLIB_FSW_SOURCE_DIR}/inc)
 
-
 # The CPU ID and name are defined by the build scripts for this target
 if (DEFINED TGTID)
-  add_definitions(-DCFE_CPU_ID_VALUE=${TGTID})
+  if (DEFINED TGT${TGTID}_PROCESSORID)
+      add_definitions(-DCFE_CPU_ID_VALUE=${TGT${TGTID}_PROCESSORID})
+  else()
+      add_definitions(-DCFE_CPU_ID_VALUE=${TGTID})
+  endif()
 endif()
 if (DEFINED SPACECRAFT_ID)
   add_definitions(-DCFE_SPACECRAFT_ID_VALUE=${SPACECRAFT_ID})
@@ -113,17 +108,12 @@ endif (TGT${TGTID}_APPLIST)
 # Collect any additional libraries that should be included on the link line
 # This depends on whether any special features are included or not
 set(CFE_LINK_WHOLE_LIBS
-    ${CFE_CORE_TARGET}
-    psp-${CFE_SYSTEM_PSPNAME} 
-    osal
+    ${MISSION_CORE_MODULES}
 )
 set(CFE_LINK_NORMAL_LIBS 
     ${TGT${TGTID}_PSP_MODULELIST}
+    ${TGT${TGTID}_STATIC_APPLIST}
 )
-
-foreach(STATICAPP ${TGT${TGTID}_STATIC_APPLIST})
-    list(APPEND CFE_LINK_NORMAL_LIBS ${STATICAPP})    
-endforeach(STATICAPP ${TGT${TGTID}_STATIC_APPLIST})
 
 # Determine EDS object linking mode for final executable.
 # This should be configured via the toolchain file,
