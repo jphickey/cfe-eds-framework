@@ -93,7 +93,7 @@ static CFE_EVS_BinFilter_t CI_LAB_EventFilters[] =
  */
 int32 CI_LAB_Noop(const CI_LAB_Noop_t *data);
 int32 CI_LAB_ResetCounters(const CI_LAB_ResetCounters_t *data);
-int32 CI_LAB_ReportHousekeeping(const CCSDS_CommandPacket_t *data);
+int32 CI_LAB_ReportHousekeeping(const CFE_SB_CmdHdr_t *data);
 
 /*
  * Define a lookup table for CI lab command codes
@@ -226,8 +226,8 @@ void CI_LAB_TaskInit(void)
 
     CFE_SB_InitMsg(&CI_LAB_Global.HkBuffer.MsgHdr, CI_LAB_HK_TLM_MID, sizeof(CI_LAB_Global.HkBuffer.HkTlm), true);
 
-    CFE_EVS_SendEvent(CI_LAB_STARTUP_INF_EID, CFE_EVS_EventType_INFORMATION, "CI Lab Initialized.  Version %d.%d.%d.%d",
-                      CI_LAB_MAJOR_VERSION, CI_LAB_MINOR_VERSION, CI_LAB_REVISION, CI_LAB_MISSION_REV);
+    CFE_EVS_SendEvent(CI_LAB_STARTUP_INF_EID, CFE_EVS_EventType_INFORMATION, "CI Lab Initialized.%s",
+                      CI_LAB_VERSION_STRING);
 
 } /* End of CI_LAB_TaskInit() */
 
@@ -271,7 +271,7 @@ int32 CI_LAB_ResetCounters(const CI_LAB_ResetCounters_t *data)
 /*         telemetry, packetize it and send it to the housekeeping task via   */
 /*         the software bus                                                   */
 /* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
-int32 CI_LAB_ReportHousekeeping(const CCSDS_CommandPacket_t *data)
+int32 CI_LAB_ReportHousekeeping(const CFE_SB_CmdHdr_t *data)
 {
     CI_LAB_Global.HkBuffer.HkTlm.Payload.SocketConnected = CI_LAB_Global.SocketConnected;
     CFE_SB_TimeStampMsg(&CI_LAB_Global.HkBuffer.MsgHdr);
