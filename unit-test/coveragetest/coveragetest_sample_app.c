@@ -55,7 +55,7 @@ typedef struct
 /*
  * Stub object for EDS registration call
  */
-const struct EdsLib_App_DataTypeDB { uint32 Data; } SAMPLE_DATATYPE_DB = { 0 };
+const struct EdsLib_App_DataTypeDB { uint32 Data; } SAMPLE_APP_DATATYPE_DB = { 0 };
 
 
 /*
@@ -280,8 +280,8 @@ void Test_SAMPLE_ReportHousekeeping(void)
      * Test Case For:
      * void SAMPLE_ReportHousekeeping( const CFE_SB_CmdHdr_t *Msg )
      */
-    CFE_SB_CmdHdr_t   CmdMsg;
-    SAMPLE_HkTlm_t          HkTelemetryMsg;
+    SAMPLE_APP_SendHkCommand_t  CmdMsg;
+    SAMPLE_APP_HkTlm_t          HkTelemetryMsg;
 
     memset(&CmdMsg, 0, sizeof(CmdMsg));
     memset(&HkTelemetryMsg, 0, sizeof(HkTelemetryMsg));
@@ -337,7 +337,7 @@ void Test_SAMPLE_NoopCmd(void)
      * Test Case For:
      * void SAMPLE_NoopCmd( const SAMPLE_Noop_t *Msg )
      */
-    SAMPLE_Noop_t TestMsg;
+    SAMPLE_APP_Noop_t TestMsg;
     UT_CheckEvent_t EventTest;
 
     memset(&TestMsg, 0, sizeof(TestMsg));
@@ -361,7 +361,7 @@ void Test_SAMPLE_ResetCounters(void)
      * Test Case For:
      * void SAMPLE_ResetCounters( const SAMPLE_ResetCounters_t *Msg )
      */
-    SAMPLE_ResetCounters_t TestMsg;
+    SAMPLE_APP_ResetCounters_t TestMsg;
     UT_CheckEvent_t EventTest;
 
     memset(&TestMsg, 0, sizeof(TestMsg));
@@ -384,7 +384,7 @@ void Test_SAMPLE_ProcessCC(void)
      * Test Case For:
      * void  SAMPLE_ProcessCC( const SAMPLE_Process_t *Msg )
      */
-    SAMPLE_Process_t TestMsg;
+    SAMPLE_APP_Process_t TestMsg;
     SAMPLE_APP_Table_t TestTblData;
     void *TblPtr = &TestTblData;
 

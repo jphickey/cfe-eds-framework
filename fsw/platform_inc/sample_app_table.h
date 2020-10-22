@@ -33,7 +33,7 @@
 /*
 ** Table structure is defined in EDS
 */
-#include "sample_eds_typedefs.h"
+#include "sample_app_eds_typedefs.h"
 
 #endif /* _sample_app_table_h_ */
 
