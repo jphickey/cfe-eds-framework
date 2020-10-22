@@ -21,13 +21,13 @@
 */
 
 #include "cfe_tbl_filedef.h"  /* Required to obtain the CFE_TBL_FILEDEF macro definition */
-#include "sample_table.h"
+#include "sample_app_table.h"
 
 /*
 ** The following is an example of the declaration statement that defines the desired
 ** contents of the table image.
 */
-SAMPLE_Table_t sampleTable = { 1, 2};
+SAMPLE_APP_Table_t SampleAppTable = {1, 2};
 
 /*
 ** The macro below identifies:
@@ -36,4 +36,5 @@ SAMPLE_Table_t sampleTable = { 1, 2};
 **    3) a brief description of the contents of the file image
 **    4) the desired name of the table image binary file that is cFE compatible
 */
-CFE_TBL_FILEDEF(sampleTable, "SAMPLE_APP.SampleTable", "Table Utility Test Table", "sample_table.tbl", "SAMPLE/Table")
+CFE_TBL_FILEDEF( SampleAppTable, "SAMPLE_APP.SampleAppTable", "Table Utility Test Table", "sample_app_tbl.tbl", "SAMPLE/Table" )
+

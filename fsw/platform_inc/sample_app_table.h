@@ -18,24 +18,24 @@
 **      See the License for the specific language governing permissions and
 **      limitations under the License.
 **
-** File: sample_table.h
+** File: sample_app_table.h
 **
 ** Purpose:
-**  Define sample table
+**  Define sample app table
 **
 ** Notes:
 **
 **
 *******************************************************************************/
-#ifndef _sample_table_h_
-#define _sample_table_h_
+#ifndef _sample_app_table_h_
+#define _sample_app_table_h_
 
 /*
 ** Table structure is defined in EDS
 */
 #include "sample_eds_typedefs.h"
 
-#endif /* _sample_table_h_ */
+#endif /* _sample_app_table_h_ */
 
 /************************/
 /*  End of File Comment */
