@@ -316,6 +316,11 @@
     </LongDescription>
   </Define>
   
+  <Define name="TO_LAB_MAX_SUBSCRIPTION_ENTRIES" value="32">
+    <LongDescription>
+       The maximum number of entries in the TO_LAB subscription table
+    </LongDescription>
+  </Define>
 
 </Package>
 </DesignParameters>

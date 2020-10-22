@@ -494,7 +494,7 @@ int32 CFE_EVS_ClearLogCmd(const CFE_EVS_ClearLog_t *data)
 ** Assumptions and Notes:
 **
 */
-int32 CFE_EVS_ReportHousekeepingCmd (const CFE_SB_CmdHdr_t *data)
+int32 CFE_EVS_ReportHousekeepingCmd (const CFE_EVS_SendHkCommand_t *data)
 {
    uint32 i, j;
 

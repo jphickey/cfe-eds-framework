@@ -194,16 +194,6 @@ typedef uint8 *CFE_SB_MsgPayloadPtr_t;
 */
 typedef cpuaddr CFE_SB_ZeroCopyHandle_t;
 
-/** \brief Quality Of Service Type Definition
-**
-** Currently an unused parameter in #CFE_SB_SubscribeEx
-** Intended to be used for interprocessor communication only
-**/
-typedef  struct {
-    uint8 Priority;/**< \brief  Specify high(1) or low(0) message priority for off-board routing, currently unused */
-    uint8 Reliability;/**< \brief  Specify high(1) or low(0) message transfer reliability for off-board routing, currently unused */
-}CFE_SB_Qos_t;
-
 extern CFE_SB_Qos_t CFE_SB_Default_Qos;/**< \brief  Defines a default priority and reliabilty for off-board routing */
 
 

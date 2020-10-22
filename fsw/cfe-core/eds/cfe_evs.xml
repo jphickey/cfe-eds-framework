@@ -302,6 +302,9 @@
         </EntryList>
       </ContainerDataType>
 
+      <ContainerDataType name="SendHkCommand" baseType="CCSDS/CommandPacket" shortDescription="Base type for all Event Services commands">
+      </ContainerDataType>
+
       <ContainerDataType name="CommandBase" baseType="CCSDS/CommandPacket" shortDescription="Base type for all Event Services commands">
       </ContainerDataType>
 
@@ -1288,7 +1291,7 @@
           <Interface name="SEND_HK" shortDescription="Send telemetry command interface" type="CFE_SB/Telecommand">
             <!-- This uses a bare spacepacket with no payload -->
             <GenericTypeMapSet>
-              <GenericTypeMap name="TelecommandDataType" type="CCSDS/CommandPacket" />
+              <GenericTypeMap name="TelecommandDataType" type="SendHkCommand" />
             </GenericTypeMapSet>
           </Interface>
           <Interface name="HK_TLM" shortDescription="Software bus housekeeping telemetry interface" type="CFE_SB/Telemetry">

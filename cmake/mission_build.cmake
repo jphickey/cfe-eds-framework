@@ -111,11 +111,6 @@ function(prepare)
   
   message(STATUS "Search path for modules: ${MISSION_MODULE_SEARCH_PATH}")
   
-  # edslib and missionlib which exist under tools/eds (EDS runtime libraries)
-  set(edslib_SEARCH_PATH "tools/eds")
-  set(missionlib_SEARCH_PATH "tools/eds/cfecfs")
-  list(APPEND MISSION_DEPS edslib missionlib)
-
   # Now search for the rest of CFS applications/libraries/modules - these may exist in
   # any directory within the search path.  
   foreach(APP ${MISSION_DEPS})
@@ -164,7 +159,7 @@ function(prepare)
     ${MISSION_DEFS}/eds/*.lua
     ${MISSION_SOURCE_DIR}/tools/eds/tool/scripts/*.lua
   )
-  foreach(APP ${MISSION_APPS} ${MISSION_DEPS})
+  foreach(APP ${MISSION_DEPS})
     set(APPSRC ${${APP}_MISSION_DIR})
     if (IS_DIRECTORY ${APPSRC}/functional-test AND DEFINED FT_INSTALL_SUBDIR)    
       install(DIRECTORY ${APPSRC}/functional-test/ DESTINATION ${FT_INSTALL_SUBDIR})

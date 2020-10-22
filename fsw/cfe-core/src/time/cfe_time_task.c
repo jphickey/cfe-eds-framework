@@ -53,12 +53,12 @@ CFE_TIME_TaskData_t CFE_TIME_TaskData;
 /*
 ** Command handler for "HK request"...
 */
-int32 CFE_TIME_HousekeepingCmd(const CFE_SB_CmdHdr_t *data);
+int32 CFE_TIME_HousekeepingCmd(const CFE_TIME_SendHkCommand_t *data);
 
 /*
 ** Command handler for "tone signal detected"...
 */
-int32 CFE_TIME_ToneSignalCmd(const CFE_SB_CmdHdr_t *data);
+int32 CFE_TIME_ToneSignalCmd(const CFE_TIME_ToneSignalCommand_t *data);
 
 /*
 ** Command handler for "time at the tone"...
@@ -68,7 +68,7 @@ int32 CFE_TIME_ToneDataCmd(const CFE_TIME_ToneDataCmd_t *data);
 /*
 ** Command handler for 1Hz signal...
 */
-int32 CFE_TIME_OneHzCmd(const CFE_SB_CmdHdr_t *data);
+int32 CFE_TIME_OneHzCmd(const CFE_TIME_OneHzCommand_t *data);
 
 /*
 ** Command handler for "request time at the tone"...
@@ -86,7 +86,7 @@ int32 CFE_TIME_OneHzCmd(const CFE_SB_CmdHdr_t *data);
 **       non-fake tone mode.
 */
 #if (CFE_PLATFORM_TIME_CFG_SERVER == true)
-int32 CFE_TIME_ToneSendCmd(const CFE_SB_CmdHdr_t *data);
+int32 CFE_TIME_ToneSendCmd(const CFE_TIME_ToneSendCommand_t *data);
 #endif
 
 /*
@@ -519,7 +519,7 @@ void CFE_TIME_TaskPipe(CFE_SB_MsgPtr_t MessagePtr)
 /*                                                                 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-int32 CFE_TIME_HousekeepingCmd(const CFE_SB_CmdHdr_t *data)
+int32 CFE_TIME_HousekeepingCmd(const CFE_TIME_SendHkCommand_t *data)
 {
     CFE_TIME_Reference_t Reference;
 
@@ -559,7 +559,7 @@ int32 CFE_TIME_HousekeepingCmd(const CFE_SB_CmdHdr_t *data)
 /*                                                                 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-int32 CFE_TIME_ToneSignalCmd(const CFE_SB_CmdHdr_t *data)
+int32 CFE_TIME_ToneSignalCmd(const CFE_TIME_ToneSignalCommand_t *data)
 {
     /*
     ** Indication that tone signal occurred recently...
@@ -608,7 +608,7 @@ int32 CFE_TIME_ToneDataCmd(const CFE_TIME_ToneDataCmd_t *data)
  * as we do not need a separate MID for this job.
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-int32 CFE_TIME_OneHzCmd(const CFE_SB_CmdHdr_t *data)
+int32 CFE_TIME_OneHzCmd(const CFE_TIME_OneHzCommand_t *data)
 {
     /*
      * Run the state machine updates required at 1Hz.
@@ -641,7 +641,7 @@ int32 CFE_TIME_OneHzCmd(const CFE_SB_CmdHdr_t *data)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #if (CFE_PLATFORM_TIME_CFG_SERVER == true)
-int32 CFE_TIME_ToneSendCmd(const CFE_SB_CmdHdr_t *data)
+int32 CFE_TIME_ToneSendCmd(const CFE_TIME_ToneSendCommand_t *data)
 {
     /*
     ** Request for "time at tone" data packet (probably scheduler)...

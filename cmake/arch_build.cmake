@@ -445,18 +445,19 @@ function(process_arch SYSVAR)
 
   # Generated EDS files all use a generalized mission name prefix in lowercase
   string(TOLOWER ${MISSION_NAME}_eds EDS_FILE_PREFIX)
+  file(RELATIVE_PATH BINARY_SUBDIR ${MISSION_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR})
   
   add_custom_target(${SYSVAR}-eds-db
     COMMAND ${CMAKE_BUILD_TOOL} -j1
         -f ${EDS_FILE_PREFIX}_db_objects.mk 
-        O=${SYSID_${SYSVAR}}/obj 
+        O=${BINARY_SUBDIR}/obj 
         CC=${CMAKE_C_COMPILER}
         LD=${CMAKE_LINKER}
         AR=${CMAKE_AR}
         CFLAGS=${CMAKE_C_FLAGS}
 	LDFLAGS=${CFE_TOOLCHAIN_LD_FLAGS}
-        "${SYSID_${SYSVAR}}/obj/${EDS_FILE_PREFIX}_db${CMAKE_STATIC_LIBRARY_SUFFIX}"
-        "${SYSID_${SYSVAR}}/obj/${EDS_FILE_PREFIX}_db${CMAKE_SHARED_MODULE_SUFFIX}"
+        "${BINARY_SUBDIR}/obj/${EDS_FILE_PREFIX}_db${CMAKE_STATIC_LIBRARY_SUFFIX}"
+        "${BINARY_SUBDIR}/obj/${EDS_FILE_PREFIX}_db${CMAKE_SHARED_MODULE_SUFFIX}"
     WORKING_DIRECTORY
         ${MISSION_BINARY_DIR}
     VERBATIM
@@ -465,14 +466,14 @@ function(process_arch SYSVAR)
   add_custom_target(${SYSVAR}-eds-interfacedb
     COMMAND ${CMAKE_BUILD_TOOL} -j1
         -f ${EDS_FILE_PREFIX}_interfacedb_objects.mk 
-        O=${SYSID_${SYSVAR}}/obj 
+        O=${BINARY_SUBDIR}/obj 
         CC=${CMAKE_C_COMPILER} 
         LD=${CMAKE_LINKER}
         AR=${CMAKE_AR} 
         CFLAGS=${CMAKE_C_FLAGS} 
 	LDFLAGS=${CFE_TOOLCHAIN_LD_FLAGS}
-        "${SYSID_${SYSVAR}}/obj/${EDS_FILE_PREFIX}_interfacedb${CMAKE_STATIC_LIBRARY_SUFFIX}"
-        "${SYSID_${SYSVAR}}/obj/${EDS_FILE_PREFIX}_interfacedb${CMAKE_SHARED_MODULE_SUFFIX}"
+        "${BINARY_SUBDIR}/obj/${EDS_FILE_PREFIX}_interfacedb${CMAKE_STATIC_LIBRARY_SUFFIX}"
+        "${BINARY_SUBDIR}/obj/${EDS_FILE_PREFIX}_interfacedb${CMAKE_SHARED_MODULE_SUFFIX}"
     WORKING_DIRECTORY
         ${MISSION_BINARY_DIR}
     VERBATIM
@@ -541,6 +542,12 @@ function(process_arch SYSVAR)
   if (NOT TARGET psp)
     add_library(psp ALIAS psp-${CFE_SYSTEM_PSPNAME})
   endif (NOT TARGET psp)
+    
+  # EDS aliases - due to the generic nature of EdsLib the
+  # target names do not exactly match CFE expectations.
+  add_library(edslib ALIAS edslib_minimal)
+  add_library(missionlib ALIAS cfe_missionlib)
+
     
   # Process each PSP module that is referenced on this system architecture (any cpu)
   foreach(PSPMOD ${TGTSYS_${SYSVAR}_PSPMODULES}) 

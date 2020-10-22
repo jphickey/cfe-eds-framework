@@ -8,7 +8,7 @@
 # 
 ###########################################################
 
-# Generate the "cfe_platform_cfg.h" and "cfe_msgids.h" header files
+# Generate the "cfe_platform_cfg.h" header files
 # these must come from mission config
 
 generate_config_includefile(
@@ -17,9 +17,4 @@ generate_config_includefile(
     PREFIXES            ${BUILD_CONFIG}
 )
 
-generate_config_includefile(
-    FILE_NAME           "cfe_msgids.h" 
-    MATCH_SUFFIX        "msgids.h"
-    PREFIXES            ${BUILD_CONFIG}
-)
 

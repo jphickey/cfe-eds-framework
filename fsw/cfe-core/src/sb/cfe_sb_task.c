@@ -458,7 +458,7 @@ int32 CFE_SB_DisableSubReportingCmd(const CFE_SB_DisableSubReporting_t *data)
 **  Return:
 **    none
 */
-int32 CFE_SB_SendHKTlmCmd(const CFE_SB_CmdHdr_t *data)
+int32 CFE_SB_SendHKTlmCmd(const CFE_SB_SendHkCommand_t *data)
 {
     CFE_SB.HKTlmMsg.Payload.MemInUse        = CFE_SB.StatTlmMsg.Payload.MemInUse;
     CFE_SB.HKTlmMsg.Payload.UnmarkedMem     = CFE_PLATFORM_SB_BUF_MEMORY_BYTES - CFE_SB.StatTlmMsg.Payload.PeakMemInUse;

@@ -495,7 +495,6 @@ void Test_SB_Cmds(void)
     SB_UT_ADD_SUBTEST(Test_SB_Cmds_SubRptOn);
     SB_UT_ADD_SUBTEST(Test_SB_Cmds_SubRptOff);
     SB_UT_ADD_SUBTEST(Test_SB_Cmds_CmdUnexpCmdCode);
-    SB_UT_ADD_SUBTEST(Test_SB_Cmds_SubRptUnexpCmdCode);
     SB_UT_ADD_SUBTEST(Test_SB_Cmds_BadCmdLength);
     SB_UT_ADD_SUBTEST(Test_SB_Cmds_UnexpMsgId);
 } /* end Test_SB_Cmds */

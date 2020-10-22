@@ -39,7 +39,7 @@ file (REMOVE "${CMAKE_CURRENT_BINARY_DIR}/cfs_static_symbol_list.inc.tmp")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Reference the EDSLIB includes to instantiate the EDS-related objects
-include_directories(${EDSLIB_FSW_SOURCE_DIR}/inc)
+include_directories(${edslib_MISSION_DIR}/fsw/inc)
 
 # The CPU ID and name are defined by the build scripts for this target
 if (DEFINED TGTID)
@@ -138,11 +138,6 @@ else(CFE_SYSTEM_EDSDB_DYNAMIC_LINK)
         
 endif(CFE_SYSTEM_EDSDB_DYNAMIC_LINK)    
 
-# When EDS is in use then include additional libraries in the link line
-list(APPEND CFE_LINK_WHOLE_LIBS 
-    edslib_minimal 
-    cfe_missionlib
-)
 list(APPEND CFE_LINK_NORMAL_LIBS 
     cfe_edsdb_static 
     cfe_missionlib_runtime_static 

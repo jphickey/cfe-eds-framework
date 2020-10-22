@@ -84,7 +84,9 @@ static const CFE_ES_Application_Component_Telecommand_DispatchTable_t CFE_ES_TC_
                 .Noop_indication = CFE_ES_NoopCmd,
                 .ResetCounters_indication = CFE_ES_ResetCountersCmd,
                 .Restart_indication = CFE_ES_RestartCmd,
+#ifndef CFE_OMIT_DEPRECATED_6_7
                 .Shell_indication = CFE_ES_ShellCmd,
+#endif
                 .StartApp_indication = CFE_ES_StartAppCmd,
                 .StopApp_indication = CFE_ES_StopAppCmd,
                 .RestartApp_indication = CFE_ES_RestartAppCmd,
@@ -531,7 +533,7 @@ void CFE_ES_TaskPipe(CFE_SB_MsgPtr_t Msg)
 /*                                                                 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-int32 CFE_ES_HousekeepingCmd(const CFE_SB_CmdHdr_t *data)
+int32 CFE_ES_HousekeepingCmd(const CFE_ES_SendHkCommand_t *data)
 {
     OS_heap_prop_t HeapProp;
     int32          stat;

@@ -108,7 +108,8 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,                   /* Ret
 {
     UT_Stub_RegisterContext(UT_KEY(CFE_TBL_Register), TblHandlePtr);
     UT_Stub_RegisterContext(UT_KEY(CFE_TBL_Register), Name);
-    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Register), Size);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Register), EdsAppIdx);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Register), EdsTypeIdx);
     UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Register), TblOptionFlags);
     UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Register), TblValidationFuncPtr);
 

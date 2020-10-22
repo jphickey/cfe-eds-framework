@@ -11,6 +11,8 @@
 # of the CFE core executable on every target.  These can be used to amend
 # or override parts of the CFE core on a mission-specific basis.
 set(MISSION_CORE_MODULES 
+    "edslib"
+    "missionlib"
     "cfe-core" 
     "osal"
     "psp"
@@ -45,3 +47,10 @@ set(MISSION_MODULE_SEARCH_PATH
 set(cfe-core_SEARCH_PATH "cfe/fsw")
 set(osal_SEARCH_PATH ".")
 set(psp_SEARCH_PATH ".")
+
+# edslib and missionlib which exist under tools/eds (EDS runtime libraries)
+set(edslib_SEARCH_PATH "tools/eds")
+set(missionlib_SEARCH_PATH "tools/eds/cfecfs")
+
+
+
