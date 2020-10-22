@@ -36,16 +36,3 @@
 #include "cfe_sb.h"
 
 
-typedef struct
-{
-    uint16       TopicId;
-    CFE_SB_Qos_t Qos;
-    uint16       BufLimit;
-} TO_LAB_Sub_t;
-
-typedef struct
-{
-    TO_LAB_Sub_t Subs[32];
-}
-TO_LAB_Subs_t;
-

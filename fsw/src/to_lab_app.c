@@ -75,7 +75,7 @@ typedef struct
     TO_LAB_HkTlm_Buffer_t     HkBuf;
     TO_LAB_DataTypes_Buffer_t DataTypesBuf;
 
-    CFE_SB_MsgId_t StreamIdTable[sizeof(TO_SubTable) / sizeof(TO_SubTable[0])]; /* runtime calculated values */
+    CFE_SB_MsgId_t StreamIdTable[CFE_MISSION_TO_LAB_MAX_SUBSCRIPTION_ENTRIES]; /* runtime calculated values */
     uint8          NetworkPacketBuffer[TO_LAB_MAX_OUTPUT];
 } TO_LAB_GlobalData_t;
 
@@ -111,7 +111,7 @@ int32 TO_LAB_RemoveAll(const TO_LAB_RemoveAll_t *data);
 int32 TO_LAB_RemovePacket(const TO_LAB_RemovePacket_t *data);
 int32 TO_LAB_ResetCounters(const TO_LAB_ResetCounters_t *data);
 int32 TO_LAB_SendDataTypes(const TO_LAB_SendDataTypes_t *data);
-int32 TO_LAB_SendHousekeeping(const CFE_SB_CmdHdr_t *data);
+int32 TO_LAB_SendHousekeeping(const TO_LAB_SendHkCommand_t *data);
 
 static const TO_LAB_Application_Component_Telecommand_DispatchTable_t TO_LAB_TC_DISPATCH_TABLE = {
     .CMD     = {.AddPacket_indication     = TO_LAB_AddPacket,
@@ -185,6 +185,7 @@ int32 TO_LAB_init(void)
     uint16 i;
     char   ToTlmPipeName[16];
     uint16 ToTlmPipeDepth;
+    CFE_SB_MsgId_t MsgId;
 
     CFE_ES_RegisterApp();
     TO_LAB_Global.downlink_on = false;
@@ -209,7 +210,7 @@ int32 TO_LAB_init(void)
     */
     CFE_SB_InitMsg(&TO_LAB_Global.HkBuf.MsgHdr, TO_LAB_HK_TLM_MID, sizeof(TO_LAB_Global.HkBuf.HkTlm), true);
 
-    status = CFE_TBL_Register(&TO_SubTblHandle, "TO_LAB_Subs", sizeof(*TO_LAB_Subs), CFE_TBL_OPT_DEFAULT, NULL);
+    status = CFE_TBL_Register(&TO_SubTblHandle, "TO_LAB_Subs", EDS_INDEX(TO_LAB), TO_LAB_Subs_DATADICTIONARY, CFE_TBL_OPT_DEFAULT, NULL);
 
     if (status != CFE_SUCCESS)
     {
@@ -253,25 +254,30 @@ int32 TO_LAB_init(void)
     }
 
     /* Subscriptions for TLM pipe*/
-    for (i = 0; (i < (sizeof(TO_LAB_Subs->Subs) / sizeof(TO_LAB_Subs->Subs[0]))); i++)
+    for (i = 0; i < CFE_MISSION_TO_LAB_MAX_SUBSCRIPTION_ENTRIES; i++)
     {
-        CFE_SB_MsgId_t MsgId = CFE_SB_MsgId_From_TopicId(TO_SubTable[i].TopicId);
-        if (TO_SubTable[i].TopicId != TO_UNUSED)
+        if (TO_LAB_Subs->Subs[i].TopicId != TO_UNUSED)
         {
-            TO_LAB_Global.StreamIdTable[i] = MsgId;
-            status = CFE_SB_SubscribeEx(TO_LAB_Global.StreamIdTable[i], TO_LAB_Global.Tlm_pipe, TO_SubTable[i].Qos,
-                                        TO_SubTable[i].BufLimit);
+            MsgId = CFE_SB_MsgId_From_TopicId(TO_LAB_Subs->Subs[i].TopicId);
+            status = CFE_SB_SubscribeEx(MsgId,
+                    TO_LAB_Global.Tlm_pipe,
+                    TO_LAB_Subs->Subs[i].Qos,
+                    TO_LAB_Subs->Subs[i].BufLimit);
+
             if (status != CFE_SUCCESS)
             {
                 CFE_EVS_SendEvent(TO_SUBSCRIBE_ERR_EID, CFE_EVS_EventType_ERROR,
                                   "L%d TO Can't subscribe to stream 0x%x status %i", __LINE__,
-                                  (unsigned int)CFE_SB_MsgIdToValue(TO_LAB_Global.StreamIdTable[i]), (int)status);
+                                  (unsigned int)CFE_SB_MsgIdToValue(MsgId), (int)status);
             }
         }
         else
         {
-            TO_LAB_Global.StreamIdTable[i] = CFE_SB_INVALID_MSG_ID;
+            MsgId = CFE_SB_INVALID_MSG_ID;
+            status = CFE_SUCCESS;
         }
+
+        TO_LAB_Global.StreamIdTable[i] = MsgId;
 
         if (status != CFE_SUCCESS)
             CFE_EVS_SendEvent(TO_SUBSCRIBE_ERR_EID, CFE_EVS_EventType_ERROR,
@@ -427,7 +433,7 @@ int32 TO_LAB_SendDataTypes(const TO_LAB_SendDataTypes_t *data)
 /* TO_LAB_SendHousekeeping() -- HK status                          */
 /* Does not increment CommandCounter                               */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-int32 TO_LAB_SendHousekeeping(const CFE_SB_CmdHdr_t *data)
+int32 TO_LAB_SendHousekeeping(const TO_LAB_SendHkCommand_t *data)
 {
     CFE_SB_TimeStampMsg(&TO_LAB_Global.HkBuf.MsgHdr);
     CFE_SB_SendMsg(&TO_LAB_Global.HkBuf.MsgHdr);
@@ -571,9 +577,9 @@ void TO_LAB_forward_telemetry(void)
     {
         CFE_SB_status = CFE_SB_RcvMsg(&PktPtr, TO_LAB_Global.Tlm_pipe, CFE_SB_POLL);
 
-        if ((CFE_SB_status == CFE_SUCCESS) && (TO_LAB_Global.suppress_sendto == FALSE))
+        if ((CFE_SB_status == CFE_SUCCESS) && (!TO_LAB_Global.suppress_sendto))
         {
-            if (TO_LAB_Global.downlink_on == TRUE)
+            if (TO_LAB_Global.downlink_on)
             {
                 CFE_ES_PerfLogEntry(TO_SOCKET_SEND_PERF_ID);
 

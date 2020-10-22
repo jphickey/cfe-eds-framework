@@ -85,6 +85,9 @@
         </EntryList>
       </ContainerDataType>
 
+      <ContainerDataType name="SendHkCommand" baseType="CCSDS/CommandPacket">
+      </ContainerDataType>
+
       <ContainerDataType name="CMD" baseType="CCSDS/CommandPacket">
       </ContainerDataType>
 
@@ -150,6 +153,26 @@
           <Entry type="EnableOutput_Payload" name="Payload" />
         </EntryList>
       </ContainerDataType>
+      
+      <ContainerDataType name="Sub">
+        <EntryList>
+          <Entry type="BASE_TYPES/uint16" name="TopicId" />
+          <Entry type="CFE_SB/Qos" name="Qos" />
+          <Entry type="BASE_TYPES/uint16" name="BufLimit" />
+        </EntryList>
+      </ContainerDataType>
+
+      <ArrayDataType name="Sublist" dataTypeRef="Sub">
+        <DimensionList>
+          <Dimension size="${CFE_MISSION/TO_LAB_MAX_SUBSCRIPTION_ENTRIES}" />
+        </DimensionList>
+      </ArrayDataType>
+      
+      <ContainerDataType name="Subs">
+        <EntryList>
+          <Entry type="Sublist" name="Subs" />
+        </EntryList>
+      </ContainerDataType>
 
     </DataTypeSet>
     
@@ -164,7 +187,7 @@
           <Interface name="SEND_HK" shortDescription="Send telemetry command interface" type="CFE_SB/Telecommand">
             <!-- This uses a bare spacepacket with no payload -->
             <GenericTypeMapSet>
-              <GenericTypeMap name="TelecommandDataType" type="CCSDS/CommandPacket" />
+              <GenericTypeMap name="TelecommandDataType" type="SendHkCommand" />
             </GenericTypeMapSet>
           </Interface>
           <Interface name="HK_TLM" shortDescription="Software bus housekeeping telemetry interface" type="CFE_SB/Telemetry">

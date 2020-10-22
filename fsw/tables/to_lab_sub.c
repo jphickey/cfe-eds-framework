@@ -57,41 +57,26 @@ TO_LAB_Subs_t TO_LAB_Subs =
     .Subs =
     {
         /* CFS App Subscriptions */
-        {CFE_SB_MSGID_WRAP_VALUE(TO_LAB_HK_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(TO_LAB_DATA_TYPES_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CI_LAB_HK_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(SAMPLE_APP_HK_TLM_MID), {0, 0}, 4},
-
-    #if 0
-        /* Add these if needed */
-        {CFE_SB_MSGID_WRAP_VALUE(HS_HK_TLM_MID), {0,0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(FM_HK_TLM_MID), {0,0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(SC_HK_TLM_MID), {0,0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(DS_HK_TLM_MID), {0,0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(LC_HK_TLM_MID), {0,0}, 4},
-    #endif
+        {CFE_MISSION_TO_LAB_HK_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_TO_LAB_DATA_TYPES_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_CI_LAB_HK_TLM_TOPICID, {0, 0}, 4},
 
         /* cFE Core subscriptions */
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_ES_HK_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_EVS_HK_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_SB_HK_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_TBL_HK_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_TIME_HK_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_TIME_DIAG_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_SB_STATS_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_TBL_REG_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_EVS_LONG_EVENT_MSG_MID), {0, 0}, 32},
-
-    #ifndef CFE_OMIT_DEPRECATED_6_7
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_ES_SHELL_TLM_MID), {0, 0}, 32},
-    #endif
-
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_ES_APP_TLM_MID), {0, 0}, 4},
-        {CFE_SB_MSGID_WRAP_VALUE(CFE_ES_MEMSTATS_TLM_MID), {0, 0}, 4},
+        {CFE_MISSION_ES_HK_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_EVS_HK_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_SB_HK_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_TBL_HK_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_TIME_HK_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_TIME_DIAG_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_SB_STATS_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_TBL_REG_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_EVS_LONG_EVENT_MSG_TOPICID, {0, 0}, 32},
+        {CFE_MISSION_ES_APP_TLM_TOPICID, {0, 0}, 4},
+        {CFE_MISSION_ES_MEMSTATS_TLM_TOPICID, {0, 0}, 4},
 
         /* TO_UNUSED entry to mark the end of valid MsgIds */
         {TO_UNUSED, {0, 0}, 0}
     }
 };
 
-CFE_TBL_FILEDEF(TO_LAB_Subs, TO_LAB_APP.TO_LAB_Subs, TO Lab Sub Tbl, to_lab_sub.tbl)
+CFE_TBL_FILEDEF(TO_LAB_Subs, "TO_LAB_APP.TO_LAB_Subs", "TO Lab Sub Tbl", "to_lab_sub.tbl", "TO_LAB/Subs")
