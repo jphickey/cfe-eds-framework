@@ -10,6 +10,24 @@ To send telemtry to the "ground" or UDP/IP port, edit the subscription table in 
 
 ## Version History
 
+### Development Build: 2.3.0+dev45
+
+- Fixes bug where an unset address values caused subscriptions to MsgId 0 over 200 times. Added a `TO_UNUSED` entry at the end of the subscription list and a break in the subscription loop when `TO_UNUSED` found. No more subscriptions on the unused table slots (no MsgId 0 subscriptions).
+- Corrects return value of `TO_LAB_init()` to be `int32` instead of `int`. Declaration now matches definition, and app builds without errors.
+- Add build number and baseline to version reporting.
+- See <https://github.com/nasa/to_lab/pull/53>
+
+### Development Build: 2.3.7
+
+- Makes the `TO_LAB_Subs` table into a CFE_TBL-managed table.
+- See <https://github.com/nasa/to_lab/pull/46>
+
+
+### Development Build: 2.3.6
+
+- Replace references to `ccsds.h` types with the `cfe_sb.h`-provided type. 
+- See <https://github.com/nasa/to_lab/pull/44>
+
 ### Development Build: 2.3.5
 
 - Apply code style
@@ -40,7 +58,7 @@ To send telemtry to the "ground" or UDP/IP port, edit the subscription table in 
 - Fix for a clean build with OMIT_DEPRECATED
 - Minor updates (see <https://github.com/nasa/to_lab/pull/26>)
 
-### _**OFFICIAL RELEASE: 2.3.0**_
+### _**OFFICIAL RELEASE: 2.3.0 - Aquila**_
 
 - Minor updates (see <https://github.com/nasa/to_lab/pull/13>)
 
