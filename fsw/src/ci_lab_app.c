@@ -93,7 +93,7 @@ static CFE_EVS_BinFilter_t CI_LAB_EventFilters[] =
  */
 int32 CI_LAB_Noop(const CI_LAB_Noop_t *data);
 int32 CI_LAB_ResetCounters(const CI_LAB_ResetCounters_t *data);
-int32 CI_LAB_ReportHousekeeping(const CFE_SB_CmdHdr_t *data);
+int32 CI_LAB_ReportHousekeeping(const CI_LAB_SendHkCommand_t *data);
 
 /*
  * Define a lookup table for CI lab command codes
@@ -271,7 +271,7 @@ int32 CI_LAB_ResetCounters(const CI_LAB_ResetCounters_t *data)
 /*         telemetry, packetize it and send it to the housekeeping task via   */
 /*         the software bus                                                   */
 /* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
-int32 CI_LAB_ReportHousekeeping(const CFE_SB_CmdHdr_t *data)
+int32 CI_LAB_ReportHousekeeping(const CI_LAB_SendHkCommand_t *data)
 {
     CI_LAB_Global.HkBuffer.HkTlm.Payload.SocketConnected = CI_LAB_Global.SocketConnected;
     CFE_SB_TimeStampMsg(&CI_LAB_Global.HkBuffer.MsgHdr);
