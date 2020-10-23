@@ -8,6 +8,27 @@ This is a collection of APIs abstracting platform specific functionality to be l
 
 ## Version History
 
+### Development Build: 1.4.0+dev76
+
+- Provide a new framework and perform PSP coverage tests. New coverage test executable is built and several files within PSP are targeted.
+- See <https://github.com/nasa/PSP/pull/184>
+ 
+### Development Build: 1.4.0+dev71
+
+- Restructure code to make more amicable for rebuilding in a unit test environment. No major changes, primarily just shifting code between locations/headers to support unit testing.
+-  Adds a char element `Version` to `CFE_PSP_VersionInfo_t` containing the version number expressed as a string. Defines new macros for the Build Number and the Build Baseline.
+- See <https://github.com/nasa/PSP/pull/176>
+
+### Development Build: 1.4.14
+
+- Changes the PSP reference to be compatible with the change in nasa/osal#449 making the BSP modules more generic and changes the name.
+- See <https://github.com/nasa/PSP/pull/175>
+
+### Development Build: 1.4.13
+
+- Changes the PSP reference to be compatible with the change in nasa/osal#449 making the BSP modules more generic and changes the name.
+- See <https://github.com/nasa/PSP/pull/167>
+
 ### Development Build: 1.4.12
 
 - Replace 'OS_VolumeTable' with OS_FileSysAddFixedMap() in all PSPs.
@@ -19,7 +40,7 @@ This is a collection of APIs abstracting platform specific functionality to be l
 - Exception handling is now implemented on POSIX. There is no longer a separate handler for SIGINT - it is now treated as an exception and goes through the normal process which ends up "restarting" CFE. On pc-linux causes the process to exit normally. There is now a mechanism to capture the CTRL+C exception code and use it during normal test cycles.
 - See <https://github.com/nasa/PSP/pull/160>
 
-#### Development Build: 1.4.10
+### Development Build: 1.4.10
 
 - Implements full-precision microsecond conversion
 - See <https://github.com/nasa/PSP/pull/155>
@@ -64,7 +85,7 @@ This is a collection of APIs abstracting platform specific functionality to be l
 
 - Minor updates (see <https://github.com/nasa/PSP/pull/115>)
 
-### **_1.4.0 OFFICIAL RELEASE_**
+### **_1.4.0 OFFICIAL RELEASE - Aquila_**
 
 - This is a point release from an internal repository
 - Changes are detailed in [cFS repo](https://github.com/nasa/cFS) release documentation
