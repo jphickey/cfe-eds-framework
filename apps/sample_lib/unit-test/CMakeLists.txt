@@ -62,10 +62,9 @@ foreach(SRCFILE ${LIB_SRC_FILES})
         ${UNIT_SOURCE_FILE}
     )    
     
-    # Apply the UT_C_FLAGS to the units under test
+    # Apply the UT_COVERAGE_COMPILE_FLAGS to the units under test
     # This should enable coverage analysis on platforms that support this
-    set_target_properties(ut_${TESTNAME}_object PROPERTIES
-        COMPILE_FLAGS "${UT_C_FLAGS}")
+    target_compile_options(ut_${TESTNAME}_object PRIVATE ${UT_COVERAGE_COMPILE_FLAGS})
         
     # For this object target only, the "override" includes should be injected
     # into the include path BEFORE any other include path.  This is so the
@@ -80,13 +79,11 @@ foreach(SRCFILE ${LIB_SRC_FILES})
         $<TARGET_OBJECTS:ut_${TESTNAME}_object>
     )
     
-    # This also needs to be linked with UT_C_FLAGS (for coverage)
-    set_target_properties(${TESTNAME}-testrunner PROPERTIES 
-        LINK_FLAGS "${UT_C_FLAGS}")
-    
+    # This also needs to be linked with UT_COVERAGE_LINK_FLAGS (for coverage)
     # This is also linked with any other stub libraries needed,
     # as well as the UT assert framework    
     target_link_libraries(${TESTNAME}-testrunner
+        ${UT_COVERAGE_LINK_FLAGS}
         ut_${UT_NAME}_stubs
         ut_${UT_NAME}_overrides
         ut_cfe-core_stubs
@@ -95,6 +92,7 @@ foreach(SRCFILE ${LIB_SRC_FILES})
     
     # Add it to the set of tests to run as part of "make test"
     add_test(${TESTNAME} ${TESTNAME}-testrunner)
+    install(TARGETS ${TESTNAME}-testrunner DESTINATION ${TGTNAME}/${UT_INSTALL_SUBDIR})
     
 endforeach()
 

@@ -37,8 +37,6 @@
 /* prototypes normally declared in string.h */
 /* ----------------------------------------- */
 
-extern char *OCS_strncpy (char * dest, const char * src, unsigned long size);
-
+extern char *OCS_strncpy(char *dest, const char *src, unsigned long size);
 
 #endif /* _STUB_STRING_H_ */
-

@@ -64,16 +64,14 @@ int32 SAMPLE_LibInit(void)
      */
     return UT_DEFAULT_IMPL(SAMPLE_LibInit);
 
-}/* End SAMPLE_LibInit */
+} /* End SAMPLE_LibInit */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */
 /* Sample Lib function stub                                        */
 /*                                                                 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-int32 SAMPLE_Function( void )
+int32 SAMPLE_Function(void)
 {
     return UT_DEFAULT_IMPL(SAMPLE_Function);
-
 } /* End SAMPLE_Function */
-

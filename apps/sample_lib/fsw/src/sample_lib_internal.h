@@ -20,7 +20,7 @@
 **
 ** File: sample_lib_internal.h
 **
-** Purpose: 
+** Purpose:
 **  An example of an internal (private) header file for SAMPLE Lib
 **
 ** Notes:
@@ -36,8 +36,7 @@
 ** Macro Definitions
 *************************************************************************/
 
-#define SAMPLE_LIB_BUFFER_SIZE      16
-
+#define SAMPLE_LIB_BUFFER_SIZE 16
 
 /*************************************************************************
 ** Internal Data Structures
@@ -53,7 +52,6 @@ extern char SAMPLE_Buffer[SAMPLE_LIB_BUFFER_SIZE];
  */
 int32 SAMPLE_LibInit(void);
 
-      
 #endif /* _sample_lib_internal_h_ */
 
 /************************/

@@ -39,8 +39,6 @@
 /* mappings for declarations in string.h */
 /* ----------------------------------------- */
 
-#define strncpy     OCS_strncpy
-
+#define strncpy OCS_strncpy
 
 #endif /* _OVERRIDE_STRING_H_ */
-

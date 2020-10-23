@@ -49,13 +49,12 @@
  */
 #include <OCS_string.h>
 
-
 /* **********************************
  * Implementation of OCS_strncpy stub
  * **********************************/
 char *OCS_strncpy(char *dst, const char *src, unsigned long size)
 {
-    int32 Status;
+    int32  Status;
     uint32 CopySize;
 
     Status = UT_DEFAULT_IMPL(OCS_strncpy);
@@ -66,7 +65,7 @@ char *OCS_strncpy(char *dst, const char *src, unsigned long size)
          * a "failure" response -
          * the real C library would never do this.
          */
-        return (char*)0;
+        return (char *)0;
     }
     /*
      * Demonstrate use of a test-provided local data buffer

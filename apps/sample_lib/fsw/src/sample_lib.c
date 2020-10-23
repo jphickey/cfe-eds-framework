@@ -20,7 +20,7 @@
 **
 ** File: sample_lib.c
 **
-** Purpose: 
+** Purpose:
 **   Sample CFS library
 **
 *************************************************************************/
@@ -42,7 +42,7 @@ char SAMPLE_Buffer[SAMPLE_LIB_BUFFER_SIZE];
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */
 /* Library Initialization Routine                                  */
-/* cFE requires that a library have an initialization routine      */ 
+/* cFE requires that a library have an initialization routine      */
 /*                                                                 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int32 SAMPLE_LibInit(void)
@@ -57,37 +57,31 @@ int32 SAMPLE_LibInit(void)
      * the pointer to the destination buffer, so it should be impossible
      * for this to ever fail when linked with a compliant C library.
      */
-    if (strncpy(SAMPLE_Buffer, "SAMPLE DATA", sizeof(SAMPLE_Buffer)-1) !=
-            SAMPLE_Buffer)
+    if (strncpy(SAMPLE_Buffer, "SAMPLE DATA", sizeof(SAMPLE_Buffer) - 1) != SAMPLE_Buffer)
     {
         return CFE_STATUS_NOT_IMPLEMENTED;
     }
-    
+
     /* ensure termination */
-    SAMPLE_Buffer[sizeof(SAMPLE_Buffer)-1] = 0;
+    SAMPLE_Buffer[sizeof(SAMPLE_Buffer) - 1] = 0;
 
+    OS_printf("SAMPLE Lib Initialized.%s\n", SAMPLE_LIB_VERSION_STRING);
 
-    OS_printf ("SAMPLE Lib Initialized.  Version %d.%d.%d.%d\n",
-                SAMPLE_LIB_MAJOR_VERSION,
-                SAMPLE_LIB_MINOR_VERSION, 
-                SAMPLE_LIB_REVISION, 
-                SAMPLE_LIB_MISSION_REV);
-                
     return CFE_SUCCESS;
- 
-}/* End SAMPLE_LibInit */
+
+} /* End SAMPLE_LibInit */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */
-/* Sample Lib function                                             */ 
+/* Sample Lib function                                             */
 /*                                                                 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-int32 SAMPLE_Function( void ) 
+int32 SAMPLE_Function(void)
 {
-   OS_printf ("SAMPLE_Function called, buffer=\'%s\'\n", SAMPLE_Buffer);
+    OS_printf("SAMPLE_Function called, buffer=\'%s\'\n", SAMPLE_Buffer);
 
-   return(CFE_SUCCESS);
-   
+    return (CFE_SUCCESS);
+
 } /* End SAMPLE_Function */
 
 /************************/

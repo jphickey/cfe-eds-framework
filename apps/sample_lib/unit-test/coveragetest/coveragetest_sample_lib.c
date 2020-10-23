@@ -61,13 +61,12 @@ typedef struct
 
 } SAMPLE_Function_TestState_t;
 
-
 /*
  * A local helper (hook) function for the OS_printf stub provided by OSAL.
  * This confirms internal content of the format string and arguments.
  */
-static int32 UT_printf_hook(void *UserObj, int32 StubRetcode, uint32 CallCount,
-        const UT_StubContext_t *Context, va_list va)
+static int32 UT_printf_hook(void *UserObj, int32 StubRetcode, uint32 CallCount, const UT_StubContext_t *Context,
+                            va_list va)
 {
     SAMPLE_Function_TestState_t *State = UserObj;
 
@@ -77,9 +76,7 @@ static int32 UT_printf_hook(void *UserObj, int32 StubRetcode, uint32 CallCount,
      * detail would not be needed, but this serves as an example
      * of how it can be done.
      */
-    if (Context->ArgCount > 0 &&
-            strcmp(Context->ArgPtr[0],
-                    "SAMPLE_Function called, buffer=\'%s\'\n") == 0)
+    if (Context->ArgCount > 0 && strcmp(Context->ArgPtr[0], "SAMPLE_Function called, buffer=\'%s\'\n") == 0)
     {
         State->format_string_valid = true;
 
@@ -98,8 +95,6 @@ static int32 UT_printf_hook(void *UserObj, int32 StubRetcode, uint32 CallCount,
     return 0;
 }
 
-
-
 /*
 **********************************************************************************
 **          TEST CASE FUNCTIONS
@@ -115,8 +110,7 @@ void Test_SAMPLE_LibInit(void)
 
     /* Set a data buffer for strncpy()
      * This overriddes what it would normally do */
-    UT_SetDataBuffer(UT_KEY(OCS_strncpy), UT_TESTBUFFER,
-            sizeof (UT_TESTBUFFER), false);
+    UT_SetDataBuffer(UT_KEY(OCS_strncpy), UT_TESTBUFFER, sizeof(UT_TESTBUFFER), false);
 
     /* nominal case should return SUCCESS */
     UT_TEST_FUNCTION_RC(SAMPLE_LibInit(), CFE_SUCCESS);
@@ -132,8 +126,7 @@ void Test_SAMPLE_LibInit(void)
      * This requires use of the local accessor routine to get to the
      * internal buffer, which is declared "static"
      */
-    UtAssert_StrCmp(UT_TESTBUFFER, SAMPLE_Buffer,
-            "Internal buffer content valid");
+    UtAssert_StrCmp(UT_TESTBUFFER, SAMPLE_Buffer, "Internal buffer content valid");
 
     /* Test failure of the underlying library call */
     UT_SetForceFail(UT_KEY(OCS_strncpy), -1);
@@ -170,8 +163,6 @@ void Test_SAMPLE_Function(void)
     UtAssert_True(state.printf_content_valid, "OS_printf content test");
 }
 
-
-
 /*
  * Setup function prior to every test
  */
@@ -183,11 +174,7 @@ void Sample_UT_Setup(void)
 /*
  * Teardown function after every test
  */
-void Sample_UT_TearDown(void)
-{
-
-}
-
+void Sample_UT_TearDown(void) {}
 
 /*
  * Register the test cases to execute with the unit test tool
@@ -197,8 +184,3 @@ void UtTest_Setup(void)
     ADD_TEST(SAMPLE_LibInit);
     ADD_TEST(SAMPLE_Function);
 }
-
-
-
-
-
