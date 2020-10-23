@@ -393,8 +393,7 @@ void CFE_SB_ProcessCmdPipePkt(void)
 int32 CFE_SB_NoopCmd(const CFE_SB_Noop_t *data)
 {
     CFE_EVS_SendEvent(CFE_SB_CMD0_RCVD_EID,CFE_EVS_EventType_INFORMATION,
-            "No-op Cmd Rcvd. cFE Version %d.%d.%d.%d",
-            CFE_MAJOR_VERSION,CFE_MINOR_VERSION,CFE_REVISION,CFE_MISSION_REV);
+            "No-op Cmd Rcvd. %s", CFE_VERSION_STRING);
     CFE_SB.HKTlmMsg.Payload.CommandCounter++;
 
     return CFE_SUCCESS;
@@ -459,7 +458,7 @@ int32 CFE_SB_DisableSubReportingCmd(const CFE_SB_DisableSubReporting_t *data)
 **  Return:
 **    none
 */
-int32 CFE_SB_SendHKTlmCmd(const CCSDS_CommandPacket_t *data)
+int32 CFE_SB_SendHKTlmCmd(const CFE_SB_SendHkCommand_t *data)
 {
     CFE_SB.HKTlmMsg.Payload.MemInUse        = CFE_SB.StatTlmMsg.Payload.MemInUse;
     CFE_SB.HKTlmMsg.Payload.UnmarkedMem     = CFE_PLATFORM_SB_BUF_MEMORY_BYTES - CFE_SB.StatTlmMsg.Payload.PeakMemInUse;

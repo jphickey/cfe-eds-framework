@@ -67,7 +67,7 @@
         </EnumerationList>
       </EnumeratedDataType>
 
-      <ContainerDataType name="MsgQos" shortDescription="Quality of service parameters">
+      <ContainerDataType name="Qos" shortDescription="Quality of service parameters">
         <EntryList>
           <Entry name="Priority" type="QosPriority" shortDescription="Message priority for off-board routing (currently unused)" />
           <Entry name="Reliability" type="QosReliability" shortDescription="Message transfer reliability for off-board routing (currently unused)" />
@@ -344,7 +344,7 @@
         <EntryList>
           <Entry name="SubType" type="BASE_TYPES/uint8" shortDescription="Subscription or Unsubscription" />
           <Entry name="MsgId" type="MsgId" shortDescription="MsgId subscribed or unsubscribe to" />
-          <Entry name="Qos" type="MsgQos" shortDescription="Quality of Service, used only for interprocessor communication" />
+          <Entry name="Qos" type="Qos" shortDescription="Quality of Service, used only for interprocessor communication" />
           <Entry name="Pipe" type="PipeId" shortDescription="Destination pipe id to send above msg id" />
         </EntryList>
       </ContainerDataType>
@@ -357,7 +357,7 @@
         </LongDescription>
         <EntryList>
           <Entry name="MsgId" type="MsgId" shortDescription="MsgId portion of the subscription" />
-          <Entry name="Qos" type="MsgQos" shortDescription="Qos portion of the subscription" />
+          <Entry name="Qos" type="Qos" shortDescription="Qos portion of the subscription" />
           <Entry name="Pipe" type="PipeId" shortDescription="PipeId portion of the subscription" />
         </EntryList>
       </ContainerDataType>
@@ -382,6 +382,9 @@
           <Entry name="Entries" type="BASE_TYPES/uint32" shortDescription="Number of entries in the pkt" />
           <Entry name="Entry" type="SubEntriesSet" shortDescription="Array of #CFE_SB_SubEntries_t entries" />
         </EntryList>
+      </ContainerDataType>
+
+      <ContainerDataType name="SendHkCommand" baseType="CCSDS/CommandPacket">
       </ContainerDataType>
 
       <ContainerDataType name="CommandBase" baseType="CCSDS/CommandPacket">
@@ -1040,7 +1043,7 @@
           <Interface name="SEND_HK" shortDescription="Send telemetry command interface" type="CFE_SB/Telecommand">
             <!-- This uses a bare spacepacket with no payload -->
             <GenericTypeMapSet>
-              <GenericTypeMap name="TelecommandDataType" type="CCSDS/CommandPacket" />
+              <GenericTypeMap name="TelecommandDataType" type="SendHkCommand" />
             </GenericTypeMapSet>
           </Interface>
           <Interface name="HK_TLM" shortDescription="Software bus housekeeping telemetry interface" type="CFE_SB/Telemetry">

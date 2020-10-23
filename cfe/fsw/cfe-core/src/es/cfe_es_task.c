@@ -84,7 +84,9 @@ static const CFE_ES_Application_Component_Telecommand_DispatchTable_t CFE_ES_TC_
                 .Noop_indication = CFE_ES_NoopCmd,
                 .ResetCounters_indication = CFE_ES_ResetCountersCmd,
                 .Restart_indication = CFE_ES_RestartCmd,
+#ifndef CFE_OMIT_DEPRECATED_6_7
                 .Shell_indication = CFE_ES_ShellCmd,
+#endif
                 .StartApp_indication = CFE_ES_StartAppCmd,
                 .StopApp_indication = CFE_ES_StopAppCmd,
                 .RestartApp_indication = CFE_ES_RestartAppCmd,
@@ -399,13 +401,21 @@ int32 CFE_ES_TaskInit(void)
         return(Status);
     }
 
-    Status = CFE_EVS_SendEvent(CFE_ES_INITSTATS_INF_EID,
-                      CFE_EVS_EventType_INFORMATION,
-                      "Versions:cFE %d.%d.%d.%d, OSAL %d.%d.%d.%d, PSP %d.%d.%d.%d, chksm %d",
-                      CFE_MAJOR_VERSION,CFE_MINOR_VERSION,CFE_REVISION,CFE_MISSION_REV,
-                      OS_MAJOR_VERSION,OS_MINOR_VERSION,OS_REVISION,OS_MISSION_REV,
-                      CFE_PSP_MAJOR_VERSION,CFE_PSP_MINOR_VERSION,CFE_PSP_REVISION,CFE_PSP_MISSION_REV,
-                      (int)CFE_ES_TaskData.HkPacket.Payload.CFECoreChecksum);
+#ifdef CFE_PSP_VERSION 
+
+    Status = CFE_EVS_SendEvent(CFE_ES_INITSTATS_INF_EID, CFE_EVS_EventType_INFORMATION, 
+                                "%s%s. cFE chksm %d",
+                                CFS_VERSIONS, CFE_PSP_VERSION, (int)CFE_ES_TaskData.HkPacket.Payload.CFECoreChecksum);
+
+#else  /* if CFE_PSP_VERSION not defined use integer version macros*/
+    Status = CFE_EVS_SendEvent(CFE_ES_INITSTATS_INF_EID, CFE_EVS_EventType_INFORMATION, 
+                                "\n%sv%d.%d.%d.%d\n cFE chksm %d",
+                                CFS_VERSIONS, 
+                                CFE_PSP_MAJOR_VERSION, CFE_PSP_MINOR_VERSION, CFE_PSP_REVISION, CFE_PSP_MISSION_REV,
+                                (int)CFE_ES_TaskData.HkPacket.Payload.CFECoreChecksum);
+
+#endif  /* CFE_PSP_VERSION */
+
     if ( Status != CFE_SUCCESS )
     {
         CFE_ES_WriteToSysLog("ES:Error sending version event:RC=0x%08X\n", (unsigned int)Status);
@@ -428,7 +438,7 @@ int32 CFE_ES_TaskInit(void)
     Remaining = sizeof(EventBuffer)-strlen(EventBuffer)-1;
     if(Remaining > 0 && strcmp(GLOBAL_CONFIGDATA.MissionVersion, GLOBAL_CONFIGDATA.CfeVersion))
     {
-       snprintf(VersionBuffer, sizeof(VersionBuffer), ", CFE: %s",
+       snprintf(VersionBuffer, sizeof(VersionBuffer), ", CFE git version: %s",
                 GLOBAL_CONFIGDATA.CfeVersion);
        VersionBuffer[Remaining] = 0;
        strcat(EventBuffer, VersionBuffer);
@@ -436,7 +446,7 @@ int32 CFE_ES_TaskInit(void)
     }
     if(Remaining > 0 && strcmp(GLOBAL_CONFIGDATA.MissionVersion, GLOBAL_CONFIGDATA.OsalVersion))
     {
-       snprintf(VersionBuffer, sizeof(VersionBuffer), ", OSAL: %s",
+       snprintf(VersionBuffer, sizeof(VersionBuffer), ", OSAL git version: %s",
                 GLOBAL_CONFIGDATA.OsalVersion);
        VersionBuffer[Remaining] = 0;
        strcat(EventBuffer, VersionBuffer);
@@ -523,7 +533,7 @@ void CFE_ES_TaskPipe(CFE_SB_MsgPtr_t Msg)
 /*                                                                 */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-int32 CFE_ES_HousekeepingCmd(const CCSDS_CommandPacket_t *data)
+int32 CFE_ES_HousekeepingCmd(const CFE_ES_SendHkCommand_t *data)
 {
     OS_heap_prop_t HeapProp;
     int32          stat;
@@ -649,12 +659,21 @@ int32 CFE_ES_NoopCmd(const CFE_ES_Noop_t *Cmd)
     ** This command will always succeed.
     */
     CFE_ES_TaskData.CommandCounter++;
-    CFE_EVS_SendEvent(CFE_ES_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION,
-                     "No-op command. Versions:cFE %d.%d.%d.%d, OSAL %d.%d.%d.%d, PSP %d.%d.%d.%d",
-                     CFE_MAJOR_VERSION,CFE_MINOR_VERSION,CFE_REVISION,CFE_MISSION_REV,
-                     OS_MAJOR_VERSION,OS_MINOR_VERSION,OS_REVISION,OS_MISSION_REV,
-                     CFE_PSP_MAJOR_VERSION,CFE_PSP_MINOR_VERSION,CFE_PSP_REVISION,CFE_PSP_MISSION_REV);
 
+                    
+#ifdef CFE_PSP_VERSION
+    CFE_EVS_SendEvent(CFE_ES_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION,
+                      "No-op command:\n %s%s",                    
+                        CFS_VERSIONS, CFE_PSP_VERSION);
+
+#else /* CFE_PSP_VERSION */
+
+    CFE_EVS_SendEvent(CFE_ES_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION,
+                      "No-op command:\n %sv%d.%d.%d.%d",                    
+                        CFS_VERSIONS,
+                        CFE_PSP_MAJOR_VERSION, CFE_PSP_MINOR_VERSION, CFE_PSP_REVISION, CFE_PSP_MISSION_REV);
+
+#endif /* CFE_PSP_VERSION */
     return CFE_SUCCESS;
 } /* End of CFE_ES_NoopCmd() */
 

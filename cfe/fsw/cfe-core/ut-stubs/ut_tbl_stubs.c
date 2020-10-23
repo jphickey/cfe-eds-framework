@@ -106,6 +106,13 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,                   /* Ret
                         uint16  TblOptionFlags,                           /* Tbl Options Settings     */
                         CFE_TBL_CallbackFuncPtr_t TblValidationFuncPtr )  /* Ptr to func that validates tbl */
 {
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_Register), TblHandlePtr);
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_Register), Name);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Register), EdsAppIdx);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Register), EdsTypeIdx);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Register), TblOptionFlags);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Register), TblValidationFuncPtr);
+
     int32 status;
     
     status = UT_DEFAULT_IMPL(CFE_TBL_Register);
@@ -119,6 +126,9 @@ int32 CFE_TBL_Register( CFE_TBL_Handle_t *TblHandlePtr,                   /* Ret
 
 int32 CFE_TBL_GetAddress (void **TblPtr, CFE_TBL_Handle_t TblHandle)
 {
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_GetAddress), TblPtr);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_GetAddress), TblHandle);
+
     int32 status;
     int32 ForceValue;
     
@@ -131,28 +141,138 @@ int32 CFE_TBL_GetAddress (void **TblPtr, CFE_TBL_Handle_t TblHandle)
     return status;
 }
 
-UT_DEFAULT_STUB(CFE_TBL_Load, (CFE_TBL_Handle_t TblHandle, CFE_TBL_SrcEnum_t SrcType, const void *SrcDataPtr))
+int32 CFE_TBL_Load( CFE_TBL_Handle_t TblHandle, CFE_TBL_SrcEnum_t SrcType, const void *SrcDataPtr )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Load), TblHandle);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Load), SrcType);
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_Load), SrcDataPtr);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_Load);
+
+    return status;
+}
     
-UT_DEFAULT_STUB(CFE_TBL_Unregister, (CFE_TBL_Handle_t TblHandle))
+int32 CFE_TBL_Unregister( CFE_TBL_Handle_t TblHandle )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Unregister), TblHandle);
 
-UT_DEFAULT_STUB(CFE_TBL_Manage, (CFE_TBL_Handle_t TblHandle))
+    int32 status;
 
-UT_DEFAULT_STUB(CFE_TBL_ReleaseAddress, (CFE_TBL_Handle_t TblHandle))
+    status = UT_DEFAULT_IMPL(CFE_TBL_Unregister);
 
-UT_DEFAULT_STUB(CFE_TBL_NotifyByMessage, (CFE_TBL_Handle_t TblHandle, CFE_SB_MsgId_t MsgId, uint16 CommandCode, uint32 Parameter))
+    return status;
+}
 
-UT_DEFAULT_STUB(CFE_TBL_Modified, (CFE_TBL_Handle_t TblHandle ))
+int32 CFE_TBL_Manage( CFE_TBL_Handle_t TblHandle )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Manage), TblHandle);
 
-UT_DEFAULT_STUB(CFE_TBL_GetStatus, ( CFE_TBL_Handle_t TblHandle ))
+    int32 status;
 
-UT_DEFAULT_STUB(CFE_TBL_DumpToBuffer, ( CFE_TBL_Handle_t TblHandle ))
+    status = UT_DEFAULT_IMPL(CFE_TBL_Manage);
 
-UT_DEFAULT_STUB(CFE_TBL_Validate, ( CFE_TBL_Handle_t TblHandle ))
+    return status;
+}
 
-UT_DEFAULT_STUB(CFE_TBL_Update, ( CFE_TBL_Handle_t TblHandle ))
+int32 CFE_TBL_ReleaseAddress( CFE_TBL_Handle_t TblHandle )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_ReleaseAddress), TblHandle);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_ReleaseAddress);
+
+    return status;
+}
+
+int32 CFE_TBL_ReleaseAddresses( uint16 NumTables, const CFE_TBL_Handle_t TblHandles[] )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_ReleaseAddresses), NumTables);
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_ReleaseAddresses), TblHandles);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_ReleaseAddresses);
+
+    return status;
+}
+
+int32 CFE_TBL_NotifyByMessage(CFE_TBL_Handle_t TblHandle, CFE_SB_MsgId_t MsgId, uint16 CommandCode, uint32 Parameter)
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_NotifyByMessage), TblHandle);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_NotifyByMessage), MsgId);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_NotifyByMessage), CommandCode);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_NotifyByMessage), Parameter);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_NotifyByMessage);
+
+    return status;
+}
+
+int32 CFE_TBL_Modified( CFE_TBL_Handle_t TblHandle )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Modified), TblHandle);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_Modified);
+
+    return status;
+}
+
+int32 CFE_TBL_GetStatus( CFE_TBL_Handle_t TblHandle )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_GetStatus), TblHandle);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_GetStatus);
+
+    return status;
+}
+
+int32 CFE_TBL_DumpToBuffer( CFE_TBL_Handle_t TblHandle )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_DumpToBuffer), TblHandle);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_DumpToBuffer);
+
+    return status;
+}
+
+int32 CFE_TBL_Validate( CFE_TBL_Handle_t TblHandle )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Validate), TblHandle);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_Validate);
+
+    return status;
+}
+
+int32 CFE_TBL_Update( CFE_TBL_Handle_t TblHandle )
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_Update), TblHandle);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_Update);
+
+    return status;
+}
 
 int32 CFE_TBL_GetInfo( CFE_TBL_Info_t *TblInfoPtr, const char *TblName )
 {
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_GetInfo), TblInfoPtr);
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_GetInfo), TblName);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(CFE_TBL_GetInfo);
@@ -166,4 +286,28 @@ int32 CFE_TBL_GetInfo( CFE_TBL_Info_t *TblInfoPtr, const char *TblName )
     return status;
 }
 
+int32 CFE_TBL_GetAddresses( void **TblPtrs[], uint16 NumTables, const CFE_TBL_Handle_t TblHandles[] )
+{
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_GetAddresses), TblPtrs);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(CFE_TBL_GetAddresses), NumTables);
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_GetAddresses), TblHandles);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_GetAddresses);
+
+    return status;
+}
+
+int32 CFE_TBL_Share( CFE_TBL_Handle_t *TblHandlePtr, const char *TblName )
+{
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_Share), TblHandlePtr);
+    UT_Stub_RegisterContext(UT_KEY(CFE_TBL_Share), TblName);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(CFE_TBL_Share);
+
+    return status;
+}
 
