@@ -27,9 +27,9 @@
 /*
 ** SCH Lab schedule table
 ** When populating this table:
-**  1. Make sure the table is terminated by the SCH_LAB_END_OF_TABLE entry
-**  2. You can have commented out entries, but a zero MID will terminate the table processing,
-**      skipping the remaining entries.
+**  1. The entire table is processed (SCH_LAB_MAX_SCHEDULE_ENTRIES) but entries with a
+**     packet rate of 0 are skipped
+**  2. You can have commented out entries or entries with a packet rate of 0
 **  3. If the table grows too big, increase SCH_LAB_MAX_SCHEDULE_ENTRIES
 */
 
