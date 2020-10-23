@@ -1,15 +1,22 @@
 /*
- * 
- *    Copyright (c) 2020, United States government as represented by the
- *    administrator of the National Aeronautics Space Administration.
- *    All rights reserved. This software was created at NASA Goddard
- *    Space Flight Center pursuant to government contracts.
- * 
- *    This is governed by the NASA Open Source Agreement and may be used,
- *    distributed and modified only according to the terms of that agreement.
- * 
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-
 
 /**
  * \file     osapi-file.c
@@ -223,7 +230,7 @@ int32 OS_close (uint32 filedes)
             record->active_id = 0;
         }
 
-        OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+        OS_Unlock_Global(LOCAL_OBJID_TYPE);
     }
 
     return return_code;
@@ -454,7 +461,7 @@ int32 OS_rename (const char *old, const char *new)
 
    if (return_code == OS_SUCCESS)
    {
-      OS_Lock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Lock_Global(LOCAL_OBJID_TYPE);
       for ( i =0; i < OS_MAX_NUM_OPEN_FILES; i++)
       {
          if (OS_global_stream_table[i].active_id != 0 &&
@@ -464,7 +471,7 @@ int32 OS_rename (const char *old, const char *new)
             strcpy (OS_stream_table[i].stream_name, new);
          }
       }
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
     }
 
     return return_code;
@@ -609,7 +616,7 @@ int32 OS_FDGetInfo (uint32 filedes, OS_file_prop_t *fd_prop)
       strncpy(fd_prop->Path, record->name_entry, OS_MAX_PATH_LEN - 1);
       fd_prop->User = record->creator;
       fd_prop->IsValid = true;
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
    return return_code;
@@ -637,7 +644,7 @@ int32 OS_FileOpenCheck(const char *Filename)
 
    return_code = OS_ERROR;
 
-   OS_Lock_Global_Impl(LOCAL_OBJID_TYPE);
+   OS_Lock_Global(LOCAL_OBJID_TYPE);
 
    for ( i = 0; i < OS_MAX_NUM_OPEN_FILES; i++)
    {
@@ -650,7 +657,7 @@ int32 OS_FileOpenCheck(const char *Filename)
       }
    }/* end for */
 
-   OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+   OS_Unlock_Global(LOCAL_OBJID_TYPE);
 
    return return_code;
 } /* end OS_FileOpenCheck */
@@ -678,7 +685,7 @@ int32 OS_CloseFileByName(const char *Filename)
 
    return_code = OS_FS_ERR_PATH_INVALID;
 
-   OS_Lock_Global_Impl(LOCAL_OBJID_TYPE);
+   OS_Lock_Global(LOCAL_OBJID_TYPE);
 
    for ( i = 0; i < OS_MAX_NUM_OPEN_FILES; i++)
    {
@@ -698,7 +705,7 @@ int32 OS_CloseFileByName(const char *Filename)
       }
    }/* end for */
 
-   OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+   OS_Unlock_Global(LOCAL_OBJID_TYPE);
 
    return (return_code);
 
@@ -721,7 +728,7 @@ int32 OS_CloseAllFiles(void)
 
    return_code = OS_SUCCESS;
 
-   OS_Lock_Global_Impl(LOCAL_OBJID_TYPE);
+   OS_Lock_Global(LOCAL_OBJID_TYPE);
 
    for ( i = 0; i < OS_MAX_NUM_OPEN_FILES; i++)
    {
@@ -739,7 +746,7 @@ int32 OS_CloseAllFiles(void)
       }
    }/* end for */
 
-   OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+   OS_Unlock_Global(LOCAL_OBJID_TYPE);
 
    return (return_code);
 

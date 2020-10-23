@@ -1,15 +1,22 @@
 /*
- * 
- *    Copyright (c) 2020, United States government as represented by the
- *    administrator of the National Aeronautics Space Administration.
- *    All rights reserved. This software was created at NASA Goddard
- *    Space Flight Center pursuant to government contracts.
- * 
- *    This is governed by the NASA Open Source Agreement and may be used,
- *    distributed and modified only according to the terms of that agreement.
- * 
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-
 
 /**
  * \file     os-shared-idmap.h
@@ -102,7 +109,16 @@ int32 OS_ObjectIdInit                (void);
 
 
 /*----------------------------------------------------------------
-   Function: OS_Lock_Global_Impl
+   Function: OS_Lock_Global
+
+    Purpose: Locks the global table identified by "idtype"
+
+   Returns: OS_SUCCESS on success, or relevant error code
+ ------------------------------------------------------------------*/
+void OS_Lock_Global(uint32 idtype);
+
+/*----------------------------------------------------------------
+   Function: OS_Lock_Global
 
     Purpose: Locks the global table identified by "idtype"
 
@@ -111,7 +127,17 @@ int32 OS_ObjectIdInit                (void);
 int32 OS_Lock_Global_Impl(uint32 idtype);
 
 /*----------------------------------------------------------------
-   Function: OS_Unlock_Global_Impl
+   Function: OS_Unlock_Global
+
+    Purpose: Unlocks the global table identified by "idtype"
+
+    Returns: OS_SUCCESS on success, or relevant error code
+ ------------------------------------------------------------------*/
+void OS_Unlock_Global(uint32 idtype);
+
+
+/*----------------------------------------------------------------
+   Function: OS_Unlock_Global
 
     Purpose: Unlocks the global table identified by "idtype"
 
@@ -128,6 +154,38 @@ int32 OS_Unlock_Global_Impl(uint32 idtype);
    is opaque externally, but internally identifies a specific type of object and
    corresponding index within the local tables.
  */
+
+/*----------------------------------------------------------------
+   Function: OS_ObjectIdToSerialNumber
+
+    Purpose: Obtain the serial number component of a generic OSAL Object ID
+ ------------------------------------------------------------------*/
+static inline uint32 OS_ObjectIdToSerialNumber_Impl(uint32 id)
+{
+    return (id & OS_OBJECT_INDEX_MASK);
+}
+
+/*----------------------------------------------------------------
+   Function: OS_ObjectIdToType
+
+    Purpose: Obtain the object type component of a generic OSAL Object ID
+ ------------------------------------------------------------------*/
+static inline uint32 OS_ObjectIdToType_Impl(uint32 id)
+{
+    return (id >> OS_OBJECT_TYPE_SHIFT);
+}
+
+
+/*----------------------------------------------------------------
+   Function: OS_ObjectIdCompose
+
+    Purpose: Convert an object serial number and resource type into an external 32-bit OSAL ID
+ ------------------------------------------------------------------*/
+static inline void OS_ObjectIdCompose_Impl(uint32 idtype, uint32 idserial, uint32 *result)
+{
+    *result = (idtype << OS_OBJECT_TYPE_SHIFT) | idserial;
+}
+
 
 /*----------------------------------------------------------------
    Function: OS_GetMaxForObjectType

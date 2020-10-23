@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
  *
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -45,6 +55,8 @@ UT_DEFAULT_STUB(OS_BinSemAPI_Init,(void))
 ******************************************************************************/
 int32 OS_BinSemTake(uint32 sem_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_BinSemTake), sem_id);
+
     int32 status = OS_SUCCESS;
 
     status = UT_DEFAULT_IMPL(OS_BinSemTake);
@@ -73,6 +85,8 @@ int32 OS_BinSemTake(uint32 sem_id)
 ******************************************************************************/
 int32 OS_BinSemFlush(uint32 sem_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_BinSemFlush), sem_id);
+
     int32   status;
 
     status = UT_DEFAULT_IMPL(OS_BinSemFlush);
@@ -106,6 +120,11 @@ int32 OS_BinSemFlush(uint32 sem_id)
 int32 OS_BinSemCreate(uint32 *sem_id, const char *sem_name,
                       uint32 sem_initial_value, uint32 options)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_BinSemCreate), sem_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_BinSemCreate), sem_name);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_BinSemCreate), sem_initial_value);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_BinSemCreate), options);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_BinSemCreate);
@@ -140,6 +159,8 @@ int32 OS_BinSemCreate(uint32 *sem_id, const char *sem_name,
 ******************************************************************************/
 int32 OS_BinSemGive(uint32 sem_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_BinSemGive), sem_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_BinSemGive);
@@ -165,6 +186,9 @@ int32 OS_BinSemGive(uint32 sem_id)
 ******************************************************************************/
 int32 OS_BinSemGetInfo(uint32 sem_id, OS_bin_sem_prop_t *bin_prop)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_BinSemGetInfo), sem_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_BinSemGetInfo), bin_prop);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_BinSemGetInfo);
@@ -204,6 +228,8 @@ int32 OS_BinSemGetInfo(uint32 sem_id, OS_bin_sem_prop_t *bin_prop)
 ******************************************************************************/
 int32 OS_BinSemDelete(uint32 sem_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_BinSemDelete), sem_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_BinSemDelete);
@@ -237,6 +263,9 @@ int32 OS_BinSemDelete(uint32 sem_id)
 ******************************************************************************/
 int32 OS_BinSemTimedWait(uint32 sem_id, uint32 msecs)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_BinSemTimedWait), sem_id);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_BinSemTimedWait), msecs);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_BinSemTimedWait);
@@ -251,6 +280,9 @@ int32 OS_BinSemTimedWait(uint32 sem_id, uint32 msecs)
  *****************************************************************************/
 int32 OS_BinSemGetIdByName (uint32 *sem_id, const char *sem_name)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_BinSemGetIdByName), sem_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_BinSemGetIdByName), sem_name);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_BinSemGetIdByName);

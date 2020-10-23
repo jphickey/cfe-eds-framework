@@ -1,15 +1,22 @@
 /*
- * 
- *    Copyright (c) 2020, United States government as represented by the
- *    administrator of the National Aeronautics Space Administration.
- *    All rights reserved. This software was created at NASA Goddard
- *    Space Flight Center pursuant to government contracts.
- * 
- *    This is governed by the NASA Open Source Agreement and may be used,
- *    distributed and modified only according to the terms of that agreement.
- * 
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-
 
 /**
  * \file     coveragetest-filesys.c
@@ -51,12 +58,14 @@ void Test_OS_FileSysAddFixedMap(void)
     OSAPI_TEST_FUNCTION_RC(OS_FileSysAddFixedMap(&id, "/phys", "/virt"), OS_SUCCESS);
     OSAPI_TEST_FUNCTION_RC(OS_FileSysAddFixedMap(&id, NULL, NULL), OS_INVALID_POINTER);
 
-    UT_SetForceFail(UT_KEY(OCS_strlen), 2 + OS_MAX_PATH_LEN);
+    UT_SetDeferredRetcode(UT_KEY(OCS_strlen), 1, 2 + OS_MAX_LOCAL_PATH_LEN);
     OSAPI_TEST_FUNCTION_RC(OS_FileSysAddFixedMap(&id, "/phys", "/virt"), OS_ERR_NAME_TOO_LONG);
-    UT_ClearForceFail(UT_KEY(OCS_strlen));
+    UT_SetDeferredRetcode(UT_KEY(OCS_strlen), 2, 2 + OS_MAX_PATH_LEN);
+    OSAPI_TEST_FUNCTION_RC(OS_FileSysAddFixedMap(&id, "/phys", "/virt"), OS_ERR_NAME_TOO_LONG);
+    UT_ResetState(UT_KEY(OCS_strlen));
 
     UT_SetForceFail(UT_KEY(OCS_strrchr), -1);
-    UT_SetDeferredRetcode(UT_KEY(OCS_strlen), 3, 2 + OS_MAX_API_NAME);
+    UT_SetDeferredRetcode(UT_KEY(OCS_strlen), 3, 2 + OS_FS_DEV_NAME_LEN);
     OSAPI_TEST_FUNCTION_RC(OS_FileSysAddFixedMap(&id, "/phys", "/virt"), OS_ERR_NAME_TOO_LONG);
     UT_ResetState(UT_KEY(OCS_strlen));
     UT_ResetState(UT_KEY(OCS_strrchr));
@@ -193,18 +202,16 @@ void Test_OS_mount(void)
     actual = OS_mount("/ramdev5","/ram5");
     UtAssert_True(actual == expected, "OS_mount() (%ld) == OS_ERR_NAME_NOT_FOUND", (long)actual);
 
-    /* mount on a fixed disk historically returns OS_SUCCESS and is a no-op.
-     * This is for backward compatibility (it should probably an error to do this) */
-    OS_filesys_table[1].flags = OS_FILESYS_FLAG_IS_READY |
-            OS_FILESYS_FLAG_IS_FIXED;
-    expected = OS_SUCCESS;
+    /* Test unknown/unset system mountpoint */
+    OS_filesys_table[1].flags = OS_FILESYS_FLAG_IS_READY;
+    OS_filesys_table[1].system_mountpt[0] = 0;
+    expected = OS_ERR_NAME_NOT_FOUND; /* should be OS_FS_ERR_PATH_INVALID, but compat return overwrites */
     actual = OS_mount("/ramdev5","/ram5");
-    UtAssert_True(actual == expected, "OS_mount(fixed) (%ld) == OS_SUCCESS", (long)actual);
-
+    UtAssert_True(actual == expected, "OS_mount(no mountpt) (%ld) == OS_FS_ERR_PATH_INVALID", (long)actual);
 
     /* set up so record is in the right state for mounting */
-    OS_filesys_table[1].flags = OS_FILESYS_FLAG_IS_READY;
     expected = OS_SUCCESS;
+    snprintf(OS_filesys_table[1].system_mountpt, sizeof(OS_filesys_table[1].system_mountpt), "/ut");
     actual = OS_mount("/ramdev5","/ram5");
     UtAssert_True(actual == expected, "OS_mount(nominal) (%ld) == OS_SUCCESS", (long)actual);
 
@@ -232,16 +239,6 @@ void Test_OS_unmount(void)
     expected = OS_ERR_NAME_NOT_FOUND;
     actual = OS_unmount("/ram0");
     UtAssert_True(actual == expected, "OS_mount() (%ld) == OS_ERR_NAME_NOT_FOUND", (long)actual);
-
-    /* unmount on a fixed disk historically returns OS_SUCCESS and is a no-op.
-     * This is for backward compatibility (it should probably an error to do this) */
-    OS_filesys_table[1].flags = OS_FILESYS_FLAG_IS_READY |
-            OS_FILESYS_FLAG_IS_FIXED |
-            OS_FILESYS_FLAG_IS_MOUNTED_SYSTEM |
-            OS_FILESYS_FLAG_IS_MOUNTED_VIRTUAL;
-    expected = OS_SUCCESS;
-    actual = OS_unmount("/ram0");
-    UtAssert_True(actual == expected, "OS_unmount(fixed) (%ld) == OS_SUCCESS", (long)actual);
 
     /* set up so record is in the right state for mounting */
     OS_filesys_table[1].flags = OS_FILESYS_FLAG_IS_READY |
@@ -551,51 +548,6 @@ void Test_OS_FileSys_FindVirtMountPoint(void)
     UtAssert_True(result, "OS_FileSys_FindVirtMountPoint(%s) (nominal) == true", refstr);
 }
 
-/*
- * Specific volume table entries to exercise translation cases in OS_FileSys_InitLocalFromVolTable()
- */
-static const OS_VolumeInfo_t UT_VOLTAB_TESTCASES[] =
-{
-        { .DeviceName = "/UT1", .VolumeType = ATA_DISK, .FreeFlag = false, .IsMounted = true },
-        { .DeviceName = "/UT2", .VolumeType = EEPROM_DISK, .FreeFlag = true, .IsMounted = false },
-        { .DeviceName = "/UT3", .VolumeType = RAM_DISK, .FreeFlag = true, .IsMounted = false }
-};
-
-void Test_OS_FileSys_InitLocalFromVolTable(void)
-{
-    /*
-     * Test Case For:
-     * static int32 OS_FileSys_InitLocalFromVolTable(OS_filesys_internal_record_t *local, const OS_VolumeInfo_t *Vol)
-     *
-     * This is a static internal function and must be invoked through a UT-specific wrapper in
-     * order to get coverage on it.
-     */
-    OS_filesys_internal_record_t temprec;
-    int32 actual;
-    int32 expected;
-
-
-    /* this should return OS_ERROR because the mount point was not valid */
-    memset(&temprec,0,sizeof(temprec));
-    expected = OS_ERROR;
-    actual = OS_FileSys_InitLocalFromVolTable(&temprec, &UT_VOLTAB_TESTCASES[0]);
-    UtAssert_True(actual == expected, "OS_FileSys_InitLocalFromVolTable(0) (%ld) == OS_ERROR", (long)actual);
-
-    memset(&temprec,0,sizeof(temprec));
-    expected = OS_SUCCESS;
-    actual = OS_FileSys_InitLocalFromVolTable(&temprec, &UT_VOLTAB_TESTCASES[1]);
-    UtAssert_True(actual == expected, "OS_FileSys_InitLocalFromVolTable(1) (%ld) == OS_SUCCESS", (long)actual);
-    UtAssert_True(temprec.fstype == OS_FILESYS_TYPE_MTD, "OS_FileSys_InitLocalFromVolTable(1) fstype(%u) == OS_FILESYS_TYPE_MTD",
-            (unsigned int)temprec.fstype);
-
-    memset(&temprec,0,sizeof(temprec));
-    expected = OS_SUCCESS;
-    actual = OS_FileSys_InitLocalFromVolTable(&temprec, &UT_VOLTAB_TESTCASES[2]);
-    UtAssert_True(actual == expected, "OS_FileSys_InitLocalFromVolTable(1) (%ld) == OS_SUCCESS", (long)actual);
-    UtAssert_True(temprec.fstype == OS_FILESYS_TYPE_VOLATILE_DISK, "OS_FileSys_InitLocalFromVolTable(2) fstype(%u) == OS_FILESYS_TYPE_MTD",
-            (unsigned int)temprec.fstype);
-}
-
 /* Osapi_Test_Setup
  *
  * Purpose:
@@ -637,7 +589,6 @@ void UtTest_Setup(void)
     ADD_TEST(OS_GetFsInfo);
     ADD_TEST(OS_TranslatePath);
     ADD_TEST(OS_FileSys_FindVirtMountPoint);
-    ADD_TEST(OS_FileSys_InitLocalFromVolTable);
 }
 
 

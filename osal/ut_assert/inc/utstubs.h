@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2015, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
  *
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -53,8 +63,29 @@ typedef cpuaddr UT_EntryKey_t;
  * Maximum size of a callback hook context list
  *
  * This is the maximum number of function arguments that can be passed to a hook
+ * Note that OS_TaskCreate() has (possibly) the highest parameter count in OSAL with 7 parameters
  */
-#define UT_STUBCONTEXT_MAXSIZE      4
+#define UT_STUBCONTEXT_MAXSIZE      8
+
+/**
+ * Identifies the type of value stored in the ArgPtr field of a UT_StubContext_t object
+ */
+typedef enum
+{
+    UT_STUBCONTEXT_ARG_TYPE_UNSPECIFIED = 0,
+    UT_STUBCONTEXT_ARG_TYPE_DIRECT,      /**< Indicates "ArgPtr" is a direct copy of the actual parameter value */
+    UT_STUBCONTEXT_ARG_TYPE_INDIRECT     /**< Indicates "ArgPtr" is a pointer to the argument value on the stack */
+} UT_StubContext_Arg_Type_t;
+
+/**
+ * Complete Metadata associated with a context argument
+ */
+typedef struct
+{
+    UT_StubContext_Arg_Type_t Type;
+    const char *Name;
+    size_t Size;
+} UT_StubArgMetaData_t;
 
 /**
  * Structure to hold context data for callback hooks
@@ -63,6 +94,7 @@ typedef struct
 {
     uint32 ArgCount;
     const void *ArgPtr[UT_STUBCONTEXT_MAXSIZE];
+    UT_StubArgMetaData_t Meta[UT_STUBCONTEXT_MAXSIZE];
 } UT_StubContext_t;
 
 /**
@@ -77,14 +109,13 @@ typedef int32 (*UT_VaHookFunc_t)(void *UserObj, int32 StubRetcode, uint32 CallCo
  **************************************************************/
 
 /**
- * Reset the Unit test framework for only the given function
+ * Reset the Unit test framework for a given function, or all functions
  *
  * Any return code or data buffer records for the given function key
- * are cleared.  The special FuncKey value of "0" matches all entries.
+ * are cleared.
  *
  * \param FuncKey The stub function to reset.  If zero, all functions
- *      are reset.  This is basically equivalent to UT_Init() without
- *      changing the Subsys string.
+ *      are reset.
  */
 void UT_ResetState(UT_EntryKey_t FuncKey);
 
@@ -94,7 +125,7 @@ void UT_ResetState(UT_EntryKey_t FuncKey);
  * A deferred ("count down") return code for the stub function will be
  * installed.  The specific implementation depends on the stub function,
  * but typically it will return its default code until it is called "Count"
- * times, after which it will return the given Retcode, then return to
+ * times, where it will return the given Retcode, then return to
  * its default return code again.
  *
  * Multiple deferred entries for a single function are allowed.  These
@@ -120,7 +151,7 @@ void UT_SetDeferredRetcode(UT_EntryKey_t FuncKey, int32 Count, int32 Retcode);
  * Multiple buffer entries for a single function are allowed.  These
  * will be used in the order they were added.
  *
- * It is recommended to call UT_ResetState() at the beginning of the test case
+ * It is recommended to call UT_ResetState(0) at the beginning of the test case
  * to ensure that any old entries for the stub functions are cleared out.
  *
  * \param FuncKey The stub function to add the data buffer to.
@@ -311,10 +342,70 @@ uint32 UT_Stub_CopyFromLocal(UT_EntryKey_t FuncKey, const void *LocalBuffer, uin
  * passed as "void *" pointers to the actual stack values.  The user code must
  * then cast them to the right type again.
  *
+ * This is now implemented as a macro which calls UT_Stub_RegisterContextWithMetaData
+ * to associate the name of the argument as well as the pointer.
+ *
  * \param FuncKey   The stub function to entry to use.
  * \param Parameter Arbitrary parameter to pass.
  */
-void UT_Stub_RegisterContext(UT_EntryKey_t FuncKey, const void *Parameter);
+#define UT_Stub_RegisterContext(FuncKey, Parameter)     \
+        UT_Stub_RegisterContextWithMetaData(FuncKey, #Parameter, UT_STUBCONTEXT_ARG_TYPE_UNSPECIFIED, Parameter, 0)
+
+/**
+ * Registers a single value argument into the context for the hook callback
+ *
+ * A pointer to the stack value is actually stored into the context,
+ * which can be dereferenced in the hook.
+ */
+#define UT_Stub_RegisterContextGenericArg(FuncKey, Parameter)     \
+        UT_Stub_RegisterContextWithMetaData(FuncKey, #Parameter, UT_STUBCONTEXT_ARG_TYPE_INDIRECT, &Parameter, sizeof(Parameter))
+
+/**
+ * Registers a single context element for the hook callback
+ *
+ * Stubs may pass up to UT_STUBCONTEXT_MAXSIZE arguments to a user-defined
+ * hook function.  These arguments are opaque to the stub function and generally
+ * passed as "void *" pointers to the actual stack values.  The user code must
+ * then cast them to the right type again.
+ *
+ * \param FuncKey   The stub function to entry to use.
+ * \param Name      Argument name to associate with the pointer
+ * \param ParamType The type of parameter (direct, indirect, or unknown)
+ * \param ParamPtr  Pointer to argument data
+ * \param ParamSize The size of the object pointed to, or zero if not known
+ */
+void UT_Stub_RegisterContextWithMetaData(UT_EntryKey_t FuncKey, const char *Name, 
+    UT_StubContext_Arg_Type_t ParamType, const void *ParamPtr, size_t ParamSize);
+
+/**
+ * Retrieve a context argument value by name
+ *
+ * This returns a pointer to a buffer containing the value, rather than the
+ * value itself, even if the argument was registered originally as a direct value.
+ *
+ * If the name is not found, this logs a UT assert failure message, as it
+ * indicates a mismatch between the hook and stub functions with respect to argument
+ * names and (possibly) types that needs to be corrected.  If possible, a buffer
+ * containing all zeros may be used as a substitute.
+ *
+ * This does not return NULL, such that the returned value can always be dereferenced.
+ *
+ * \param ContextPtr   The context structure containing arguments
+ * \param Name         Argument name to find
+ * \param ExpectedSize The size of the expected object type
+ * \returns Pointer to buffer containing the value.
+ */
+const void* UT_Hook_GetArgPtr(const UT_StubContext_t *ContextPtr, const char *Name, size_t ExpectedTypeSize);
+
+/**
+ * Macro which retrieves a value argument by name.
+ *
+ * This is a convenience method to easily use UT_Hook_GetArgPtr() to get the value
+ * associated with an argument as the correct/expected type.
+ *
+ */
+#define UT_Hook_GetArgValueByName(ContextPtr,Name,Type)     \
+    (*(Type const *)UT_Hook_GetArgPtr(ContextPtr,Name,sizeof(Type)))
 
 /**
  * Default implementation for a stub function that takes a va_list of arguments.
@@ -389,6 +480,22 @@ int32 UT_DefaultStubImpl(const char *FunctionName, UT_EntryKey_t FuncKey, int32 
  * checked first, then additional functionality is added.
  */
 #define UT_DEFAULT_IMPL_RC_ARGS(FuncName,Rc,...)  UT_DefaultStubImpl(#FuncName, UT_KEY(FuncName), Rc, __VA_ARGS__)
+
+/**
+ * Macro to simplify usage of the UT_DefaultStubImplWithArgs() function
+ *
+ * This function accepts a list of arguments as a va_list
+ */
+#define UT_DEFAULT_IMPL_VARARGS(FuncName,va)  UT_DefaultStubImplWithArgs(#FuncName, UT_KEY(FuncName), 0, va)
+
+/**
+ * Macro to simplify usage of the UT_DefaultStubImplWithArgs() function
+ *
+ * This function accepts a list of arguments as a va_list and
+ * a nonzero default return code
+ */
+#define UT_DEFAULT_IMPL_RC_VARARGS(FuncName,Rc,va)  UT_DefaultStubImplWithArgs(#FuncName, UT_KEY(FuncName), Rc, va)
+
 
 /**
  * Macro to simplify usage of the UT_DefaultStubImpl() function

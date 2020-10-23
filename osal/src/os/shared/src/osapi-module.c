@@ -1,15 +1,22 @@
 /*
- * 
- *    Copyright (c) 2020, United States government as represented by the
- *    administrator of the National Aeronautics Space Administration.
- *    All rights reserved. This software was created at NASA Goddard
- *    Space Flight Center pursuant to government contracts.
- * 
- *    This is governed by the NASA Open Source Agreement and may be used,
- *    distributed and modified only according to the terms of that agreement.
- * 
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-
 
 /**
  * \file     osapi-module.c
@@ -289,7 +296,7 @@ int32 OS_ModuleUnload ( uint32 module_id )
         }
 
         /* Unlock the global from OS_ObjectIdGetAndLock() */
-        OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+        OS_Unlock_Global(LOCAL_OBJID_TYPE);
     }
 
     return return_code;
@@ -325,7 +332,7 @@ int32 OS_ModuleInfo ( uint32 module_id, OS_module_prop_t *module_prop )
 
         return_code = OS_ModuleGetInfo_Impl(local_id, module_prop);
 
-        OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+        OS_Unlock_Global(LOCAL_OBJID_TYPE);
     }
 
     return return_code;
@@ -428,11 +435,11 @@ int32 OS_SymbolTableDump ( const char *filename, uint32 SizeLimit )
      * underlying implementation may safely use globals for
      * state storage.
      */
-    OS_Lock_Global_Impl(LOCAL_OBJID_TYPE);
+    OS_Lock_Global(LOCAL_OBJID_TYPE);
 
     return_code = OS_SymbolTableDump_Impl(translated_path, SizeLimit);
 
-    OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+    OS_Unlock_Global(LOCAL_OBJID_TYPE);
 
     return(return_code);
 

@@ -1,15 +1,22 @@
 /*
- * 
- *    Copyright (c) 2020, United States government as represented by the
- *    administrator of the National Aeronautics Space Administration.
- *    All rights reserved. This software was created at NASA Goddard
- *    Space Flight Center pursuant to government contracts.
- * 
- *    This is governed by the NASA Open Source Agreement and may be used,
- *    distributed and modified only according to the terms of that agreement.
- * 
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-
 
 /**
  * \file     osapi-task.c
@@ -89,7 +96,7 @@ static int32 OS_TaskPrepare(uint32 task_id, osal_task_entry *entrypt)
        * This ensures that the parent thread's OS_TaskCreate() call is fully completed,
        * and that nobody can call OS_TaskDelete() and possibly overwrite this data.
        */
-      OS_Lock_Global_Impl(OS_OBJECT_TYPE_OS_TASK);
+      OS_Lock_Global(OS_OBJECT_TYPE_OS_TASK);
 
       /*
        * Verify that we still appear to own the table entry
@@ -104,7 +111,7 @@ static int32 OS_TaskPrepare(uint32 task_id, osal_task_entry *entrypt)
           *entrypt = OS_task_table[local_id].entry_function_pointer;
       }
 
-      OS_Unlock_Global_Impl(OS_OBJECT_TYPE_OS_TASK);
+      OS_Unlock_Global(OS_OBJECT_TYPE_OS_TASK);
    }
 
    if (return_code == OS_SUCCESS)
@@ -196,6 +203,13 @@ int32 OS_TaskCreate (uint32 *task_id, const char *task_name, osal_task_entry fun
       return OS_INVALID_POINTER;
    }
 
+   /* Check for bad stack size.  Note that NULL stack_pointer is
+    * OK (impl will allocate) but size must be nonzero. */
+   if (stack_size == 0)
+   {
+       return OS_ERROR;
+   }
+
    /* we don't want to allow names too long*/
    /* if truncated, two names might be the same */
    if (strlen(task_name) >= OS_MAX_API_NAME)
@@ -266,7 +280,7 @@ int32 OS_TaskDelete (uint32 task_id)
          delete_hook = NULL;
       }
 
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
    /*
@@ -300,7 +314,7 @@ void OS_TaskExit()
    {
       /* Only need to clear the ID as zero is the "unused" flag */
       record->active_id = 0;
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
    /* call the implementation */
@@ -358,7 +372,7 @@ int32 OS_TaskSetPriority (uint32 task_id, uint32 new_priority)
          }
 
          /* Unlock the global from OS_ObjectIdGetAndLock() */
-         OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+         OS_Unlock_Global(LOCAL_OBJID_TYPE);
       }
    }
 
@@ -475,7 +489,7 @@ int32 OS_TaskGetInfo (uint32 task_id, OS_task_prop_t *task_prop)
 
       return_code = OS_TaskGetInfo_Impl(local_id, task_prop);
 
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
    return return_code;
@@ -507,7 +521,7 @@ int32 OS_TaskInstallDeleteHandler(osal_task_entry function_pointer)
       */
       OS_task_table[local_id].delete_hook_pointer = function_pointer;
 
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
    return return_code;
@@ -543,7 +557,7 @@ int32 OS_TaskFindIdBySystemData(uint32 *task_id, const void *sysdata, size_t sys
     if (return_code == OS_SUCCESS)
     {
         *task_id = record->active_id;
-        OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+        OS_Unlock_Global(LOCAL_OBJID_TYPE);
     }
 
     return return_code;

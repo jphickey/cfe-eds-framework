@@ -1,15 +1,22 @@
 /*
- * 
- *    Copyright (c) 2020, United States government as represented by the
- *    administrator of the National Aeronautics Space Administration.
- *    All rights reserved. This software was created at NASA Goddard
- *    Space Flight Center pursuant to government contracts.
- * 
- *    This is governed by the NASA Open Source Agreement and may be used,
- *    distributed and modified only according to the terms of that agreement.
- * 
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-
 
 /**
  * \file     os-impl-filesys.c
@@ -47,6 +54,7 @@
 /****************************************************************************************
                                    GLOBAL DATA
  ***************************************************************************************/
+const char OS_POSIX_DEVICEFILE_PREFIX[] = "/dev/";
 
 /****************************************************************************************
                                 Filesys API
@@ -93,13 +101,26 @@ int32 OS_FileSysStartVolume_Impl (uint32 filesys_id)
         VOLATILE_DISK_LOC_MAX
     };
 
+    /*
+     * Determine basic type of filesystem, if not already known
+     */
+    if (local->fstype == OS_FILESYS_TYPE_UNKNOWN &&
+            strncmp(local->device_name, OS_POSIX_DEVICEFILE_PREFIX, sizeof(OS_POSIX_DEVICEFILE_PREFIX)-1) == 0)
+    {
+        /*
+         * If referring to a real device in the /dev filesystem,
+         * then assume it is a normal disk.
+         */
+        local->fstype = OS_FILESYS_TYPE_NORMAL_DISK;
+    }
 
     /*
-     * For RAM_DISK volumes, there are two options:
+     * For VOLATILE volumes, there are two options:
      *  - The /dev/shm filesystem, if it exists
      *  - The /tmp filesystem
      *
-     * The /dev/shm is preferable because it should actually be a ramdisk.
+     * The /dev/shm is preferable because it should actually be a ramdisk, but
+     * it is system-specific - should exist on Linux if it is mounted.
      * The /tmp file system might be a regular persistent disk, but should always exist
      * on any POSIX-compliant OS.
      */
@@ -252,9 +273,10 @@ int32 OS_FileSysMountVolume_Impl (uint32 filesys_id)
      * mount point exists.  For any other FS type, trigger an
      * error to indicate that it is not implemented in this OSAL.
      */
-    if (local->fstype != OS_FILESYS_TYPE_VOLATILE_DISK)
+    if (local->fstype != OS_FILESYS_TYPE_VOLATILE_DISK &&
+            local->fstype != OS_FILESYS_TYPE_FS_BASED)
     {
-        /* the mount command is only allowed on a ram disk */
+        /* the mount command is not implemented for this FS type */
         return OS_ERR_NOT_IMPLEMENTED;
     }
 

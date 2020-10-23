@@ -1,4 +1,24 @@
 /*
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/*
 ** Binary semaphore Producer/Consumer test
 */
 #include <stdio.h>
@@ -137,9 +157,26 @@ void task_1(void)
 void BinSemCheck(void)
 {
     uint32 status;
+    OS_bin_sem_prop_t  bin_sem_prop;
+
+    /* Delete the task, which should be pending in OS_BinSemTake() */
+    status = OS_TaskDelete(task_1_id);
+    UtAssert_True(status == OS_SUCCESS, "OS_TaskDelete Rc=%d", (int)status);
 
     status = OS_TimerDelete(timer_id);
     UtAssert_True(status == OS_SUCCESS, "OS_TimerDelete Rc=%d", (int)status);
+
+    OS_TaskDelay(100);
+
+    /* Confirm that the semaphore itself is still operational after task deletion */
+    status = OS_BinSemGive(bin_sem_id);
+    UtAssert_True(status == OS_SUCCESS, "BinSem give Rc=%d", (int)status);
+    status = OS_BinSemGetInfo (bin_sem_id, &bin_sem_prop);
+    UtAssert_True(status == OS_SUCCESS, "BinSem value=%d Rc=%d", (int)bin_sem_prop.value, (int)status);
+    status = OS_BinSemTake(bin_sem_id);
+    UtAssert_True(status == OS_SUCCESS, "BinSem take Rc=%d", (int)status);
+    status = OS_BinSemDelete(bin_sem_id);
+    UtAssert_True(status == OS_SUCCESS, "BinSem delete Rc=%d", (int)status);
 
     UtAssert_True(counter < timer_counter, "Task counter (%d) < timer counter (%d)", (int)counter, (int)timer_counter);
     UtAssert_True(task_1_failures == 0, "Task 1 failures = %u", (unsigned int)task_1_failures);

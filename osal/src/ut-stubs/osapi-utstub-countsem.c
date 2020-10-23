@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
  *
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -35,6 +45,11 @@ UT_DEFAULT_STUB(OS_CountSemAPI_Init,(void))
 int32 OS_CountSemCreate(uint32 *sem_id, const char *sem_name,
                       uint32 sem_initial_value, uint32 options)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_CountSemCreate), sem_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_CountSemCreate), sem_name);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_CountSemCreate), sem_initial_value);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_CountSemCreate), options);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_CountSemCreate);
@@ -73,6 +88,8 @@ int32 OS_CountSemCreate(uint32 *sem_id, const char *sem_name,
 ******************************************************************************/
 int32 OS_CountSemDelete(uint32 sem_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_CountSemDelete), sem_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_CountSemDelete);
@@ -93,6 +110,8 @@ int32 OS_CountSemDelete(uint32 sem_id)
  *****************************************************************************/
 int32 OS_CountSemGive ( uint32 sem_id )
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_CountSemGive), sem_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_CountSemGive);
@@ -107,6 +126,8 @@ int32 OS_CountSemGive ( uint32 sem_id )
  *****************************************************************************/
 int32 OS_CountSemTake ( uint32 sem_id )
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_CountSemTake), sem_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_CountSemTake);
@@ -121,6 +142,9 @@ int32 OS_CountSemTake ( uint32 sem_id )
  *****************************************************************************/
 int32 OS_CountSemTimedWait ( uint32 sem_id, uint32 msecs )
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_CountSemTimedWait), sem_id);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_CountSemTimedWait), msecs);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_CountSemTimedWait);
@@ -135,6 +159,9 @@ int32 OS_CountSemTimedWait ( uint32 sem_id, uint32 msecs )
  *****************************************************************************/
 int32 OS_CountSemGetIdByName (uint32 *sem_id, const char *sem_name)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_CountSemGetIdByName), sem_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_CountSemGetIdByName), sem_name);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_CountSemGetIdByName);
@@ -167,6 +194,9 @@ int32 OS_CountSemGetIdByName (uint32 *sem_id, const char *sem_name)
 ******************************************************************************/
 int32 OS_CountSemGetInfo(uint32 sem_id, OS_count_sem_prop_t *count_prop)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_CountSemGetInfo), sem_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_CountSemGetInfo), count_prop);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_CountSemGetInfo);

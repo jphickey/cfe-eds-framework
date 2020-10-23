@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
  *
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -75,6 +85,10 @@ int32 dummy_function(void)
 ******************************************************************************/
 int32 OS_ModuleLoad(uint32 *module_id, const char *module_name, const char *filename)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_ModuleLoad), module_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_ModuleLoad), module_name);
+    UT_Stub_RegisterContext(UT_KEY(OS_ModuleLoad), filename);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_ModuleLoad);
@@ -113,6 +127,8 @@ int32 OS_ModuleLoad(uint32 *module_id, const char *module_name, const char *file
 ******************************************************************************/
 int32 OS_ModuleUnload(uint32 module_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_ModuleUnload), module_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_ModuleUnload);
@@ -147,6 +163,9 @@ int32 OS_ModuleUnload(uint32 module_id)
 ******************************************************************************/
 int32 OS_ModuleInfo(uint32 module_id, OS_module_prop_t *module_info)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_ModuleInfo), module_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_ModuleInfo), module_info);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_ModuleInfo);
@@ -182,13 +201,14 @@ int32 OS_ModuleInfo(uint32 module_id, OS_module_prop_t *module_info)
 ******************************************************************************/
 int32 OS_SymbolLookup(cpuaddr *symbol_address, const char *symbol_name)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_SymbolLookup), symbol_address);
+    UT_Stub_RegisterContext(UT_KEY(OS_SymbolLookup), symbol_name);
+
     int32 status;
 
     /*
      * Register the context so a hook can do something with the parameters
      */
-    UT_Stub_RegisterContext(UT_KEY(OS_SymbolLookup), symbol_address);
-    UT_Stub_RegisterContext(UT_KEY(OS_SymbolLookup), symbol_name);
 
     status = UT_DEFAULT_IMPL(OS_SymbolLookup);
 
@@ -210,8 +230,11 @@ int32 OS_SymbolLookup(cpuaddr *symbol_address, const char *symbol_name)
  * Stub function for OS_SymbolTableDump()
  *
  *****************************************************************************/
-int32 OS_SymbolTableDump ( const char *filename, uint32 SizeLimit )
+int32 OS_SymbolTableDump ( const char *filename, uint32 size_limit )
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_SymbolTableDump), filename);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_SymbolTableDump), size_limit);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_SymbolTableDump);

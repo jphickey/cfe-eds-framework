@@ -1,20 +1,31 @@
 /*
-** File: osapi-os-core.h
-**
-**      Copyright (c) 2004-2006, United States government as represented by the 
-**      administrator of the National Aeronautics Space Administration.  
-**      All rights reserved. This software was created at NASAs Goddard 
-**      Space Flight Center pursuant to government contracts.
-**
-**      This is governed by the NASA Open Source Agreement and may be used, 
-**      distributed and modified only pursuant to the terms of that agreement.
-**
-** Author:  Ezra Yeheksli -Code 582/Raytheon
-**
-** Purpose: Contains functions prototype definitions and variables declarations
-**          for the OS Abstraction Layer, Core OS module
-**
-*/
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/*
+ * File: osapi-os-core.h
+ *
+ * Author:  Ezra Yeheksli -Code 582/Raytheon
+ *
+ * Purpose: Contains functions prototype definitions and variables declarations
+ *          for the OS Abstraction Layer, Core OS module
+ */
 
 #ifndef _osapi_core_
 #define _osapi_core_
@@ -46,6 +57,13 @@
 
 /** @brief Upper limit for OSAL task priorities */
 #define OS_MAX_TASK_PRIORITY        255
+
+/**
+ * @brief Constant that may be passed to OS_ForEachObject()/OS_ForEachObjectOfType() to match any
+ * creator (i.e. get all objects)
+ */
+#define OS_OBJECT_CREATOR_ANY       0
+
 
 /** @defgroup OSSemaphoreStates OSAL Semaphore State Defines
  * @{
@@ -280,6 +298,24 @@ void OS_ApplicationExit(int32 Status);
 
 /*-------------------------------------------------------------------------------------*/
 /**
+ * @brief Obtain the name of an object given an arbitrary object ID
+ *
+ * All OSAL resources generally have a name associated with them.  This
+ * allows application code to retrieve the name of any valid OSAL object ID.
+ *
+ * @param[in]  object_id The object ID to operate on
+ * @param[out] buffer Buffer in which to store the name
+ * @param[in]  buffer_size Size of the output storage buffer
+ *
+ * @returns #OS_SUCCESS if successful
+ *          #OS_ERR_INVALID_ID if the passed-in ID is not a valid OSAL ID
+ *          #OS_INVALID_POINTER if the passed-in buffer is invalid
+ *          #OS_ERR_NAME_TOO_LONG if the name will not fit in the buffer provided
+ */
+int32 OS_GetResourceName(uint32 object_id, char *buffer, uint32 buffer_size);
+
+/*-------------------------------------------------------------------------------------*/
+/**
  * @brief Obtain the type of an object given an arbitrary object ID
  *
  * Given an arbitrary object ID, get the type of the object
@@ -315,11 +351,32 @@ int32 OS_ConvertToArrayIndex   (uint32 object_id, uint32 *ArrayIndex);
 /**
  * @brief call the supplied callback function for all valid object IDs
  *
- * Loops through all defined OSAL objects and calls callback_ptr on each one
+ * Loops through all defined OSAL objects of all types and calls callback_ptr on each one
  * If creator_id is nonzero then only objects with matching creator id are processed.
+ *
+ * @param[in]  creator_id   Filter objects to those created by a specific task
+ *                          This may be passed as OS_OBJECT_CREATOR_ANY to return all objects
+ * @param[in]  callback_ptr Function to invoke for each matching object ID
+ * @param[in]  callback_arg Opaque Argument to pass to callback function
  */
 void OS_ForEachObject           (uint32 creator_id, OS_ArgCallback_t callback_ptr, void *callback_arg);
 /**@}*/
+
+/*-------------------------------------------------------------------------------------*/
+/**
+ * @brief call the supplied callback function for valid object IDs of a specific type
+ *
+ * Loops through all defined OSAL objects of a specific type and calls callback_ptr on each one
+ * If creator_id is nonzero then only objects with matching creator id are processed.
+ *
+ * @param[in]  objtype      The type of objects to iterate
+ * @param[in]  creator_id   Filter objects to those created by a specific task
+ *                          This may be passed as OS_OBJECT_CREATOR_ANY to return all objects
+ * @param[in]  callback_ptr Function to invoke for each matching object ID
+ * @param[in]  callback_arg Opaque Argument to pass to callback function
+  */
+void OS_ForEachObjectOfType     (uint32 objtype, uint32 creator_id, OS_ArgCallback_t callback_ptr, void *callback_arg);
+
 
 /** @defgroup OSAPITask OSAL Task APIs
  * @{
@@ -332,7 +389,7 @@ void OS_ForEachObject           (uint32 creator_id, OS_ArgCallback_t callback_pt
  * Creates a task and passes back the id of the task created. Task names must be unique;
  * if the name already exists this function fails. Names cannot be NULL.
  *
- * @param[out]  task_id will be set to the ID of the newly-created resource
+ * @param[out]  task_id will be set to the non-zero ID of the newly-created resource
  * @param[in]   task_name the name of the new resource to create
  * @param[in]   function_pointer the entry point of the new task
  * @param[in]   stack_pointer pointer to the stack for the task, or NULL
@@ -520,7 +577,7 @@ int32 OS_TaskFindIdBySystemData(uint32 *task_id, const void *sysdata, size_t sys
  * function fails. Names cannot be NULL.
  *
  *
- * @param[out]  queue_id will be set to the ID of the newly-created resource
+ * @param[out]  queue_id will be set to the non-zero ID of the newly-created resource
  * @param[in]   queue_name the name of the new resource to create
  * @param[in]   queue_depth the maximum depth of the queue
  * @param[in]   data_size the size of each entry in the queue
@@ -532,6 +589,7 @@ int32 OS_TaskFindIdBySystemData(uint32 *task_id, const void *sysdata, size_t sys
  * @retval #OS_ERR_NAME_TOO_LONG name length including null terminator greater than #OS_MAX_API_NAME
  * @retval #OS_ERR_NO_FREE_IDS if there are already the max queues created
  * @retval #OS_ERR_NAME_TAKEN if the name is already being used on another queue
+ * @retval #OS_QUEUE_INVALID_SIZE if the queue depth exceeds the limit
  * @retval #OS_ERROR if the OS create call fails
  */
 int32 OS_QueueCreate           (uint32 *queue_id, const char *queue_name,
@@ -647,7 +705,7 @@ int32 OS_QueueGetInfo          (uint32 queue_id, OS_queue_prop_t *queue_prop);
  * sem_initial_value and name specified by sem_name. sem_id will be
  * returned to the caller
  *
- * @param[out]  sem_id will be set to the ID of the newly-created resource
+ * @param[out]  sem_id will be set to the non-zero ID of the newly-created resource
  * @param[in]   sem_name the name of the new resource to create
  * @param[in]   sem_initial_value the initial value of the binary semaphore
  * @param[in]   options Reserved for future use, should be passed as 0.
@@ -799,7 +857,7 @@ int32 OS_BinSemGetInfo         (uint32 sem_id, OS_bin_sem_prop_t *bin_prop);
  * sem_initial_value and name specified by sem_name. sem_id will be
  * returned to the caller
  *
- * @param[out]  sem_id will be set to the ID of the newly-created resource
+ * @param[out]  sem_id will be set to the non-zero ID of the newly-created resource
  * @param[in]   sem_name the name of the new resource to create
  * @param[in]   sem_initial_value the initial value of the counting semaphore
  * @param[in]   options Reserved for future use, should be passed as 0.
@@ -931,7 +989,7 @@ int32 OS_CountSemGetInfo         (uint32 sem_id, OS_count_sem_prop_t *count_prop
  *
  * Mutex semaphores are always created in the unlocked (full) state.
  *
- * @param[out]  sem_id will be set to the ID of the newly-created resource
+ * @param[out]  sem_id will be set to the non-zero ID of the newly-created resource
  * @param[in]   sem_name the name of the new resource to create
  * @param[in]   options reserved for future use.  Should be passed as 0.
  *

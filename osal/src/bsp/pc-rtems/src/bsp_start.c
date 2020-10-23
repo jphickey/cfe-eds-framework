@@ -1,19 +1,29 @@
-/******************************************************************************
-** File:  bsp_start.c
-**
-**
-**      This is governed by the NASA Open Source Agreement and may be used,
-**      distributed and modified only pursuant to the terms of that agreement.
-**
-**      Copyright (c) 2004-2006, United States government as represented by the
-**      administrator of the National Aeronautics Space Administration.
-**      All rights reserved.
-**
-**
-** Purpose:
-**   OSAL BSP main entry point.
-**
-******************************************************************************/
+/*
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/*
+ * File:  bsp_start.c
+ *
+ * Purpose:
+ *   OSAL BSP main entry point.
+ */
 
 #define _USING_RTEMS_INCLUDES_
 
@@ -48,29 +58,6 @@ extern rtems_status_code rtems_ide_part_table_initialize(const char *);
 extern int rtems_rtl_shell_command (int argc, char* argv[]);
 
 /*
- * The RAM Disk configuration.
- */
-rtems_ramdisk_config rtems_ramdisk_configuration[RTEMS_NUMBER_OF_RAMDISKS];
-
-/*
- * The number of RAM Disk configurations.
- */
-size_t rtems_ramdisk_configuration_size = RTEMS_NUMBER_OF_RAMDISKS;
-
-/*
-** RAM Disk IO op table.
-*/
-rtems_driver_address_table rtems_ramdisk_io_ops =
-{
-        .initialization_entry = ramdisk_initialize,
-        .open_entry =           rtems_blkdev_generic_open,
-        .close_entry =          rtems_blkdev_generic_close,
-        .read_entry =           rtems_blkdev_generic_read,
-        .write_entry =          rtems_blkdev_generic_write,
-        .control_entry =        rtems_blkdev_generic_ioctl
-};
-
-/*
  * Additional shell commands for the RTL functionality
  */
 rtems_shell_cmd_t rtems_shell_RTL_Command = {
@@ -101,9 +88,7 @@ OS_BSP_PcRtemsGlobalData_t OS_BSP_PcRtemsGlobal;
 void OS_BSP_Setup(void)
 {
     int          status;
-    unsigned int i;
     struct stat  statbuf;
-    const char * cfpart;
     const char * cmdlinestr;
     const char * cmdp;
     char *       cmdi, *cmdo;
@@ -207,6 +192,19 @@ void OS_BSP_Setup(void)
     }
 
     /*
+     * Create the mountpoint for the general purpose file system
+     */
+    if (stat(RTEMS_USER_FS_MOUNTPOINT, &statbuf) < 0)
+    {
+        status = mkdir(RTEMS_USER_FS_MOUNTPOINT,
+                       S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO); /* For nonvol filesystem mountpoint */
+        if (status < 0)
+        {
+            printf("mkdir failed: %s\n", strerror(errno));
+        }
+    }
+
+    /*
      * Register the IDE partition table.
      */
     status = rtems_ide_part_table_initialize("/dev/hda");
@@ -217,52 +215,25 @@ void OS_BSP_Setup(void)
          * is still available. */
         BSP_DEBUG("warning: /dev/hda partition table not found: %s / %s\n", rtems_status_text(status), strerror(errno));
         BSP_DEBUG("Persistent storage will NOT be mounted\n");
-        cfpart = NULL;
     }
     else
     {
-        cfpart = "/dev/hda1";
+        status = mount("/dev/hda1", RTEMS_USER_FS_MOUNTPOINT, RTEMS_FILESYSTEM_TYPE_DOSFS,
+                       RTEMS_FILESYSTEM_READ_WRITE, NULL);
+        if (status < 0)
+        {
+            BSP_DEBUG("mount failed: %s\n", strerror(errno));
+        }
     }
 
     /*
-    ** Create local directories for "disk" mount points
-    **  See bsp_voltab for the values
-    **
-    ** NOTE - the voltab table is poorly designed here; values of "0" are valid
-    ** and will translate into an entry that is actually used.  In particular the
-    ** "free" flag has to be actually initialized to TRUE to say its NOT valid.
-    ** So in the case of an entry that has been zeroed out (i.e. bss section) it
-    ** will be treated as a valid entry.
-    **
-    ** Checking that the DeviceName starts with a leading slash '/' is a workaround
-    ** for this, and may be the only way to detect an entry that is uninitialized.
-    */
-    for (i = 0; i < NUM_TABLE_ENTRIES; ++i)
-    {
-        if (OS_VolumeTable[i].VolumeType == FS_BASED && OS_VolumeTable[i].PhysDevName[0] != 0 &&
-            OS_VolumeTable[i].DeviceName[0] == '/')
+     * Change to the user storage mountpoint dir, which
+     * will be the basis of relative directory refs.
+     * If mounted, it will be persistent, otherwise
+     * it will be an IMFS dir, but should generally work.
+     */
+    chdir(RTEMS_USER_FS_MOUNTPOINT);
 
-        {
-            if (stat(OS_VolumeTable[i].PhysDevName, &statbuf) < 0)
-            {
-                status = mkdir(OS_VolumeTable[i].PhysDevName,
-                               S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO); /* For ramdisk mountpoint */
-                if (status < 0)
-                {
-                    printf("mkdir failed: %s\n", strerror(errno));
-                }
-            }
-            if (cfpart != NULL && strcmp(OS_VolumeTable[i].MountPoint, "/cf") == 0)
-            {
-                status = mount(cfpart, OS_VolumeTable[i].PhysDevName, RTEMS_FILESYSTEM_TYPE_DOSFS,
-                               RTEMS_FILESYSTEM_READ_WRITE, NULL);
-                if (status < 0)
-                {
-                    printf("mount failed: %s\n", strerror(errno));
-                }
-            }
-        }
-    }
 
     /*
      * Start the shell now, before any application starts.
@@ -324,6 +295,30 @@ rtems_status_code OS_BSP_GetReturnStatus(void)
     return retcode;
 }
 
+/* ---------------------------------------------------------
+    OS_BSP_Shutdown_Impl()
+
+     Helper function to abort the running task
+   --------------------------------------------------------- */
+void OS_BSP_Shutdown_Impl(void)
+{
+    /*
+     * Not calling exit() under RTEMS, this simply shuts down the executive,
+     * forcing the user to reboot the system.
+     *
+     * Calling suspend causes execution to get stuck here, but the RTEMS
+     * shell thread will still be active so the user can poke around, read results,
+     * then use a shell command to reboot when ready.
+     */
+    while (!OS_BSP_PcRtemsGlobal.BatchMode)
+    {
+        printf("\n\nInit thread idle.\nPress <enter> for shell or reset machine...\n\n");
+        rtems_task_suspend(rtems_task_self());
+    }
+
+    rtems_shutdown_executive(OS_BSP_GetReturnStatus());
+}
+
 /*
  ** A simple entry point to start from the loader
  */
@@ -355,20 +350,11 @@ rtems_task Init(rtems_task_argument ignored)
     OS_Application_Run();
 
     /*
-     * Not calling exit() under RTEMS, this simply shuts down the executive,
-     * forcing the user to reboot the system.
-     *
-     * Calling suspend causes execution to get stuck here, but the RTEMS
-     * shell thread will still be active so the user can poke around, read results,
-     * then use a shell command to reboot when ready.
+     * Enter the BSP default shutdown mode
+     * depending on config, this may reset/reboot or suspend
+     * so the operator can use the shell.
      */
-    while (!OS_BSP_PcRtemsGlobal.BatchMode)
-    {
-        printf("\n\nInit thread idle.\nPress <enter> for shell or reset machine...\n\n");
-        rtems_task_suspend(rtems_task_self());
-    }
-
-    rtems_shutdown_executive(OS_BSP_GetReturnStatus());
+    OS_BSP_Shutdown_Impl();
 }
 
 /* configuration information */

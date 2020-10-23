@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
  *
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -105,6 +115,9 @@ static int32 UT_GenericWriteStub(const char *fname, UT_EntryKey_t fkey, const vo
  *****************************************************************************/
 int32 OS_creat(const char *path, int32 access)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_creat), path);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_creat), access);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_creat);
@@ -124,6 +137,10 @@ int32 OS_creat(const char *path, int32 access)
  *****************************************************************************/
 int32 OS_open(const char *path, int32 access, uint32 mode)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_open), path);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_open), access);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_open), mode);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_open);
@@ -144,6 +161,8 @@ int32 OS_open(const char *path, int32 access, uint32 mode)
  *****************************************************************************/
 int32 OS_close(uint32 filedes)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_close), filedes);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_close);
@@ -183,6 +202,10 @@ int32 OS_StreamWrite(uint32  filedes, const void *buffer, uint32 nbytes, int32 t
  *****************************************************************************/
 int32 OS_read(uint32 filedes, void *buffer, uint32 nbytes)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_read), filedes);
+    UT_Stub_RegisterContext(UT_KEY(OS_read), buffer);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_read), nbytes);
+
     return UT_GenericReadStub(__func__,UT_KEY(OS_read),buffer,nbytes);
 }
 
@@ -193,8 +216,43 @@ int32 OS_read(uint32 filedes, void *buffer, uint32 nbytes)
  *****************************************************************************/
 int32 OS_write(uint32 filedes, const void *buffer, uint32 nbytes)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_write), filedes);
+    UT_Stub_RegisterContext(UT_KEY(OS_write), buffer);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_write), nbytes);
+
     return UT_GenericWriteStub(__func__,UT_KEY(OS_write),buffer,nbytes);
 }
+
+/*****************************************************************************
+ *
+ * Stub function for OS_TimedRead()
+ *
+ *****************************************************************************/
+int32 OS_TimedRead(uint32  filedes, void *buffer, uint32 nbytes, int32 timeout)
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimedRead), filedes);
+    UT_Stub_RegisterContext(UT_KEY(OS_TimedRead), buffer);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimedRead), nbytes);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimedRead), timeout);
+
+    return UT_GenericReadStub(__func__,UT_KEY(OS_TimedRead),buffer,nbytes);
+}
+
+/*****************************************************************************
+ *
+ * Stub function for OS_TimedWrite()
+ *
+ *****************************************************************************/
+int32 OS_TimedWrite(uint32  filedes, const void *buffer, uint32 nbytes, int32 timeout)
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimedWrite), filedes);
+    UT_Stub_RegisterContext(UT_KEY(OS_TimedWrite), buffer);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimedWrite), nbytes);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimedWrite), timeout);
+
+    return UT_GenericWriteStub(__func__,UT_KEY(OS_TimedWrite),buffer,nbytes);
+}
+
 
 /*****************************************************************************
  *
@@ -203,6 +261,9 @@ int32 OS_write(uint32 filedes, const void *buffer, uint32 nbytes)
  *****************************************************************************/
 int32 OS_chmod  (const char *path, uint32 access)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_chmod), path);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_chmod), access);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_chmod);
@@ -218,6 +279,9 @@ int32 OS_chmod  (const char *path, uint32 access)
  *****************************************************************************/
 int32 OS_stat   (const char *path, os_fstat_t *filestats)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_stat), path);
+    UT_Stub_RegisterContext(UT_KEY(OS_stat), filestats);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_stat);
@@ -236,6 +300,10 @@ int32 OS_stat   (const char *path, os_fstat_t *filestats)
  *****************************************************************************/
 int32 OS_lseek(uint32 filedes, int32 offset, uint32 whence)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_lseek), filedes);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_lseek), offset);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_lseek), whence);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL_RC(OS_lseek, offset);
@@ -250,6 +318,8 @@ int32 OS_lseek(uint32 filedes, int32 offset, uint32 whence)
  *****************************************************************************/
 int32 OS_remove (const char *path)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_remove), path);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_remove);
@@ -262,8 +332,11 @@ int32 OS_remove (const char *path)
  * Stub function for OS_rename()
  *
  *****************************************************************************/
-int32 OS_rename (const char *old, const char *new)
+int32 OS_rename (const char *old_filename, const char *new_filename)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_rename), old_filename);
+    UT_Stub_RegisterContext(UT_KEY(OS_rename), new_filename);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_rename);
@@ -278,6 +351,9 @@ int32 OS_rename (const char *old, const char *new)
  *****************************************************************************/
 int32 OS_cp (const char *src, const char *dest)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_cp), src);
+    UT_Stub_RegisterContext(UT_KEY(OS_cp), dest);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_cp);
@@ -292,6 +368,9 @@ int32 OS_cp (const char *src, const char *dest)
  *****************************************************************************/
 int32 OS_mv (const char *src, const char *dest)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_mv), src);
+    UT_Stub_RegisterContext(UT_KEY(OS_mv), dest);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_mv);
@@ -307,6 +386,9 @@ int32 OS_mv (const char *src, const char *dest)
  *****************************************************************************/
 int32 OS_FDGetInfo (uint32 filedes, OS_file_prop_t *fd_prop)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_FDGetInfo), filedes);
+    UT_Stub_RegisterContext(UT_KEY(OS_FDGetInfo), fd_prop);
+
     int32 status;
     uint32 CopySize;
 
@@ -336,6 +418,8 @@ int32 OS_FDGetInfo (uint32 filedes, OS_file_prop_t *fd_prop)
  *****************************************************************************/
 int32 OS_FileOpenCheck(const char *Filename)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_FileOpenCheck), Filename);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_FileOpenCheck);
@@ -350,6 +434,8 @@ int32 OS_FileOpenCheck(const char *Filename)
  *****************************************************************************/
 int32 OS_CloseFileByName(const char *Filename)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_CloseFileByName), Filename);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_CloseFileByName);
@@ -378,12 +464,14 @@ int32 OS_CloseAllFiles(void)
  *****************************************************************************/
 int32 OS_ShellOutputToFile(const char* Cmd, uint32 filedes)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_ShellOutputToFile), Cmd);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_ShellOutputToFile), filedes);
+
     int32 status;
 
     /*
      * This allows a hook function to do something with the "Cmd" parameter
      */
-    UT_Stub_RegisterContext(UT_KEY(OS_ShellOutputToFile),Cmd);
 
     status = UT_DEFAULT_IMPL(OS_ShellOutputToFile);
 

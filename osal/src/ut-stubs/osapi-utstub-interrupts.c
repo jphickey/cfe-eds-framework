@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
  *
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -32,8 +42,10 @@
  *****************************************************************************/
 int32 OS_IntAttachHandler  (uint32 InterruptNumber, osal_task_entry InterruptHandler, int32 parameter)
 {
-    UT_Stub_RegisterContext(UT_KEY(OS_IntAttachHandler), &InterruptHandler);
-    UT_Stub_RegisterContext(UT_KEY(OS_IntAttachHandler), &parameter);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_IntAttachHandler), InterruptNumber);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_IntAttachHandler), InterruptHandler);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_IntAttachHandler), parameter);
+
     return UT_DEFAULT_IMPL(OS_IntAttachHandler);
 }
 
@@ -73,8 +85,10 @@ int32 OS_IntLock(void)
 **        Returns OS_SUCCESS.
 **
 ******************************************************************************/
-int32 OS_IntUnlock(int32 IntFlags)
+int32 OS_IntUnlock(int32 IntLevel)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_IntUnlock), IntLevel);
+
     return UT_DEFAULT_IMPL(OS_IntUnlock);
 }
 
@@ -85,6 +99,8 @@ int32 OS_IntUnlock(int32 IntFlags)
  *****************************************************************************/
 int32 OS_IntEnable(int32 Level)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_IntEnable), Level);
+
     return UT_DEFAULT_IMPL(OS_IntEnable);
 }
 
@@ -95,6 +111,8 @@ int32 OS_IntEnable(int32 Level)
  *****************************************************************************/
 int32 OS_IntDisable(int32 Level)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_IntDisable), Level);
+
     return UT_DEFAULT_IMPL(OS_IntDisable);
 }
 
@@ -103,9 +121,10 @@ int32 OS_IntDisable(int32 Level)
  * Stub function for OS_IntSetMask()
  *
  *****************************************************************************/
-int32 OS_IntSetMask ( uint32 MaskSetting )
+int32 OS_IntSetMask ( uint32 mask )
 {
-    UT_Stub_RegisterContext(UT_KEY(OS_IntSetMask), &MaskSetting);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_IntSetMask), mask);
+
     return UT_DEFAULT_IMPL(OS_IntSetMask);
 }
 
@@ -114,9 +133,10 @@ int32 OS_IntSetMask ( uint32 MaskSetting )
  * Stub function for OS_IntGetMask()
  *
  *****************************************************************************/
-int32 OS_IntGetMask ( uint32 * MaskSettingPtr )
+int32 OS_IntGetMask ( uint32 * mask )
 {
-    UT_Stub_RegisterContext(UT_KEY(OS_IntGetMask), MaskSettingPtr);
+    UT_Stub_RegisterContext(UT_KEY(OS_IntGetMask), mask);
+
     return UT_DEFAULT_IMPL(OS_IntGetMask);
 }
 

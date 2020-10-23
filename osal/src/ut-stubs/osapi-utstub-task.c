@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
  *
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -49,10 +59,15 @@ int32 OS_TaskCreate(uint32 *task_id, const char *task_name,
                     uint32 stack_size, uint32 priority,
                     uint32 flags)
 {
-    int32 status;
-
-    UT_Stub_RegisterContext(UT_KEY(OS_TaskCreate), &function_pointer);
+    UT_Stub_RegisterContext(UT_KEY(OS_TaskCreate), task_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_TaskCreate), task_name);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskCreate), function_pointer);
     UT_Stub_RegisterContext(UT_KEY(OS_TaskCreate), stack_pointer);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskCreate), stack_size);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskCreate), priority);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskCreate), flags);
+
+    int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TaskCreate);
 
@@ -87,6 +102,8 @@ int32 OS_TaskCreate(uint32 *task_id, const char *task_name,
 ******************************************************************************/
 int32 OS_TaskDelete(uint32 task_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskDelete), task_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TaskDelete);
@@ -140,6 +157,8 @@ void OS_TaskExit()
 ******************************************************************************/
 int32 OS_TaskDelay(uint32 millisecond)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskDelay), millisecond);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TaskDelay);
@@ -154,6 +173,9 @@ int32 OS_TaskDelay(uint32 millisecond)
  *****************************************************************************/
 int32 OS_TaskSetPriority (uint32 task_id, uint32 new_priority)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskSetPriority), task_id);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskSetPriority), new_priority);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TaskSetPriority);
@@ -221,6 +243,9 @@ uint32 OS_TaskGetId(void)
  *****************************************************************************/
 int32 OS_TaskGetIdByName (uint32 *task_id, const char *task_name)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_TaskGetIdByName), task_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_TaskGetIdByName), task_name);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TaskGetIdByName);
@@ -255,12 +280,15 @@ int32 OS_TaskGetIdByName (uint32 *task_id, const char *task_name)
 ******************************************************************************/
 int32 OS_TaskGetInfo(uint32 task_id, OS_task_prop_t *task_prop)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskGetInfo), task_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_TaskGetInfo), task_prop);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TaskGetInfo);
 
     if (status == OS_SUCCESS &&
-            UT_Stub_CopyToLocal(UT_KEY(OS_MutSemGetInfo), task_prop, sizeof(*task_prop)) < sizeof(*task_prop))
+            UT_Stub_CopyToLocal(UT_KEY(OS_TaskGetInfo), task_prop, sizeof(*task_prop)) < sizeof(*task_prop))
     {
         task_prop->creator = 1;
         UT_FIXUP_ID(task_prop->creator, UT_OBJTYPE_TASK);
@@ -273,6 +301,37 @@ int32 OS_TaskGetInfo(uint32 task_id, OS_task_prop_t *task_prop)
     return status;
 }
 
+/*****************************************************************************/
+/**
+** \brief OS_TaskGetInfo stub function
+**
+** \par Description
+**        This function is used to mimic the response of the OS API function
+**        OS_TaskFindIdBySystemData.
+**
+** \returns
+**        The return value instructed by the test case setup
+**
+******************************************************************************/
+int32 OS_TaskFindIdBySystemData(uint32 *task_id, const void *sysdata, size_t sysdata_size)
+{
+    UT_Stub_RegisterContext(UT_KEY(OS_TaskFindIdBySystemData), task_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_TaskFindIdBySystemData), sysdata);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskFindIdBySystemData), sysdata_size);
+
+    int32 status;
+
+    status = UT_DEFAULT_IMPL(OS_TaskFindIdBySystemData);
+
+    if (status == OS_SUCCESS &&
+            UT_Stub_CopyToLocal(UT_KEY(OS_TaskFindIdBySystemData), task_id, sizeof(*task_id)) < sizeof(*task_id))
+    {
+        *task_id = 1;
+        UT_FIXUP_ID(*task_id, UT_OBJTYPE_TASK);
+    }
+
+    return status;
+}
 
 /*****************************************************************************
  *
@@ -281,9 +340,9 @@ int32 OS_TaskGetInfo(uint32 task_id, OS_task_prop_t *task_prop)
  *****************************************************************************/
 int32 OS_TaskInstallDeleteHandler(osal_task_entry function_pointer)
 {
-    int32 status;
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TaskInstallDeleteHandler), function_pointer);
 
-    UT_Stub_RegisterContext(UT_KEY(OS_TaskInstallDeleteHandler), &function_pointer);
+    int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TaskInstallDeleteHandler);
 

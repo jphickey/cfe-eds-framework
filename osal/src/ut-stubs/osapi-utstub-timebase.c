@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
  *
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -34,6 +44,10 @@ UT_DEFAULT_STUB(OS_TimeBaseAPI_Init,(void))
  *****************************************************************************/
 int32 OS_TimeBaseCreate(uint32 *timebase_id, const char *timebase_name, OS_TimerSync_t external_sync)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_TimeBaseCreate), timebase_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_TimeBaseCreate), timebase_name);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimeBaseCreate), external_sync);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TimeBaseCreate);
@@ -58,6 +72,10 @@ int32 OS_TimeBaseCreate(uint32 *timebase_id, const char *timebase_name, OS_Timer
  *****************************************************************************/
 int32 OS_TimeBaseSet(uint32 timebase_id, uint32 start_time, uint32 interval_time)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimeBaseSet), timebase_id);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimeBaseSet), start_time);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimeBaseSet), interval_time);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TimeBaseSet);
@@ -73,6 +91,8 @@ int32 OS_TimeBaseSet(uint32 timebase_id, uint32 start_time, uint32 interval_time
  *****************************************************************************/
 int32 OS_TimeBaseDelete(uint32 timebase_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimeBaseDelete), timebase_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TimeBaseDelete);
@@ -93,6 +113,9 @@ int32 OS_TimeBaseDelete(uint32 timebase_id)
  *****************************************************************************/
 int32 OS_TimeBaseGetIdByName (uint32 *timebase_id, const char *timebase_name)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_TimeBaseGetIdByName), timebase_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_TimeBaseGetIdByName), timebase_name);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TimeBaseGetIdByName);
@@ -115,6 +138,9 @@ int32 OS_TimeBaseGetIdByName (uint32 *timebase_id, const char *timebase_name)
  *****************************************************************************/
 int32 OS_TimeBaseGetInfo (uint32 timebase_id, OS_timebase_prop_t *timebase_prop)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimeBaseGetInfo), timebase_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_TimeBaseGetInfo), timebase_prop);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TimeBaseGetInfo);
@@ -139,6 +165,9 @@ int32 OS_TimeBaseGetInfo (uint32 timebase_id, OS_timebase_prop_t *timebase_prop)
  *****************************************************************************/
 int32 OS_TimeBaseGetFreeRun     (uint32 timebase_id, uint32 *freerun_val)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_TimeBaseGetFreeRun), timebase_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_TimeBaseGetFreeRun), freerun_val);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_TimeBaseGetFreeRun);
@@ -194,5 +223,7 @@ int32 OS_Tick2Micros (void)
  *****************************************************************************/
 int32 OS_Milli2Ticks(uint32 milli_seconds)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_Milli2Ticks), milli_seconds);
+
     return UT_DEFAULT_IMPL_RC(OS_Milli2Ticks,100);
 }

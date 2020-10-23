@@ -1,15 +1,22 @@
 /*
- * 
- *    Copyright (c) 2020, United States government as represented by the
- *    administrator of the National Aeronautics Space Administration.
- *    All rights reserved. This software was created at NASA Goddard
- *    Space Flight Center pursuant to government contracts.
- * 
- *    This is governed by the NASA Open Source Agreement and may be used,
- *    distributed and modified only according to the terms of that agreement.
- * 
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-
 
 /**
  * \file     osapi-sockets.c
@@ -194,7 +201,7 @@ int32 OS_SocketBind(uint32 sock_id, const OS_SockAddr_t *Addr)
          }
       }
 
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
    return return_code;
@@ -274,7 +281,7 @@ int32 OS_SocketAccept(uint32 sock_id, uint32 *connsock_id, OS_SockAddr_t *Addr, 
       /* The actual accept impl is done without global table lock, only refcount lock */
       return_code = OS_SocketAccept_Impl(local_id, conn_id, Addr, timeout);
 
-      OS_Lock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Lock_Global(LOCAL_OBJID_TYPE);
       if (return_code == OS_SUCCESS)
       {
          /* Generate an entry name based on the remote address */
@@ -291,7 +298,7 @@ int32 OS_SocketAccept(uint32 sock_id, uint32 *connsock_id, OS_SockAddr_t *Addr, 
       /* Decrement both ref counters that were increased earlier */
       --record->refcount;
       --connrecord->refcount;
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
    return return_code;
@@ -334,20 +341,20 @@ int32 OS_SocketConnect(uint32 sock_id, const OS_SockAddr_t *Addr, int32 Timeout)
       {
          ++record->refcount;
       }
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
    if (return_code == OS_SUCCESS)
    {
       return_code = OS_SocketConnect_Impl (local_id, Addr, Timeout);
 
-      OS_Lock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Lock_Global(LOCAL_OBJID_TYPE);
       if (return_code == OS_SUCCESS)
       {
          OS_stream_table[local_id].stream_state |= OS_STREAM_STATE_CONNECTED | OS_STREAM_STATE_READABLE | OS_STREAM_STATE_WRITABLE;
       }
       --record->refcount;
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
 
@@ -488,7 +495,7 @@ int32 OS_SocketGetInfo (uint32 sock_id, OS_socket_prop_t *sock_prop)
       strncpy(sock_prop->name, record->name_entry, OS_MAX_API_NAME - 1);
       sock_prop->creator = record->creator;
       return_code = OS_SocketGetInfo_Impl (local_id, sock_prop);
-      OS_Unlock_Global_Impl(LOCAL_OBJID_TYPE);
+      OS_Unlock_Global(LOCAL_OBJID_TYPE);
    }
 
    return return_code;

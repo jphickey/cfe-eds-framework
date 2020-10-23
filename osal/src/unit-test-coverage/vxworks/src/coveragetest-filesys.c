@@ -1,15 +1,22 @@
 /*
- * 
- *    Copyright (c) 2020, United States government as represented by the
- *    administrator of the National Aeronautics Space Administration.
- *    All rights reserved. This software was created at NASA Goddard
- *    Space Flight Center pursuant to government contracts.
- * 
- *    This is governed by the NASA Open Source Agreement and may be used,
- *    distributed and modified only according to the terms of that agreement.
- * 
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-
 
 /**
  * \file     coveragetest-filesys.c
@@ -43,9 +50,13 @@ void Test_OS_FileSysStartVolume_Impl(void)
      */
     int32 expected;
 
-    /* Emulate an FS_BASED entry */
-    OS_filesys_table[0].fstype = OS_FILESYS_TYPE_DEFAULT;
+    /* Emulate an UNKNOWN entry */
+    OS_filesys_table[0].fstype = OS_FILESYS_TYPE_UNKNOWN;
     OSAPI_TEST_FUNCTION_RC(OS_FileSysStartVolume_Impl(0), OS_ERR_NOT_IMPLEMENTED);
+
+    /* Emulate an FS_BASED entry */
+    OS_filesys_table[0].fstype = OS_FILESYS_TYPE_FS_BASED;
+    OSAPI_TEST_FUNCTION_RC(OS_FileSysStartVolume_Impl(0), OS_SUCCESS);
 
     /* Emulate a VOLATILE_DISK entry (ramdisk) */
     OS_filesys_table[1].fstype = OS_FILESYS_TYPE_VOLATILE_DISK;
@@ -78,6 +89,7 @@ void Test_OS_FileSysStopVolume_Impl(void)
     OSAPI_TEST_FUNCTION_RC(OS_FileSysStopVolume_Impl(0), OS_SUCCESS);
 
     /* Failure to delete XBD layer */
+    OS_filesys_table[1].fstype = OS_FILESYS_TYPE_VOLATILE_DISK;
     UT_FileSysTest_SetupFileSysEntry(1, NULL, 1, 4);
     OSAPI_TEST_FUNCTION_RC(OS_FileSysStopVolume_Impl(1), OS_SUCCESS);
     UtAssert_True(UT_GetStubCount(UT_KEY(OCS_xbdBlkDevDelete)) == 1, "xbdBlkDevDelete() called");
@@ -88,6 +100,16 @@ void Test_OS_FileSysFormatVolume_Impl(void)
     /* Test Case For:
      * int32 OS_FileSysFormatVolume_Impl (uint32 filesys_id)
      */
+
+    /* test unimplemented fs type */
+    OS_filesys_table[0].fstype = OS_FILESYS_TYPE_UNKNOWN;
+    OSAPI_TEST_FUNCTION_RC(OS_FileSysFormatVolume_Impl(0), OS_ERR_NOT_IMPLEMENTED);
+
+    /* fs-based should be noop */
+    OS_filesys_table[0].fstype = OS_FILESYS_TYPE_FS_BASED;
+    OSAPI_TEST_FUNCTION_RC(OS_FileSysFormatVolume_Impl(0), OS_SUCCESS);
+
+    OS_filesys_table[0].fstype = OS_FILESYS_TYPE_VOLATILE_DISK;
     OSAPI_TEST_FUNCTION_RC(OS_FileSysFormatVolume_Impl(0), OS_SUCCESS);
 
     /* Failure of the dosFsVolFormat() call */

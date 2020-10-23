@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
- * 
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 
@@ -31,6 +41,16 @@
 #include "os-shared-idmap.h"
 
 UT_DEFAULT_STUB(OS_ObjectIdInit,(void))
+
+/* Lock/Unlock for global tables */
+void OS_Lock_Global(uint32 idtype)
+{
+    UT_DEFAULT_IMPL(OS_Lock_Global);
+}
+void OS_Unlock_Global(uint32 idtype)
+{
+    UT_DEFAULT_IMPL(OS_Unlock_Global);
+}
 
 /*****************************************************************************
  *
@@ -138,7 +158,6 @@ int32 OS_ObjectIdToArrayIndex(uint32 idtype, uint32 id, uint32 *ArrayIndex)
     return Status;
 }
 
-
 /*****************************************************************************
  *
  * Stub function for OS_ObjectIdFinalize()
@@ -188,7 +207,6 @@ int32 OS_ObjectIdGetBySearch(OS_lock_mode_t lock_mode, uint32 idtype, OS_ObjectM
 
     return Status;
 }
-
 
 /*****************************************************************************
  *
@@ -392,6 +410,37 @@ int32 OS_ObjectIdAllocateNew(uint32 idtype, const char *name, uint32 *array_inde
 }
 
 /*--------------------------------------------------------------------------------------
+     Name: OS_GetResourceName
+
+    Purpose: Stub function for OS_GetResourceName, returns either the test-supplied string
+             or an empty string.
+
+    returns: status
+---------------------------------------------------------------------------------------*/
+int32 OS_GetResourceName(uint32 object_id, char *buffer, uint32 buffer_size)
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_GetResourceName), object_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_GetResourceName), buffer);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_GetResourceName), buffer_size);
+
+    int32 return_code;
+
+    return_code = UT_DEFAULT_IMPL(OS_GetResourceName);
+
+    if (return_code == OS_SUCCESS)
+    {
+        if (buffer_size > 0 &&
+                UT_Stub_CopyToLocal(UT_KEY(OS_GetResourceName), buffer, buffer_size) == 0)
+        {
+            /* return an empty string by default */
+            buffer[0] = 0;
+        }
+    }
+
+    return return_code;
+}
+
+/*--------------------------------------------------------------------------------------
      Name: OS_ConvertToArrayIndex
 
     Purpose: Converts any abstract ID into a number suitable for use as an array index.
@@ -403,6 +452,9 @@ int32 OS_ObjectIdAllocateNew(uint32 idtype, const char *name, uint32 *array_inde
 ---------------------------------------------------------------------------------------*/
 int32 OS_ConvertToArrayIndex(uint32 object_id, uint32 *ArrayIndex)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_ConvertToArrayIndex), object_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_ConvertToArrayIndex), ArrayIndex);
+
    int32 return_code;
 
    return_code = UT_DEFAULT_IMPL(OS_ConvertToArrayIndex);
@@ -429,6 +481,36 @@ int32 OS_ConvertToArrayIndex(uint32 object_id, uint32 *ArrayIndex)
    return return_code;
 } /* end OS_ConvertToArrayIndex */
 
+/*--------------------------------------------------------------------------------------
+     Name: OS_ForEachObjectOfType
+
+    Purpose: Stub function for OS_ForEachObjectOfType
+
+    returns: None
+---------------------------------------------------------------------------------------*/
+void OS_ForEachObjectOfType     (uint32 objtype, uint32 creator_id, OS_ArgCallback_t callback_ptr, void *callback_arg)
+{
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_ForEachObjectOfType), objtype);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_ForEachObjectOfType), creator_id);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_ForEachObjectOfType), callback_ptr);
+    UT_Stub_RegisterContext(UT_KEY(OS_ForEachObjectOfType), callback_arg);
+
+    uint32 NextId;
+    uint32 IdSize;
+
+    /* Although this is "void", Invoke the default impl to log it and invoke any hooks */
+    UT_DEFAULT_IMPL(OS_ForEachObjectOfType);
+
+    while (1)
+    {
+        IdSize = UT_Stub_CopyToLocal(UT_KEY(OS_ForEachObjectOfType), &NextId, sizeof(NextId));
+        if (IdSize < sizeof(NextId))
+        {
+            break;
+        }
+        (*callback_ptr)(NextId, callback_arg);
+    }
+}
 
 /*--------------------------------------------------------------------------------------
      Name: OS_ForEachOject
@@ -440,15 +522,14 @@ int32 OS_ConvertToArrayIndex(uint32 object_id, uint32 *ArrayIndex)
 ---------------------------------------------------------------------------------------*/
 void OS_ForEachObject (uint32 creator_id, OS_ArgCallback_t callback_ptr, void *callback_arg)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_ForEachObject), creator_id);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_ForEachObject), callback_ptr);
+    UT_Stub_RegisterContext(UT_KEY(OS_ForEachObject), callback_arg);
+
     uint32 NextId;
     uint32 IdSize;
-    OS_U32ValueWrapper_t wrapper;
-
-    wrapper.arg_callback_func = callback_ptr;
 
     /* Although this is "void", Invoke the default impl to log it and invoke any hooks */
-    UT_Stub_RegisterContext(UT_KEY(OS_ForEachObject), wrapper.opaque_arg);
-    UT_Stub_RegisterContext(UT_KEY(OS_ForEachObject), callback_arg);
     UT_DEFAULT_IMPL(OS_ForEachObject);
 
     while (1)
@@ -471,6 +552,8 @@ void OS_ForEachObject (uint32 creator_id, OS_ArgCallback_t callback_ptr, void *c
 ---------------------------------------------------------------------------------------*/
 uint32 OS_IdentifyObject       (uint32 object_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_IdentifyObject), object_id);
+
     int32 DefaultType;
 
     switch ((object_id >> 16) ^ 0x4000U)

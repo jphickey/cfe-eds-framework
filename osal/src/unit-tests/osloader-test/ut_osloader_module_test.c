@@ -1,3 +1,23 @@
+/*
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 /*================================================================================*
 ** File:  ut_osloader_module_test.c
 ** Owner: Tam Ngo
@@ -99,10 +119,8 @@ void UT_os_module_load_test()
     /* Setup */
     for ( i = 0; i< OS_MAX_MODULES; i++ )
     {
-        memset(module_name, '\0', sizeof(module_name));
-        UT_os_sprintf(module_name, "MODULE%d",i);
-        memset(module_file_name, '\0', sizeof(module_file_name));
-        UT_os_sprintf(module_file_name, UT_OS_SPECIFIC_MODULE_NAME, i);
+        snprintf(module_name, sizeof(module_name), UT_OS_GENERIC_MODULE_NAME_TEMPLATE, i);
+        snprintf(module_file_name, sizeof(module_file_name), UT_OS_GENERIC_MODULE_FILE_TEMPLATE, i);
         res = OS_ModuleLoad(&module_id, module_name, module_file_name);
         if ( res != OS_SUCCESS )
         {

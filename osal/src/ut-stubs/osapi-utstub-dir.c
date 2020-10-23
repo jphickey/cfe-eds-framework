@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
  *
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -34,6 +44,9 @@ UT_DEFAULT_STUB(OS_DirAPI_Init,(void))
  *****************************************************************************/
 int32 OS_mkdir (const char *path, uint32 access)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_mkdir), path);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_mkdir), access);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_mkdir);
@@ -48,6 +61,8 @@ int32 OS_mkdir (const char *path, uint32 access)
  *****************************************************************************/
 int32  OS_rmdir (const char *path)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_rmdir), path);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_rmdir);
@@ -64,6 +79,9 @@ int32  OS_rmdir (const char *path)
  *****************************************************************************/
 int32 OS_DirectoryOpen(uint32 *dir_id, const char *path)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_DirectoryOpen), dir_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_DirectoryOpen), path);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_DirectoryOpen);
@@ -88,6 +106,8 @@ int32 OS_DirectoryOpen(uint32 *dir_id, const char *path)
  *****************************************************************************/
 int32 OS_DirectoryClose(uint32 dir_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_DirectoryClose), dir_id);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_DirectoryClose);
@@ -107,6 +127,8 @@ int32 OS_DirectoryClose(uint32 dir_id)
  *****************************************************************************/
 int32 OS_DirectoryRewind(uint32 dir_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_DirectoryRewind), dir_id);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_DirectoryRewind);
@@ -121,6 +143,9 @@ int32 OS_DirectoryRewind(uint32 dir_id)
  *****************************************************************************/
 int32 OS_DirectoryRead(uint32 dir_id, os_dirent_t *dirent)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_DirectoryRead), dir_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_DirectoryRead), dirent);
+
     int32 Status;
     uint32 CopySize;
 
@@ -149,6 +174,8 @@ int32 OS_DirectoryRead(uint32 dir_id, os_dirent_t *dirent)
  *****************************************************************************/
 os_dirp_t OS_opendir (const char *path)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_opendir), path);
+
     int32 Status;
     os_dirp_t Dirp;
 
@@ -181,6 +208,8 @@ os_dirp_t OS_opendir (const char *path)
  *****************************************************************************/
 int32 OS_closedir (os_dirp_t directory)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_closedir), directory);
+
     int32 Status;
 
     Status = UT_DEFAULT_IMPL(OS_closedir);
@@ -196,6 +225,8 @@ int32 OS_closedir (os_dirp_t directory)
  *****************************************************************************/
 os_dirent_t *  OS_readdir (os_dirp_t directory)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_readdir), directory);
+
     static os_dirent_t DefaultEntry;
     os_dirent_t *DirentPtr;
     int32 Status;
@@ -231,6 +262,8 @@ os_dirent_t *  OS_readdir (os_dirp_t directory)
  *****************************************************************************/
 void OS_rewinddir(os_dirp_t directory)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_rewinddir), directory);
+
     /* Call the default impl so hooks will work */
     UT_DEFAULT_IMPL(OS_rewinddir);
 }

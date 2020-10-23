@@ -1,11 +1,21 @@
 /*
- *  Copyright (c) 2004-2018, United States government as represented by the
- *  administrator of the National Aeronautics Space Administration.
- *  All rights reserved. This software was created at NASA Glenn
- *  Research Center pursuant to government contracts.
- * 
- *  This is governed by the NASA Open Source Agreement and may be used,
- *  distributed and modified only according to the terms of that agreement.
+ *  NASA Docket No. GSC-18,370-1, and identified as "Operating System Abstraction Layer"
+ *
+ *  Copyright (c) 2019 United States Government as represented by
+ *  the Administrator of the National Aeronautics and Space Administration.
+ *  All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 
@@ -51,6 +61,10 @@ UT_DEFAULT_STUB(OS_MutexAPI_Init,(void))
 ******************************************************************************/
 int32 OS_MutSemCreate(uint32 *sem_id, const char *sem_name, uint32 options)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_MutSemCreate), sem_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_MutSemCreate), sem_name);
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_MutSemCreate), options);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_MutSemCreate);
@@ -89,6 +103,8 @@ int32 OS_MutSemCreate(uint32 *sem_id, const char *sem_name, uint32 options)
 ******************************************************************************/
 int32 OS_MutSemDelete(uint32 sem_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_MutSemDelete), sem_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_MutSemDelete);
@@ -123,6 +139,8 @@ int32 OS_MutSemDelete(uint32 sem_id)
 ******************************************************************************/
 int32 OS_MutSemGive(uint32 sem_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_MutSemGive), sem_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_MutSemGive);
@@ -152,6 +170,8 @@ int32 OS_MutSemGive(uint32 sem_id)
 ******************************************************************************/
 int32 OS_MutSemTake(uint32 sem_id)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_MutSemTake), sem_id);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_MutSemTake);
@@ -166,6 +186,9 @@ int32 OS_MutSemTake(uint32 sem_id)
  *****************************************************************************/
 int32 OS_MutSemGetIdByName (uint32 *sem_id, const char *sem_name)
 {
+    UT_Stub_RegisterContext(UT_KEY(OS_MutSemGetIdByName), sem_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_MutSemGetIdByName), sem_name);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_MutSemGetIdByName);
@@ -199,6 +222,9 @@ int32 OS_MutSemGetIdByName (uint32 *sem_id, const char *sem_name)
 ******************************************************************************/
 int32 OS_MutSemGetInfo(uint32 sem_id, OS_mut_sem_prop_t *mut_prop)
 {
+    UT_Stub_RegisterContextGenericArg(UT_KEY(OS_MutSemGetInfo), sem_id);
+    UT_Stub_RegisterContext(UT_KEY(OS_MutSemGetInfo), mut_prop);
+
     int32 status;
 
     status = UT_DEFAULT_IMPL(OS_MutSemGetInfo);
