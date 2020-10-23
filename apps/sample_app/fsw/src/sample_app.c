@@ -31,14 +31,14 @@
 #include "sample_app_events.h"
 #include "sample_app_version.h"
 #include "sample_app.h"
-#include "sample_table.h"
+#include "sample_app_table.h"
 
 /* The sample_lib module provides the SAMPLE_Function() prototype */
 #include <string.h>
 #include "sample_lib.h"
 
-#include "sample_eds_dispatcher.h"
-#include "sample_eds_dictionary.h"
+#include "sample_app_eds_dispatcher.h"
+#include "sample_app_eds_dictionary.h"
 
 /*
 ** global data
@@ -48,7 +48,7 @@ SAMPLE_AppData_t SAMPLE_AppData;
 /*
  * Define a lookup table for SAMPLE app command codes
  */
-static const SAMPLE_Application_Component_Telecommand_DispatchTable_t SAMPLE_TC_DISPATCH_TABLE =
+static const SAMPLE_APP_Application_Component_Telecommand_DispatchTable_t SAMPLE_TC_DISPATCH_TABLE =
 {
         .CMD =
         {
@@ -117,7 +117,7 @@ void SAMPLE_AppMain( void )
 
         if (status == CFE_SUCCESS)
         {
-            SAMPLE_Application_Component_Telecommand_Dispatch(
+            SAMPLE_APP_Application_Component_Telecommand_Dispatch(
                     CFE_SB_Telecommand_indication_Command_ID,
                     SAMPLE_AppData.MsgPtr, &SAMPLE_TC_DISPATCH_TABLE);
         }
@@ -199,7 +199,7 @@ int32 SAMPLE_AppInit( void )
     /*
      * Register message dictionary with SB
      */
-    CFE_SB_EDS_RegisterSelf(&SAMPLE_DATATYPE_DB);
+    CFE_SB_EDS_RegisterSelf(&SAMPLE_APP_DATATYPE_DB);
 
     /*
     ** Initialize housekeeping packet (clear user data area).
@@ -251,15 +251,14 @@ int32 SAMPLE_AppInit( void )
     ** Register Table(s)
     */
     status = CFE_TBL_Register(&SAMPLE_AppData.TblHandles[0],
-                              "SampleTable",
-                              EDS_INDEX(SAMPLE),
-                              SAMPLE_Table_DATADICTIONARY,
+                              "SampleAppTable",
+                              EDS_INDEX(SAMPLE_APP),
+                              SAMPLE_APP_Table_DATADICTIONARY,
                               CFE_TBL_OPT_DEFAULT,
                               SAMPLE_TblValidationFunc);
     if ( status != CFE_SUCCESS )
     {
-        CFE_ES_WriteToSysLog("Sample App: Error Registering \
-                              Table, RC = 0x%08lX\n", (unsigned long)status);
+        CFE_ES_WriteToSysLog("Sample App: Error Registering Table, RC = 0x%08lX\n", (unsigned long)status);
 
         return ( status );
     }
@@ -267,16 +266,13 @@ int32 SAMPLE_AppInit( void )
     {
         status = CFE_TBL_Load(SAMPLE_AppData.TblHandles[0],
                               CFE_TBL_SRC_FILE,
-                              SAMPLE_TABLE_FILE);
+                              SAMPLE_APP_TABLE_FILE);
     }
 
     CFE_EVS_SendEvent (SAMPLE_STARTUP_INF_EID,
                        CFE_EVS_EventType_INFORMATION,
-                       "SAMPLE App Initialized. Version %d.%d.%d.%d",
-                       SAMPLE_APP_MAJOR_VERSION,
-                       SAMPLE_APP_MINOR_VERSION,
-                       SAMPLE_APP_REVISION,
-                       SAMPLE_APP_MISSION_REV);
+                       "SAMPLE App Initialized.%s",
+                       SAMPLE_APP_VERSION_STRING);
 
     return ( CFE_SUCCESS );
 
@@ -290,7 +286,7 @@ int32 SAMPLE_AppInit( void )
 /*         telemetry, packetize it and send it to the housekeeping task via   */
 /*         the software bus                                                   */
 /* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
-int32 SAMPLE_ReportHousekeeping( const CCSDS_CommandPacket_t *Msg )
+int32 SAMPLE_ReportHousekeeping( const SAMPLE_APP_SendHkCommand_t *Msg )
 {
     int i;
 
@@ -323,18 +319,14 @@ int32 SAMPLE_ReportHousekeeping( const CCSDS_CommandPacket_t *Msg )
 /* SAMPLE_Noop -- SAMPLE NOOP commands                                        */
 /*                                                                            */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-int32 SAMPLE_Noop( const SAMPLE_Noop_t *Msg )
+int32 SAMPLE_Noop( const SAMPLE_APP_Noop_t *Msg )
 {
 
     SAMPLE_AppData.CmdCounter++;
 
     CFE_EVS_SendEvent(SAMPLE_COMMANDNOP_INF_EID,
                       CFE_EVS_EventType_INFORMATION,
-                      "SAMPLE: NOOP command  Version %d.%d.%d.%d",
-                      SAMPLE_APP_MAJOR_VERSION,
-                      SAMPLE_APP_MINOR_VERSION,
-                      SAMPLE_APP_REVISION,
-                      SAMPLE_APP_MISSION_REV);
+                      "SAMPLE: NOOP command %s", SAMPLE_APP_VERSION);
 
     return CFE_SUCCESS;
 
@@ -348,7 +340,7 @@ int32 SAMPLE_Noop( const SAMPLE_Noop_t *Msg )
 /*         part of the task telemetry.                                        */
 /*                                                                            */
 /* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
-int32 SAMPLE_ResetCounters( const SAMPLE_ResetCounters_t *Msg )
+int32 SAMPLE_ResetCounters( const SAMPLE_APP_ResetCounters_t *Msg )
 {
 
     SAMPLE_AppData.CmdCounter = 0;
@@ -369,11 +361,11 @@ int32 SAMPLE_ResetCounters( const SAMPLE_ResetCounters_t *Msg )
 /*         This function Process Ground Station Command                       */
 /*                                                                            */
 /* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
-int32  SAMPLE_Process( const SAMPLE_Process_t *Msg )
+int32  SAMPLE_Process( const SAMPLE_APP_Process_t *Msg )
 {
     int32 status;
-    SAMPLE_Table_t *TblPtr;
-    const char *TableName = "SAMPLE_APP.SampleTable";
+    SAMPLE_APP_Table_t *TblPtr;
+    const char *TableName = "SAMPLE_APP.SampleAppTable";
 
     /* Sample Use of Table */
 
@@ -415,7 +407,7 @@ int32  SAMPLE_Process( const SAMPLE_Process_t *Msg )
 /*         Example command with a value.  Writes the value to syslog.         */
 /*                                                                            */
 /* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
-int32 SAMPLE_DoExample(const SAMPLE_DoExample_t *data)
+int32 SAMPLE_DoExample(const SAMPLE_APP_DoExample_t *data)
 {
     CFE_ES_WriteToSysLog("SAMPLE APP Command Received, value=%u",
             (unsigned int)data->Payload.Value);
@@ -433,20 +425,20 @@ int32 SAMPLE_DoExample(const SAMPLE_DoExample_t *data)
 int32 SAMPLE_TblValidationFunc( void *TblData )
 {
     int32 ReturnCode = CFE_SUCCESS;
-    SAMPLE_Table_t *TblDataPtr = (SAMPLE_Table_t *)TblData;
+    SAMPLE_APP_Table_t *TblDataPtr = (SAMPLE_APP_Table_t *)TblData;
 
     /*
     ** Sample Table Validation
     */
-    if (TblDataPtr->Int1 > SAMPLE_TBL_ELEMENT_1_MAX)
+    if (TblDataPtr->Int1 > SAMPLE_APP_TBL_ELEMENT_1_MAX)
     {
         /* First element is out of range, return an appropriate error code */
-        ReturnCode = SAMPLE_TABLE_OUT_OF_RANGE_ERR_CODE;
+        ReturnCode = SAMPLE_APP_TABLE_OUT_OF_RANGE_ERR_CODE;
     }
 
     return ReturnCode;
 
-} /* End of Sample_TblValidationFunc*/
+} /* End of SAMPLE_TBLValidationFunc() */
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */

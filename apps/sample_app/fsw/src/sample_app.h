@@ -42,8 +42,8 @@
 #include "sample_app_msgids.h"
 
 /* Use the EDS generated type definitions */
-#include "sample_eds_defines.h"
-#include "sample_eds_typedefs.h"
+#include "sample_app_eds_defines.h"
+#include "sample_app_eds_typedefs.h"
 
 
 /***********************************************************************/
@@ -52,11 +52,11 @@
 #define SAMPLE_NUMBER_OF_TABLES               1  /* Number of Table(s) */
 
 /* Define filenames of default data images for tables */
-#define SAMPLE_TABLE_FILE                     "/cf/sample_table.tbl"
+#define SAMPLE_APP_TABLE_FILE                 "/cf/sample_app_tbl.tbl"
 
-#define SAMPLE_TABLE_OUT_OF_RANGE_ERR_CODE    -1
+#define SAMPLE_APP_TABLE_OUT_OF_RANGE_ERR_CODE  -1
 
-#define SAMPLE_TBL_ELEMENT_1_MAX              10
+#define SAMPLE_APP_TBL_ELEMENT_1_MAX              10
 /************************************************************************
 ** Type Definitions
 *************************************************************************/
@@ -68,7 +68,7 @@
 typedef union
 {
     CFE_SB_Msg_t        MsgHdr;
-    SAMPLE_HkTlm_t      HkTlm;
+    SAMPLE_APP_HkTlm_t  HkTlm;
 } SAMPLE_HkBuffer_t;
 
 /*
@@ -118,11 +118,11 @@ typedef struct
 */
 void  SAMPLE_AppMain(void);
 int32 SAMPLE_AppInit(void);
-int32 SAMPLE_ReportHousekeeping(const CCSDS_CommandPacket_t *Msg);
-int32 SAMPLE_ResetCounters(const SAMPLE_ResetCounters_t *Msg);
-int32 SAMPLE_Process(const SAMPLE_Process_t *Msg);
-int32 SAMPLE_Noop(const SAMPLE_Noop_t *Msg);
-int32 SAMPLE_DoExample(const SAMPLE_DoExample_t *Msg);
+int32 SAMPLE_ReportHousekeeping(const SAMPLE_APP_SendHkCommand_t *Msg);
+int32 SAMPLE_ResetCounters(const SAMPLE_APP_ResetCounters_t *Msg);
+int32 SAMPLE_Process(const SAMPLE_APP_Process_t *Msg);
+int32 SAMPLE_Noop(const SAMPLE_APP_Noop_t *Msg);
+int32 SAMPLE_DoExample(const SAMPLE_APP_DoExample_t *Msg);
 void  SAMPLE_GetCrc(const char *TableName);
 
 int32 SAMPLE_TblValidationFunc(void *TblData);

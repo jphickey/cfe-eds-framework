@@ -49,22 +49,25 @@ typedef struct
 {
     uint16 ExpectedEvent;
     uint32 MatchCount;
+    const char *ExpectedText;
 } UT_CheckEvent_t;
 
 /*
  * Stub object for EDS registration call
  */
-const struct EdsLib_App_DataTypeDB { uint32 Data; } SAMPLE_DATATYPE_DB = { 0 };
+const struct EdsLib_App_DataTypeDB { uint32 Data; } SAMPLE_APP_DATATYPE_DB = { 0 };
 
 
 /*
  * An example hook function to check for a specific event.
  */
 static int32 UT_CheckEvent_Hook(void *UserObj, int32 StubRetcode,
-        uint32 CallCount, const UT_StubContext_t *Context)
+        uint32 CallCount, const UT_StubContext_t *Context, va_list va)
 {
     UT_CheckEvent_t *State = UserObj;
-    uint16 *EventIdPtr;
+    char TestText[CFE_MISSION_EVS_MAX_MESSAGE_LENGTH];
+    uint16 EventId;
+    const char *Spec;
 
     /*
      * The CFE_EVS_SendEvent stub passes the EventID as the
@@ -72,10 +75,36 @@ static int32 UT_CheckEvent_Hook(void *UserObj, int32 StubRetcode,
      */
     if (Context->ArgCount > 0)
     {
-        EventIdPtr = (uint16*)Context->ArgPtr[0];
-        if (*EventIdPtr == State->ExpectedEvent)
+        EventId = UT_Hook_GetArgValueByName(Context, "EventID", uint16);
+        if (EventId == State->ExpectedEvent)
         {
-            ++State->MatchCount;
+            /*
+             * Example of how to validate the full argument set.
+             * If reference text was supplied, also check against this.
+             *
+             * NOTE: While this can be done, use with discretion - This isn't really
+             * verifying that the FSW code unit generated the correct event text,
+             * rather it is validating what the system snprintf() library function
+             * produces when passed the format string and args.
+             *
+             * __This derived string is not an actual output of the unit under test__
+             */
+            if (State->ExpectedText != NULL)
+            {
+                Spec = UT_Hook_GetArgValueByName(Context, "Spec", const char *);
+                if (Spec != NULL)
+                {
+                    vsnprintf(TestText, sizeof(TestText), Spec, va);
+                    if (strcmp(TestText,State->ExpectedText) == 0)
+                    {
+                        ++State->MatchCount;
+                    }
+                }
+            }
+            else
+            {
+                ++State->MatchCount;
+            }
         }
     }
 
@@ -86,13 +115,13 @@ static int32 UT_CheckEvent_Hook(void *UserObj, int32 StubRetcode,
  * Helper function to set up for event checking
  * This attaches the hook function to CFE_EVS_SendEvent
  */
-static void UT_CheckEvent_Setup(UT_CheckEvent_t *Evt, uint16 ExpectedEvent)
+static void UT_CheckEvent_Setup(UT_CheckEvent_t *Evt, uint16 ExpectedEvent, const char *ExpectedText)
 {
     memset(Evt, 0, sizeof(*Evt));
     Evt->ExpectedEvent = ExpectedEvent;
-    UT_SetHookFunction(UT_KEY(CFE_EVS_SendEvent), UT_CheckEvent_Hook, Evt);
+    Evt->ExpectedText = ExpectedText;
+    UT_SetVaHookFunction(UT_KEY(CFE_EVS_SendEvent), UT_CheckEvent_Hook, Evt);
 }
-
 
 
 
@@ -189,7 +218,7 @@ void Test_SAMPLE_AppMain(void)
      */
     UT_SetDeferredRetcode(UT_KEY(CFE_ES_RunLoop), 1, true);
     UT_SetDeferredRetcode(UT_KEY(CFE_SB_RcvMsg), 1, CFE_SB_PIPE_RD_ERR);
-    UT_CheckEvent_Setup(&EventTest, SAMPLE_PIPE_ERR_EID);
+    UT_CheckEvent_Setup(&EventTest, SAMPLE_PIPE_ERR_EID, "SAMPLE APP: SB Pipe Read Error, App Will Exit");
 
     /*
      * Invoke again
@@ -249,10 +278,10 @@ void Test_SAMPLE_ReportHousekeeping(void)
 {
     /*
      * Test Case For:
-     * void SAMPLE_ReportHousekeeping( const CCSDS_CommandPacket_t *Msg )
+     * void SAMPLE_ReportHousekeeping( const CFE_SB_CmdHdr_t *Msg )
      */
-    CCSDS_CommandPacket_t   CmdMsg;
-    SAMPLE_HkTlm_t          HkTelemetryMsg;
+    SAMPLE_APP_SendHkCommand_t  CmdMsg;
+    SAMPLE_APP_HkTlm_t          HkTelemetryMsg;
 
     memset(&CmdMsg, 0, sizeof(CmdMsg));
     memset(&HkTelemetryMsg, 0, sizeof(HkTelemetryMsg));
@@ -308,13 +337,13 @@ void Test_SAMPLE_NoopCmd(void)
      * Test Case For:
      * void SAMPLE_NoopCmd( const SAMPLE_Noop_t *Msg )
      */
-    SAMPLE_Noop_t TestMsg;
+    SAMPLE_APP_Noop_t TestMsg;
     UT_CheckEvent_t EventTest;
 
     memset(&TestMsg, 0, sizeof(TestMsg));
 
     /* test dispatch of NOOP */
-    UT_CheckEvent_Setup(&EventTest, SAMPLE_COMMANDNOP_INF_EID);
+    UT_CheckEvent_Setup(&EventTest, SAMPLE_COMMANDNOP_INF_EID, NULL);
 
     UT_TEST_FUNCTION_RC(SAMPLE_Noop(&TestMsg), CFE_SUCCESS);
 
@@ -332,12 +361,12 @@ void Test_SAMPLE_ResetCounters(void)
      * Test Case For:
      * void SAMPLE_ResetCounters( const SAMPLE_ResetCounters_t *Msg )
      */
-    SAMPLE_ResetCounters_t TestMsg;
+    SAMPLE_APP_ResetCounters_t TestMsg;
     UT_CheckEvent_t EventTest;
 
     memset(&TestMsg, 0, sizeof(TestMsg));
 
-    UT_CheckEvent_Setup(&EventTest, SAMPLE_COMMANDRST_INF_EID);
+    UT_CheckEvent_Setup(&EventTest, SAMPLE_COMMANDRST_INF_EID, "SAMPLE: RESET command");
 
     UT_TEST_FUNCTION_RC(SAMPLE_ResetCounters(&TestMsg), CFE_SUCCESS);
 
@@ -355,8 +384,8 @@ void Test_SAMPLE_ProcessCC(void)
      * Test Case For:
      * void  SAMPLE_ProcessCC( const SAMPLE_Process_t *Msg )
      */
-    SAMPLE_Process_t TestMsg;
-    SAMPLE_Table_t TestTblData;
+    SAMPLE_APP_Process_t TestMsg;
+    SAMPLE_APP_Table_t TestTblData;
     void *TblPtr = &TestTblData;
 
     memset(&TestTblData, 0, sizeof(TestTblData));
@@ -396,17 +425,17 @@ void Test_SAMPLE_TblValidationFunc(void)
      * Test Case For:
      * int32 SAMPLE_TblValidationFunc( void *TblData )
      */
-    SAMPLE_Table_t TestTblData;
+    SAMPLE_APP_Table_t TestTblData;
 
     memset(&TestTblData, 0, sizeof(TestTblData));
 
     /* nominal case (0) should succeed */
     UT_TEST_FUNCTION_RC(SAMPLE_TblValidationFunc(&TestTblData), CFE_SUCCESS);
 
-    /* error case should return SAMPLE_TABLE_OUT_OF_RANGE_ERR_CODE */
-    TestTblData.Int1 = 1 + SAMPLE_TBL_ELEMENT_1_MAX;
+    /* error case should return SAMPLE_APP_TABLE_OUT_OF_RANGE_ERR_CODE */
+    TestTblData.Int1 = 1 + SAMPLE_APP_TBL_ELEMENT_1_MAX;
     UT_TEST_FUNCTION_RC(SAMPLE_TblValidationFunc(&TestTblData),
-            SAMPLE_TABLE_OUT_OF_RANGE_ERR_CODE);
+            SAMPLE_APP_TABLE_OUT_OF_RANGE_ERR_CODE);
 }
 
 
