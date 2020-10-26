@@ -143,8 +143,11 @@ If the upstream application is in a git repository, then the `git subtree add` c
 used to add the application, which retains a relationship to the original source:
 
     git remote add ${name} ${repo_url}
+    git config remote.${name}.tagOpt --no-tags
     git fetch ${name}
     git subtree add -P apps/${name} ${name}/master
+    
+See notes below for further explanation of the `--no-tags` option and why this is often necessary.
 
 If/when a new version of the upstream app is released after the initial subtree add, it may be 
 merged, for example:
@@ -155,6 +158,7 @@ merged, for example:
 If the application is distributed as a tarball or zipfile, then the distribution file may be
 simply extracted as a subdirectory within `./apps`.
 
+
 The application should then be added to `targets.cmake` and `cfe_es_startup.scr` within the 
 mission configuration directory (e.g. `sample_defs`) to build and execute it.
 
@@ -162,6 +166,35 @@ mission configuration directory (e.g. `sample_defs`) to build and execute it.
 the directory name containing the module must match the name of the module listed in 
 `targets.cmake` exactly.  It is recommended to use all lowercase names to avoid issues with case
 senstivity in file systems, and avoid any sort of punctuation aside from underscores. 
+
+### Subtrees and Tags ###
+
+git implments a single/unified namespace for tags, and as a result the tags of any repository
+added as a remote per the above will also fetch the tags of that remote, and create local tags
+of the same name.  If tags are simply named, such as e.g. `v2.4.0`, then it is possible to get
+duplicate/conflicting tags between subtree repositories.
+
+To avoid this issue, it is recommended to fetch with `--no-tags` for repositories used as subtrees.
+This can be configured persistently using the command:
+
+    git config remote.${name}.tagOpt --no-tags
+    
+Where `${name}` represents the name of the remote.  The result should be equivalent to specifying
+the `--no-tags` option on all fetches from this remote.
+
+**OPTIONAL**: Translate tags when fetching and introduce a namespace prefix
+
+It is also fairly simple to add and explicit specification to fetch tags but translate them
+into a namespace.  This can be done by editing the `.git/config` file within the base repository,
+and adding a line to each remote used with subtrees:
+
+    fetch = +refs/tags/*:refs/tags/${name}-*
+    
+Again, where `${name}` represents the name of the remote.  This creates a local tag with the same
+name but with a prefix based on the remote name, thereby avoiding tag conflicts.  Note that one
+still needs to use the `--no-tags` option per above, otherwise two tags will be locally created, 
+one with the prefix and one without the prefix.
+
 
 ## Further information
 
