@@ -158,7 +158,7 @@ int32 CFE_FS_WriteHeader(int32 FileDes, CFE_FS_Header_t *Hdr)
             /*
             ** Write header structure...
             */
-            Result = OS_write(FileDes, Hdr, ExpectedSize);
+            Result = OS_write(FileDes, LocalBuffer, ExpectedSize);
 
             /*
              * Fixup the return status to match what had been done
