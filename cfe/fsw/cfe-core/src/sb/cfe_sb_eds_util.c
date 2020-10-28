@@ -156,25 +156,6 @@ int32 CFE_SB_EDS_PackOutputMessage(uint16 InterfaceId, void *DestBuffer, const C
     uint16 TopicId;
     int32 Status;
 
-    if (InterfaceId == CFE_SB_Telecommand_Interface_ID)
-    {
-        EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CCSDS_SPACEPACKET), CCSDS_CommandPacket_DATADICTIONARY);
-    }
-    else if (InterfaceId == CFE_SB_Telemetry_Interface_ID)
-    {
-        EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CCSDS_SPACEPACKET), CCSDS_TelemetryPacket_DATADICTIONARY);
-    }
-    else
-    {
-        EdsId = EDSLIB_ID_INVALID;
-    }
-
-    Status = EdsLib_DataTypeDB_GetTypeInfo(GD, EdsId, &TypeInfo);
-    if (Status != EDSLIB_SUCCESS)
-    {
-        return CFE_SB_INTERNAL_ERR;
-    }
-
     CFE_SB_Get_PubSub_Parameters(&PubSubParams, &SourceBuffer->SpacePacket);
     if (InterfaceId == CFE_SB_Telemetry_Interface_ID)
     {
@@ -206,8 +187,25 @@ int32 CFE_SB_EDS_PackOutputMessage(uint16 InterfaceId, void *DestBuffer, const C
         return CFE_SB_INTERNAL_ERR;
     }
 
-    Status = EdsLib_DataTypeDB_PackCompleteObject(GD, &EdsId, DestBuffer, SourceBuffer,
-            8 * *DestBufferSize, SourceBufferSize);
+    Status = EdsLib_DataTypeDB_PackPartialObject(GD, &EdsId, DestBuffer, SourceBuffer,
+            8 * *DestBufferSize, SourceBufferSize, 0);
+    if (Status != EDSLIB_SUCCESS)
+    {
+        return CFE_SB_INTERNAL_ERR;
+    }
+
+    Status = EdsLib_DataTypeDB_PackPartialObject(GD, &EdsId, DestBuffer, SourceBuffer,
+            8 * *DestBufferSize, SourceBufferSize, TypeInfo.Size.Bits);
+    if (Status == EDSLIB_SUCCESS)
+    {
+        Status = EdsLib_DataTypeDB_FinalizePackedObject(GD, EdsId, DestBuffer);
+    }
+    else
+    {
+        return CFE_SB_INTERNAL_ERR;
+    }
+
+    Status = EdsLib_DataTypeDB_GetTypeInfo(GD, EdsId, &TypeInfo);
     if (Status != EDSLIB_SUCCESS)
     {
         return CFE_SB_INTERNAL_ERR;
