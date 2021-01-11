@@ -1141,7 +1141,7 @@ int32 CFE_TBL_LoadFromFileAndDecode(const char *AppName, CFE_TBL_LoadBuff_t *Wor
          */
         if (Status == CFE_SUCCESS)
         {
-            CFE_TBL_DecodeFromMemory(ScratchBufferPtr->BufferPtr, WorkingBufferPtr, RegRecPtr);
+            Status = CFE_TBL_DecodeFromMemory(ScratchBufferPtr->BufferPtr, WorkingBufferPtr, RegRecPtr);
         }
 
         strncpy(WorkingBufferPtr->DataSource, Filename, sizeof(WorkingBufferPtr->DataSource)-1);
