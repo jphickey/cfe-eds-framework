@@ -41,6 +41,7 @@
 #include "cfe_error.h"
 #include "cfe_sb_events.h"
 #include "cfe_sb_eds_db.h"
+#include "edslib_init.h"
 
 #include "base_types_eds_dictionary.h"
 #include "ccsds_spacepacket_eds_dictionary.h"
@@ -144,6 +145,11 @@ int32 CFE_SB_EarlyInit (void) {
     CFE_SB_EDS_RegisterGlobal(&BASE_TYPES_DATATYPE_DB);
     CFE_SB_EDS_RegisterGlobal(&CCSDS_SPACEPACKET_DATATYPE_DB);
 
+    /*
+     * Call the EdsLib initilization function.
+     * This populates the CRC lookup tables in EdsLib.
+     */
+    EdsLib_Initialize();
 
     return Stat;
 
