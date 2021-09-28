@@ -29,14 +29,15 @@
 #ifndef SAMPLE_APP_TABLE_H
 #define SAMPLE_APP_TABLE_H
 
-/*
-** Table structure
-*/
-typedef struct
-{
-    uint16 Int1;
-    uint16 Int2;
+#include "sample_app_eds_typedefs.h"
 
-} SAMPLE_APP_Table_t;
+/*
+ * The EDS defines the table type name as "SampleAppTable" so it matches
+ * the runtime table name, but the source code refers to the type
+ * as SAMPLE_APP_Table_t
+ *
+ * This discrepancy can be worked around with a typedef for now
+ */
+typedef SAMPLE_APP_SampleAppTable_t SAMPLE_APP_Table_t;
 
 #endif /* SAMPLE_APP_TABLE_H */
