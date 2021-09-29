@@ -35,6 +35,26 @@
 #include "to_lab_version.h"
 #include "to_lab_sub_table.h"
 
+#include "cfe_msgids.h"
+#include "cfe_config.h"
+
+#include "to_lab_eds_defines.h"
+#include "to_lab_eds_dictionary.h"
+
+#include "edslib_datatypedb.h"
+#include "cfe_missionlib_api.h"
+#include "cfe_missionlib_runtime.h"
+#include "cfe_mission_eds_parameters.h"
+#include "cfe_mission_eds_interface_parameters.h"
+
+/*
+** Include the TO subscription table
+**  This header is in the platform include directory
+**  and can be changed for default TO subscriptions in
+**  each CPU.
+*/
+#include "to_lab_sub_table.h"
+
 /*
 ** Global Data Section
 */
@@ -49,6 +69,8 @@ typedef struct
 
     TO_LAB_HkTlm_t        HkTlm;
     TO_LAB_DataTypesTlm_t DataTypesTlm;
+
+    CFE_HDR_TelemetryHeader_PackedBuffer_t NetworkBuffer;
 } TO_LAB_GlobalData_t;
 
 TO_LAB_GlobalData_t TO_LAB_Global;
@@ -543,6 +565,48 @@ int32 TO_LAB_RemoveAll(const TO_LAB_RemoveAllCmd_t *data)
     return CFE_SUCCESS;
 }
 
+int32 TO_LAB_EDS_PackOutputMessage(void *DestBuffer, const CFE_MSG_Message_t *SourceBuffer, size_t *DestBufferSize)
+{
+    EdsLib_Id_t EdsId;
+    EdsLib_DataTypeDB_TypeInfo_t TypeInfo;
+    CFE_SB_SoftwareBus_PubSub_Interface_t PubSubParams;
+    CFE_SB_Publisher_Component_t PublisherParams;
+    uint16 TopicId;
+    int32 Status;
+    size_t SourceBufferSize;
+
+    const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
+
+    CFE_MSG_GetSize(SourceBuffer, &SourceBufferSize);
+
+    CFE_MissionLib_Get_PubSub_Parameters(&PubSubParams, &SourceBuffer->BaseMsg);
+    CFE_MissionLib_UnmapPublisherComponent(&PublisherParams, &PubSubParams);
+    TopicId = PublisherParams.Telemetry.TopicId;
+
+    Status = CFE_MissionLib_GetArgumentType(&CFE_SOFTWAREBUS_INTERFACE,
+            CFE_SB_Telemetry_Interface_ID, TopicId, 1, 1, &EdsId);
+    if (Status != CFE_MISSIONLIB_SUCCESS)
+    {
+        return CFE_STATUS_UNKNOWN_MSG_ID;
+    }
+
+    Status = EdsLib_DataTypeDB_PackCompleteObject(EDS_DB, &EdsId, DestBuffer, SourceBuffer,
+            8 * *DestBufferSize, SourceBufferSize);
+    if (Status != EDSLIB_SUCCESS)
+    {
+        return CFE_SB_INTERNAL_ERR;
+    }
+
+    Status = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &TypeInfo);
+    if (Status != EDSLIB_SUCCESS)
+    {
+        return CFE_SB_INTERNAL_ERR;
+    }
+
+    *DestBufferSize = (TypeInfo.Size.Bits + 7) / 8;
+    return CFE_SUCCESS;
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                 */
 /* TO_forward_telemetry() -- Forward telemetry                     */
@@ -553,8 +617,8 @@ void TO_LAB_forward_telemetry(void)
     OS_SockAddr_t    d_addr;
     int32            status;
     int32            CFE_SB_status;
-    size_t           size;
     CFE_SB_Buffer_t *SBBufPtr;
+    size_t DataSize;
 
     OS_SocketAddrInit(&d_addr, OS_SocketDomain_INET);
     OS_SocketAddrSetPort(&d_addr, cfgTLM_PORT);
@@ -567,13 +631,24 @@ void TO_LAB_forward_telemetry(void)
 
         if ((CFE_SB_status == CFE_SUCCESS) && (TO_LAB_Global.suppress_sendto == false))
         {
-            CFE_MSG_GetSize(&SBBufPtr->Msg, &size);
-
             if (TO_LAB_Global.downlink_on == true)
             {
                 CFE_ES_PerfLogEntry(TO_SOCKET_SEND_PERF_ID);
 
-                status = OS_SocketSendTo(TO_LAB_Global.TLMsockid, SBBufPtr, size, &d_addr);
+                DataSize = sizeof(TO_LAB_Global.NetworkBuffer);
+                CFE_SB_status =
+                    TO_LAB_EDS_PackOutputMessage(TO_LAB_Global.NetworkBuffer, &SBBufPtr->Msg, &DataSize);
+
+                if (CFE_SB_status != CFE_SUCCESS)
+                {
+                    CFE_EVS_SendEvent(TO_MSGID_ERR_EID, CFE_EVS_EventType_ERROR,
+                                      "Error packing output: %d\n", (int)CFE_SB_status);
+                }
+                else
+                {
+                    status =
+                        OS_SocketSendTo(TO_LAB_Global.TLMsockid, TO_LAB_Global.NetworkBuffer, DataSize, &d_addr);
+                }
 
                 CFE_ES_PerfLogExit(TO_SOCKET_SEND_PERF_ID);
             }
