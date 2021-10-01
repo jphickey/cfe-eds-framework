@@ -19,6 +19,4 @@ target_include_directories(coverage-tbl-ALL-testrunner PRIVATE
     ${CFE_TBL_SOURCE_DIR}/fsw/src
 )
 
-target_link_libraries(coverage-tbl-ALL-testrunner ut_core_private_stubs)
-
-
+target_link_libraries(coverage-tbl-ALL-testrunner ut_core_private_stubs ut_edslib_stubs)

@@ -40,6 +40,9 @@
 #include "cfe_es_resetdata_typedef.h"
 #include "cfe_version.h"   /* for CFE_VERSION_STRING */
 #include "osapi-version.h" /* for OS_VERSION_STRING */
+#include "edslib_api_types.h"
+#include "cfe_mission_eds_parameters.h"
+#include "cfe_mission_eds_interface_parameters.h"
 
 #ifndef CFE_CPU_NAME_VALUE
 #define CFE_CPU_NAME_VALUE "unknown"
@@ -156,26 +159,65 @@ Target_CfeConfigData GLOBAL_CFE_CONFIGDATA = {
     .RamDiskSectorSize   = CFE_PLATFORM_ES_RAM_DISK_SECTOR_SIZE,
     .RamDiskTotalSectors = CFE_PLATFORM_ES_RAM_DISK_NUM_SECTORS};
 
+/*
+ * Determine the proper values for populating the EDS-related
+ * fields of the configuration structure.  This depends on the
+ * selected linkage mode (static or dynamic).
+ */
+#ifdef CFE_STATIC_EDSDB_OBJECT
+
+/*
+ * Static EDS object link mode:
+ * Only the const pointer gets assigned to the EDS object, and the
+ * non-const pointer gets set NULL.  There are no "write" operations
+ * in this mode -- registration and de-registration is not necessary.
+ */
+#define CFE_CONST_EDSDB_PTR    &CFE_STATIC_EDSDB_OBJECT
+#define CFE_NONCONST_EDSDB_PTR NULL
+
+#else /* CFE_STATIC_EDSDB_OBJECT */
+
+/*
+ * Dynamic (non-const) runtime EDS database object
+ * This is filled in as additional EDS datasheet objects are registered
+ */
+static EdsLib_DataTypeDB_t CFE_DYNAMIC_EDS_TABLE[EDS_MAX_DATASHEETS] = {NULL};
+
+static EdsLib_DatabaseObject_t CFE_DYNAMIC_EDSDB_OBJECT = {.AppTableSize     = EDS_MAX_DATASHEETS,
+                                                           .DataTypeDB_Table = CFE_DYNAMIC_EDS_TABLE};
+
+/*
+ * Dynamic EDS object link mode:
+ * Both the const and non-const pointers get assigned to the same object.
+ * Runtime code should use the non-const pointer only for those operations
+ * that require a writable object (i.e. registration and de-registration)
+ */
+#define CFE_CONST_EDSDB_PTR    &CFE_DYNAMIC_EDSDB_OBJECT
+#define CFE_NONCONST_EDSDB_PTR &CFE_DYNAMIC_EDSDB_OBJECT
+
+#endif /* CFE_STATIC_EDSDB_OBJECT */
+
 /**
  * Instantiation of global system-wide configuration struct
  * This contains build info plus pointers to the PSP and CFE
  * configuration structures.  Everything will be linked together
  * in the final executable.
  */
-Target_ConfigData GLOBAL_CONFIGDATA = {
-    .MissionName             = CFE_MISSION_NAME,
-    .CfeVersion              = CFE_SRC_VERSION,
-    .OsalVersion             = OS_VERSION,
-    .Config                  = CFE_MISSION_CONFIG,
-    .Default_CpuName         = CFE_CPU_NAME_VALUE,
-    .Default_CpuId           = CFE_CPU_ID_VALUE,
-    .Default_SpacecraftId    = CFE_SPACECRAFT_ID_VALUE,
-    .Default_ModuleExtension = CFE_DEFAULT_MODULE_EXTENSION,
-    .Default_CoreFilename    = CFE_DEFAULT_CORE_FILENAME,
-    .CfeConfig               = &GLOBAL_CFE_CONFIGDATA,
-    .PspModuleList           = CFE_PSP_MODULE_LIST,
-    .BuildEnvironment        = CFE_BUILD_ENV_TABLE,
-    .ModuleVersionList       = CFE_MODULE_VERSION_TABLE,
-    .CoreModuleList          = CFE_CORE_MODULE_LIST,
-    .StaticAppList           = CFE_STATIC_APP_LIST,
-};
+Target_ConfigData GLOBAL_CONFIGDATA = {.MissionName             = CFE_MISSION_NAME,
+                                       .CfeVersion              = CFE_SRC_VERSION,
+                                       .OsalVersion             = OS_VERSION,
+                                       .Config                  = CFE_MISSION_CONFIG,
+                                       .Default_CpuName         = CFE_CPU_NAME_VALUE,
+                                       .Default_CpuId           = CFE_CPU_ID_VALUE,
+                                       .Default_SpacecraftId    = CFE_SPACECRAFT_ID_VALUE,
+                                       .Default_ModuleExtension = CFE_DEFAULT_MODULE_EXTENSION,
+                                       .Default_CoreFilename    = CFE_DEFAULT_CORE_FILENAME,
+                                       .CfeConfig               = &GLOBAL_CFE_CONFIGDATA,
+                                       .PspModuleList           = CFE_PSP_MODULE_LIST,
+                                       .BuildEnvironment        = CFE_BUILD_ENV_TABLE,
+                                       .ModuleVersionList       = CFE_MODULE_VERSION_TABLE,
+                                       .CoreModuleList          = CFE_CORE_MODULE_LIST,
+                                       .StaticAppList           = CFE_STATIC_APP_LIST,
+                                       .EdsDb                   = CFE_CONST_EDSDB_PTR,
+                                       .DynamicEdsDb            = CFE_NONCONST_EDSDB_PTR,
+                                       .SbIntfDb                = &CFE_SOFTWAREBUS_INTERFACE};

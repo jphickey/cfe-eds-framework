@@ -36,19 +36,13 @@
 
 #define CFE_FT_STRINGBUF_SIZE 12
 
+#include "cfe_testcase_eds_typedefs.h"
+
 /* A simple command message */
-typedef struct
-{
-    CFE_MSG_CommandHeader_t CommandHeader;
-    uint64                  CmdPayload;
-} CFE_FT_TestCmdMessage_t;
+typedef CFE_TEST_TestCmd_t CFE_FT_TestCmdMessage_t;
 
 /* A simple telemetry message */
-typedef struct
-{
-    CFE_MSG_TelemetryHeader_t TelemetryHeader;
-    uint64                    TlmPayload;
-} CFE_FT_TestTlmMessage_t;
+typedef CFE_TEST_TestTlm_t CFE_FT_TestTlmMessage_t;
 
 /* A message intended to be (overall) larger than the CFE_MISSION_SB_MAX_SB_MSG_SIZE */
 typedef union
@@ -523,6 +517,38 @@ void TestZeroCopyTransmitRecv(void)
     UtAssert_INT32_EQ(CFE_SB_DeletePipe(PipeId2), CFE_SUCCESS);
 }
 
+void TestMessageUserDataAccess(void)
+{
+    CFE_FT_TestCmdMessage_t CmdMsg;
+    CFE_FT_TestTlmMessage_t TlmMsg;
+
+    /* Test CFE_SB_GetUserData */
+    UtAssert_INT32_EQ(
+        CFE_MSG_Init(CFE_MSG_PTR(CmdMsg.CommandHeader), CFE_FT_CMD_MSGID, sizeof(CFE_FT_TestCmdMessage_t)),
+        CFE_SUCCESS);
+    UtAssert_INT32_EQ(
+        CFE_MSG_Init(CFE_MSG_PTR(TlmMsg.TelemetryHeader), CFE_FT_TLM_MSGID, sizeof(CFE_FT_TestTlmMessage_t)),
+        CFE_SUCCESS);
+
+    UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(CmdMsg.CommandHeader)), &CmdMsg.CmdPayload);
+    UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(TlmMsg.TelemetryHeader)), &TlmMsg.TlmPayload);
+
+    UtAssert_UINT32_EQ(CFE_SB_GetUserDataLength(CFE_MSG_PTR(CmdMsg.CommandHeader)), sizeof(CmdMsg.CmdPayload));
+    UtAssert_UINT32_EQ(CFE_SB_GetUserDataLength(CFE_MSG_PTR(TlmMsg.TelemetryHeader)), sizeof(TlmMsg.TlmPayload));
+
+    /* The size should be settable to something less, if necessary */
+    CFE_SB_SetUserDataLength(CFE_MSG_PTR(CmdMsg.CommandHeader), sizeof(CmdMsg.CmdPayload) - 2);
+    CFE_SB_SetUserDataLength(CFE_MSG_PTR(TlmMsg.TelemetryHeader), sizeof(TlmMsg.TlmPayload) - 2);
+    UtAssert_UINT32_EQ(CFE_SB_GetUserDataLength(CFE_MSG_PTR(CmdMsg.CommandHeader)), sizeof(CmdMsg.CmdPayload) - 2);
+    UtAssert_UINT32_EQ(CFE_SB_GetUserDataLength(CFE_MSG_PTR(TlmMsg.TelemetryHeader)), sizeof(TlmMsg.TlmPayload) - 2);
+
+    /* Bad inputs */
+    UtAssert_NULL(CFE_SB_GetUserData(NULL));
+    UtAssert_NULL(CFE_SB_GetUserData(NULL));
+    UtAssert_ZERO(CFE_SB_GetUserDataLength(NULL));
+    UtAssert_ZERO(CFE_SB_GetUserDataLength(NULL));
+}
+
 void TestMiscMessageUtils(void)
 {
     char       TestString[CFE_FT_STRINGBUF_SIZE + 4];
@@ -601,4 +627,5 @@ void SBSendRecvTestSetup(void)
     UtTest_Add(TestZeroCopyTransmitRecv, NULL, NULL, "Test Zero Copy Transmit/Receive");
     UtTest_Add(TestMsgBroadcast, NULL, NULL, "Test Msg Broadcast");
     UtTest_Add(TestMiscMessageUtils, NULL, NULL, "Test Miscellaneous Message Utility APIs");
+    UtTest_Add(TestMessageUserDataAccess, NULL, NULL, "Test Message UserData APIs");
 }

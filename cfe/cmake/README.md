@@ -37,6 +37,7 @@ compile source code using these libraries.
 
 * gcc, make, libc-dev, etc. - Standard prerequisites for any build environment.
 * cmake - The build system uses this.  Any recent version should work.
+* libexpat (XML parser) - Any recent version should work.
 * git - Required if you want to access the official CFS distribution directly
 from the CFS community source repositories.
 

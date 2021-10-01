@@ -99,7 +99,8 @@ static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_SET_LOG_MODE_CC = {
     .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_EVS_CMD_MID), .CommandCode = CFE_EVS_SET_LOG_MODE_CC};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_CLEAR_LOG_CC = {
     .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_EVS_CMD_MID), .CommandCode = CFE_EVS_CLEAR_LOG_CC};
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_INVALID_MID = {.MsgId = CFE_SB_MSGID_RESERVED, .CommandCode = 0};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_INVALID_MID    = {.MsgId       = CFE_SB_MSGID_WRAP_VALUE(-1),
+                                                                    .CommandCode = 0};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_CMD_INVALID_CC = {
     .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_EVS_CMD_MID), .CommandCode = 0x7F};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_EVS_SEND_HK = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_EVS_SEND_HK_MID)};
@@ -119,6 +120,12 @@ typedef struct
     uint16 EventID;
     uint16 Count;
 } UT_EVS_EventCapture_t;
+
+typedef CFE_EVS_EnableEventTypeCmd_t    CFE_EVS_BitMaskCmd_t;
+typedef CFE_EVS_EnableAppEventTypeCmd_t CFE_EVS_AppNameBitMaskCmd_t;
+typedef CFE_EVS_EnableAppEventsCmd_t    CFE_EVS_AppNameCmd_t;
+typedef CFE_EVS_SetFilterCmd_t          CFE_EVS_AppNameEventIDMaskCmd_t;
+typedef CFE_EVS_ResetFilterCmd_t        CFE_EVS_AppNameEventIDCmd_t;
 
 static UT_EVS_EventCapture_t UT_EVS_EventBuf;
 

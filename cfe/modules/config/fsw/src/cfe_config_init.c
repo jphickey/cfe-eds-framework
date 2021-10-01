@@ -32,6 +32,8 @@
 #include "cfe_config_map.h"
 #include "cfe_config_ids.h"
 
+#include "cfe_mission_eds_parameters.h"
+
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -179,6 +181,10 @@ void CFE_Config_SetupBasicBuildInfo(void)
     CFE_Config_SetString(CFE_CONFIGID_MISSION_NAME, GLOBAL_CONFIGDATA.MissionName);
     KeyVal = CFE_Config_FindTargetKeyValue(GLOBAL_CONFIGDATA.ModuleVersionList, "MISSION");
     CFE_Config_SetString(CFE_CONFIGID_MISSION_SRCVER, KeyVal);
+
+    /* Global mission EDS runtime DB */
+    CFE_Config_SetObjPointer(CFE_CONFIGID_MISSION_EDS_DB, GLOBAL_CONFIGDATA.EdsDb);
+    CFE_Config_SetObjPointer(CFE_CONFIGID_MISSION_SBINTF_DB, GLOBAL_CONFIGDATA.SbIntfDb);
 
     /* propagate the version numbers from version.h */
     CFE_Config_SetValue(CFE_CONFIGID_CORE_VERSION_MAJOR, CFE_MAJOR_VERSION);

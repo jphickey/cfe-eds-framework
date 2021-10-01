@@ -36,6 +36,7 @@
 ** Required header files
 */
 #include "cfe_tbl_msg.h"
+#include "edslib_id.h"
 
 /*************************************************************************/
 
@@ -134,13 +135,14 @@ typedef struct
 */
 typedef struct
 {
-    void * BufferPtr;             /**< \brief Pointer to Load Buffer */
-    uint32 FileCreateTimeSecs;    /**< \brief File creation time from last file loaded into table */
-    uint32 FileCreateTimeSubSecs; /**< \brief File creation time from last file loaded into table */
-    uint32 Crc;                   /**< \brief Last calculated CRC for this buffer's contents */
-    bool   Taken;                 /**< \brief Flag indicating whether buffer is in use */
-    bool   Validated;             /**< \brief Flag indicating whether the buffer has been successfully validated */
-    char   DataSource[OS_MAX_PATH_LEN]; /**< \brief Source of data put into buffer (filename or memory address) */
+    void *      BufferPtr;             /**< \brief Pointer to Load Buffer */
+    uint32      FileCreateTimeSecs;    /**< \brief File creation time from last file loaded into table */
+    uint32      FileCreateTimeSubSecs; /**< \brief File creation time from last file loaded into table */
+    uint32      Crc;                   /**< \brief Last calculated CRC for this buffer's contents */
+    bool        Taken;                 /**< \brief Flag indicating whether buffer is in use */
+    bool        Validated;             /**< \brief Flag indicating whether the buffer has been successfully validated */
+    char        DataSource[OS_MAX_PATH_LEN]; /**< \brief Source of data put into buffer (filename or memory address) */
+    EdsLib_Id_t EdsContentId;
 } CFE_TBL_LoadBuff_t;
 
 /*******************************************************************************/
@@ -330,10 +332,10 @@ typedef struct
     CFE_TBL_AccessDescriptor_t Handles[CFE_PLATFORM_TBL_MAX_NUM_HANDLES]; /**< \brief Array of Access Descriptors */
     CFE_TBL_RegistryRec_t      Registry[CFE_PLATFORM_TBL_MAX_NUM_TABLES]; /**< \brief Array of Table Registry Records */
     CFE_TBL_CritRegRec_t
-                        CritReg[CFE_PLATFORM_TBL_MAX_CRITICAL_TABLES]; /**< \brief Array of Critical Table Registry Records */
+        CritReg[CFE_PLATFORM_TBL_MAX_CRITICAL_TABLES]; /**< \brief Array of Critical Table Registry Records */
     CFE_TBL_BufParams_t Buf; /**< \brief Parameters associated with Table Task's Memory Pool */
     CFE_TBL_ValidationResult_t
-                          ValidationResults[CFE_PLATFORM_TBL_MAX_NUM_VALIDATIONS]; /**< \brief Array of Table Validation Requests */
+        ValidationResults[CFE_PLATFORM_TBL_MAX_NUM_VALIDATIONS]; /**< \brief Array of Table Validation Requests */
     CFE_TBL_DumpControl_t DumpControlBlocks[CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS]; /**< \brief Array of Dump-Only
                                                                                          Dump Control Blocks */
 

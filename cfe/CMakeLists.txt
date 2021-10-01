@@ -114,6 +114,10 @@ elseif (IS_CFS_MISSION_BUILD)
     include("${MISSION_DEFS}/mission_build_custom.cmake" OPTIONAL)
 endif (IS_CFS_ARCH_BUILD)
 
+# The CFE_EDS_ENABLED_BUILD switch indicates that any
+# compile-time EDS options should be enabled in this build
+add_definitions(-DCFE_EDS_ENABLED_BUILD)
+
 # Call the prepare function defined by the sub-script
 # This is implemented differently depending on whether this is a
 # top-level or arch-specific build

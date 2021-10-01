@@ -37,7 +37,7 @@
 #define CFE_ERROR_H
 
 /* Include Files */
-#include "osapi.h"
+#include "common_types.h"
 
 /*
  * Define a type for readability.

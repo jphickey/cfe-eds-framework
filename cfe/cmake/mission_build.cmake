@@ -232,6 +232,59 @@ function(prepare)
      set(${DEP}_MISSION_DIR ${${DEP}_MISSION_DIR} PARENT_SCOPE)
   endforeach(DEP ${MISSION_DEPS})
 
+  # EDS-specific stuff
+
+  # Now that a complete list of mission dependencies is generated,
+  # check for the presence of additional special files under each app subdir:
+  #  - Electronic Data Sheet XML source files under eds/ subdirectory
+  #  - Electronic Data Sheet toolchain plugin scripts also under eds/ subdirectory
+  #  - The "functional-test" subdir will be installed to the host functional test dir
+  #  - The "ui" subdir will be installed to the UI pages install dir
+  file(GLOB_RECURSE MISSION_EDS_FILELIST FOLLOW_SYMLINKS
+    ${MISSION_DEFS}/eds/*.xml
+  )
+  file(GLOB_RECURSE MISSION_EDS_SCRIPTLIST FOLLOW_SYMLINKS
+    ${MISSION_DEFS}/eds/*.lua
+    ${MISSION_SOURCE_DIR}/tools/eds/tool/scripts/*.lua
+  )
+  foreach(APP ${MISSION_DEPS})
+    set(APPSRC ${${APP}_MISSION_DIR})
+    if (IS_DIRECTORY ${APPSRC}/functional-test AND DEFINED FT_INSTALL_SUBDIR)
+      install(DIRECTORY ${APPSRC}/functional-test/ DESTINATION ${FT_INSTALL_SUBDIR})
+    endif (IS_DIRECTORY ${APPSRC}/functional-test AND DEFINED FT_INSTALL_SUBDIR)
+
+    if (IS_DIRECTORY ${APPSRC}/ui AND DEFINED UI_INSTALL_SUBDIR)
+      install(DIRECTORY ${APPSRC}/ui/ DESTINATION ${UI_INSTALL_SUBDIR}/pages)
+    endif()
+
+    if (IS_DIRECTORY ${APPSRC}/eds)
+        file(GLOB_RECURSE APPXML FOLLOW_SYMLINKS ${APPSRC}/eds/*.xml)
+        file(GLOB_RECURSE APPSCRIPTS FOLLOW_SYMLINKS ${APPSRC}/eds/*.lua)
+        list(APPEND MISSION_EDS_FILELIST ${APPXML})
+        list(APPEND MISSION_EDS_SCRIPTLIST ${APPSCRIPTS})
+        unset(APPXML)
+        unset(APPSCRIPTS)
+    endif()
+  endforeach(APP ${MISSION_APPS} ${MISSION_DEPS})
+
+  # EDS toolchain plugin scripts may have ordering dependencies between them,
+  # so the assembled set of available scripts should be sorted by its filename
+  # This allows a numeric prefix (NN-) to be prepended in cases where
+  # the execution order is a concern (similar to UNIX SysV init system approach)
+  set(EDS_SCRIPT_BASENAMES)
+  foreach(SCRIPTFILE ${MISSION_EDS_SCRIPTLIST})
+    get_filename_component(BASENAME ${SCRIPTFILE} NAME_WE)
+    set(${BASENAME}_SCRIPT_LOCATION ${SCRIPTFILE})
+    list(APPEND EDS_SCRIPT_BASENAMES ${BASENAME})
+  endforeach(SCRIPTFILE ${MISSION_EDS_SCRIPTLIST})
+  list(SORT EDS_SCRIPT_BASENAMES)
+  set(MISSION_EDS_SCRIPTLIST)
+  foreach(BASENAME ${EDS_SCRIPT_BASENAMES})
+    list(APPEND MISSION_EDS_SCRIPTLIST ${${BASENAME}_SCRIPT_LOCATION})
+    unset(${BASENAME}_SCRIPT_LOCATION)
+  endforeach(BASENAME ${EDS_SCRIPT_BASENAMES})
+  unset(EDS_SCRIPT_BASENAMES)
+
   # Doxygen-based documentation generation targets
   # Create a directory for documentation output
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/docs")
@@ -356,6 +409,8 @@ function(prepare)
     "MISSION_PSPMODULES"
     "MISSION_DEPS"
     "ENABLE_UNIT_TESTS"
+    "MISSION_EDS_FILELIST"
+    "MISSION_EDS_SCRIPTLIST"
   )
   foreach(APP ${MISSION_DEPS})
     list(APPEND VARLIST "${APP}_MISSION_DIR")
@@ -375,6 +430,52 @@ function(prepare)
   endforeach(VARL ${VARLIST})
   file(WRITE "${CMAKE_BINARY_DIR}/mission_vars.cache" "${MISSION_VARCACHE}")
 
+  # build the EDS tool set which is used later in the build
+  message(STATUS "Setting up EDS toolchain build...")
+  file(MAKE_DIRECTORY "${MISSION_BINARY_DIR}/eds")
+  file(MAKE_DIRECTORY "${MISSION_BINARY_DIR}/obj")
+  file(MAKE_DIRECTORY "${MISSION_BINARY_DIR}/inc")
+  file(MAKE_DIRECTORY "${MISSION_BINARY_DIR}/src")
+
+
+  # Include all the EDS libaries and tools which are built for the host system
+  include_directories(${MISSION_BINARY_DIR}/inc)
+  add_subdirectory(${MISSION_SOURCE_DIR}/tools/eds/edslib eds/edslib)
+  add_subdirectory(${MISSION_SOURCE_DIR}/tools/eds/tool   eds/tool)
+  add_subdirectory(${MISSION_SOURCE_DIR}/tools/eds/cfecfs eds/cfecfs)
+
+  add_custom_command(
+    OUTPUT
+        "${MISSION_BINARY_DIR}/edstool-complete.stamp"
+    COMMAND sedstool
+        -DBUILD_TOOL="${CMAKE_BUILD_TOOL}"
+        -DCFLAGS="${CMAKE_C_FLAGS}"
+        -DCC="${CMAKE_C_COMPILER}"
+        -DAR="${CMAKE_AR}"
+        -DOBJDIR="obj"
+        -DMISSION_BINARY_DIR="${MISSION_BINARY_DIR}"
+        -DMISSION_NAME="${MISSION_NAME}"
+        ${MISSION_EDS_FILELIST}
+        ${MISSION_EDS_SCRIPTLIST}
+    COMMAND ${CMAKE_COMMAND}
+        -E touch "edstool-complete.stamp"
+    WORKING_DIRECTORY
+        "${MISSION_BINARY_DIR}"
+    DEPENDS
+        sedstool
+        ${MISSION_EDS_FILELIST}
+        ${MISSION_EDS_SCRIPTLIST}
+  )
+
+  add_custom_target(edstool-execute
+    DEPENDS
+        "${MISSION_BINARY_DIR}/edstool-complete.stamp"
+  )
+
+  # Executing the EDS tool per above custom commands is hooked into
+  # the pre-build process so it is done before any CPU builds.
+  add_dependencies(mission-prebuild edstool-execute)
+
   generate_build_version_templates()
 
   # Generate the tools for the native (host) arch
@@ -382,13 +483,13 @@ function(prepare)
   include_directories(
     ${core_api_MISSION_DIR}/fsw/inc
     ${osal_MISSION_DIR}/src/os/inc
-    ${psp_MISSION_DIR}/psp/fsw/inc
+    ${psp_MISSION_DIR}/fsw/inc
   )
   add_subdirectory(${MISSION_SOURCE_DIR}/tools tools)
 
   # Add a dependency on the table generator tool as this is required for table builds
-  # The "elf2cfetbl" target should have been added by the "tools" above
-  add_dependencies(mission-prebuild elf2cfetbl)
+  # The "eds2cfetbl" target should have been added by the "tools" above
+  add_dependencies(mission-prebuild eds2cfetbl)
 
   # Build version information should be generated as part of the pre-build process
   add_dependencies(mission-prebuild mission-version)
@@ -438,6 +539,9 @@ function(process_arch TARGETSYSTEM)
     set(SELECTED_TOOLCHAIN_FILE)
   endif ()
 
+  # Ensure the list of tables for this arch is initially empty
+  file(REMOVE ${ARCH_BINARY_DIR}/table_configs.cmake)
+
   # Execute CMake subprocess to create a binary build tree for the specific CPU architecture
   execute_process(
     COMMAND ${CMAKE_COMMAND}
@@ -456,6 +560,13 @@ function(process_arch TARGETSYSTEM)
   if (NOT RESULT EQUAL 0)
     message(FATAL_ERROR "Failed to configure ${TARGETSYSTEM}")
   endif (NOT RESULT EQUAL 0)
+
+  # Now include the list of tables that might have been generated
+  set(TABLE_CONFIG_LIST)
+  include(${ARCH_BINARY_DIR}/table_configs.cmake OPTIONAL)
+  foreach (TBLCFG ${TABLE_CONFIG_LIST})
+    add_subdirectory(${CMAKE_SOURCE_DIR}/cmake/tables tables/${TBLCFG})
+  endforeach()
 
   # Hook the "make all", "make clean", and "make install" targets for the subordinate build
   # to top-level build targets prefixed by the CPU architecture.
@@ -487,5 +598,3 @@ function(process_arch TARGETSYSTEM)
   add_dependencies(mission-install ${TARGETSYSTEM}-install)
 
 endfunction(process_arch TARGETSYSTEM)
-
-

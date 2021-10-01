@@ -41,6 +41,8 @@
 #include "sb_UT.h"
 #include "cfe_msg.h"
 #include "cfe_core_resourceid_basevalues.h"
+#include "edslib_datatypedb.h"
+#include "cfe_missionlib_runtime.h"
 
 /*
  * A method to add an SB "Subtest"
@@ -143,6 +145,14 @@ CFE_ES_AppId_t UT_SB_AppID_Modify(CFE_ES_AppId_t InitialID, int32 Modifier)
     memcpy(&OutValue, &InValue, sizeof(OutValue));
 
     return OutValue;
+}
+
+/* Hook for "EdsLib_DataTypeDB_GetMemberByIndex" */
+void UT_SB_Hook_GetMemberByIndex(void *UserObj, UT_EntryKey_t FuncKey, const UT_StubContext_t *Context)
+{
+    EdsLib_DataTypeDB_EntityInfo_t *MemberInfo =
+        UT_Hook_GetArgValueByName(Context, "MemberInfo", EdsLib_DataTypeDB_EntityInfo_t *);
+    memcpy(MemberInfo, UserObj, sizeof(*MemberInfo));
 }
 
 /*
@@ -4140,10 +4150,8 @@ void Test_CFE_SB_MsgHdrSize(void)
 */
 void Test_CFE_SB_GetUserData(void)
 {
-    CFE_MSG_Message_t msg;
-    uint8 *           expected;
-    bool              hassec;
-    CFE_MSG_Type_t    type = CFE_MSG_Type_Invalid;
+    EdsLib_DataTypeDB_EntityInfo_t PayloadInfo;
+    CFE_MSG_Message_t              msg;
     struct
     {
         CFE_MSG_CommandHeader_t CommandHeader;
@@ -4185,44 +4193,40 @@ void Test_CFE_SB_GetUserData(void)
         uint64                    payload;
     } tlm_uint64;
 
-    /* No secondary */
-    hassec = false;
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetHasSecondaryHeader), &hassec, sizeof(hassec), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetType), &type, sizeof(type), false);
+    memset(&PayloadInfo, 0, sizeof(PayloadInfo));
 
-    /* Expected return */
-    expected = (uint8 *)&msg + sizeof(CFE_MSG_Message_t);
-    UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(&msg), expected);
+    /* Invalid message */
+    UtAssert_NULL(CFE_SB_GetUserData(&msg));
 
     /* Commands */
-    hassec = true;
-    type   = CFE_MSG_Type_Cmd;
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetHasSecondaryHeader), &hassec, sizeof(hassec), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetType), &type, sizeof(type), false);
+    UT_SetDefaultReturnValue(UT_KEY(CFE_MissionLib_PubSub_IsListenerComponent), true);
+    PayloadInfo.Offset.Bytes = (char *)&cmd_uint8.payload - (char *)&cmd_uint8;
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_GetMemberByIndex), UT_SB_Hook_GetMemberByIndex, &PayloadInfo);
     UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(cmd_uint8.CommandHeader)), &(cmd_uint8.payload));
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetHasSecondaryHeader), &hassec, sizeof(hassec), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetType), &type, sizeof(type), false);
+    PayloadInfo.Offset.Bytes = (char *)&cmd_uint16.payload - (char *)&cmd_uint16;
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_GetMemberByIndex), UT_SB_Hook_GetMemberByIndex, &PayloadInfo);
     UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(cmd_uint16.CommandHeader)), &(cmd_uint16.payload));
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetHasSecondaryHeader), &hassec, sizeof(hassec), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetType), &type, sizeof(type), false);
+    PayloadInfo.Offset.Bytes = (char *)&cmd_uint32.payload - (char *)&cmd_uint32;
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_GetMemberByIndex), UT_SB_Hook_GetMemberByIndex, &PayloadInfo);
     UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(cmd_uint32.CommandHeader)), &(cmd_uint32.payload));
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetHasSecondaryHeader), &hassec, sizeof(hassec), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetType), &type, sizeof(type), false);
+    PayloadInfo.Offset.Bytes = (char *)&cmd_uint64.payload - (char *)&cmd_uint64;
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_GetMemberByIndex), UT_SB_Hook_GetMemberByIndex, &PayloadInfo);
     UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(cmd_uint64.CommandHeader)), &(cmd_uint64.payload));
 
     /* Telemetry */
-    type = CFE_MSG_Type_Tlm;
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetHasSecondaryHeader), &hassec, sizeof(hassec), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetType), &type, sizeof(type), false);
+    UT_SetDefaultReturnValue(UT_KEY(CFE_MissionLib_PubSub_IsListenerComponent), false);
+    UT_SetDefaultReturnValue(UT_KEY(CFE_MissionLib_PubSub_IsPublisherComponent), true);
+    PayloadInfo.Offset.Bytes = (char *)&tlm_uint8.payload - (char *)&tlm_uint8;
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_GetMemberByIndex), UT_SB_Hook_GetMemberByIndex, &PayloadInfo);
     UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(tlm_uint8.TelemetryHeader)), &(tlm_uint8.payload));
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetHasSecondaryHeader), &hassec, sizeof(hassec), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetType), &type, sizeof(type), false);
+    PayloadInfo.Offset.Bytes = (char *)&tlm_uint16.payload - (char *)&tlm_uint16;
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_GetMemberByIndex), UT_SB_Hook_GetMemberByIndex, &PayloadInfo);
     UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(tlm_uint16.TelemetryHeader)), &(tlm_uint16.payload));
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetHasSecondaryHeader), &hassec, sizeof(hassec), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetType), &type, sizeof(type), false);
+    PayloadInfo.Offset.Bytes = (char *)&tlm_uint32.payload - (char *)&tlm_uint32;
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_GetMemberByIndex), UT_SB_Hook_GetMemberByIndex, &PayloadInfo);
     UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(tlm_uint32.TelemetryHeader)), &(tlm_uint32.payload));
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetHasSecondaryHeader), &hassec, sizeof(hassec), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetType), &type, sizeof(type), false);
+    PayloadInfo.Offset.Bytes = (char *)&tlm_uint64.payload - (char *)&tlm_uint64;
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_GetMemberByIndex), UT_SB_Hook_GetMemberByIndex, &PayloadInfo);
     UtAssert_ADDRESS_EQ(CFE_SB_GetUserData(CFE_MSG_PTR(tlm_uint64.TelemetryHeader)), &(tlm_uint64.payload));
 
     /* Bad inputs */

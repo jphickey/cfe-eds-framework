@@ -8,12 +8,8 @@
 #
 ###########################################################
 
-# Check if strict/enforcing typedef should be used
-if (MISSION_RESOURCEID_MODE STREQUAL "STRICT")
-  set(RESOURCEID_HDR_FILE "cfe_resourceid_strict.h")
-else ()
-  set(RESOURCEID_HDR_FILE "cfe_resourceid_simple.h")
-endif ()
+# In this build the EDS definition of resource ID is used
+set(RESOURCEID_HDR_FILE "cfe_resourceid_eds.h")
 
 # Generate the header definition files, use local default for this module)
 generate_config_includefile(

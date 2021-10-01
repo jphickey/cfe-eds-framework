@@ -796,7 +796,7 @@ static inline bool CFE_SB_MsgId_Equal(CFE_SB_MsgId_t MsgId1, CFE_SB_MsgId_t MsgI
  *
  * \return Integer representation of the #CFE_SB_MsgId_t
  */
-static inline CFE_SB_MsgId_Atom_t CFE_SB_MsgIdToValue(CFE_SB_MsgId_t MsgId)
+static inline CFE_SB_MsgIdValue_Atom_t CFE_SB_MsgIdToValue(CFE_SB_MsgId_t MsgId)
 {
     return CFE_SB_MSGID_UNWRAP_VALUE(MsgId);
 }
@@ -825,7 +825,7 @@ static inline CFE_SB_MsgId_Atom_t CFE_SB_MsgIdToValue(CFE_SB_MsgId_t MsgId)
  *
  * \return #CFE_SB_MsgId_t representation of the integer
  */
-static inline CFE_SB_MsgId_t CFE_SB_ValueToMsgId(CFE_SB_MsgId_Atom_t MsgIdValue)
+static inline CFE_SB_MsgId_t CFE_SB_ValueToMsgId(CFE_SB_MsgIdValue_Atom_t MsgIdValue)
 {
     CFE_SB_MsgId_t Result = CFE_SB_MSGID_C(MsgIdValue);
     return Result;

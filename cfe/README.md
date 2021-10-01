@@ -549,7 +549,7 @@ of the OSAL limit. Task name shows up as `ES_BG_TASK`
 - Adds SBR module which includes message map and routing table. The access APIs are on the SB side which still owns the destination logic
 - Removes passing of route index or pointers being. Everything is now based on route and message id
 - Oversized the hash message map (4x) to minimize collisions
-- Hash designed for 32 bit, a change in CFE_SB_MsgId_Atom_t size may require implementation updates
+- Hash designed for 32 bit, a change in CFE_SB_MsgId_t size may require implementation updates
 - Adds debug event for collisions during add
 - Dropped routing push/pop, dropped "key" in direct implementation
 - Deletes unused code CFE_SB_FindGlobalMsgIdCnt

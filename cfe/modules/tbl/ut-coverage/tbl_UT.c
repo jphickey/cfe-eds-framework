@@ -40,6 +40,8 @@
 */
 #include "tbl_UT.h"
 #include "cfe_core_resourceid_basevalues.h"
+#include "edslib_datatypedb.h"
+#include "cfe_mission_eds_parameters.h"
 
 /*
 ** External global variables
@@ -85,6 +87,59 @@ static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_CMD_INVALID_CC = {
 
 CFE_TBL_RegistryRec_t Original[CFE_PLATFORM_TBL_MAX_NUM_TABLES];
 
+static void UT_TBL_SetEdsLibUnpackData(void *UserObj, UT_EntryKey_t FuncKey, const UT_StubContext_t *Context)
+{
+    EdsLib_Id_t *EdsId      = UT_Hook_GetArgValueByName(Context, "EdsId", EdsLib_Id_t *);
+    void *       DestBuffer = UT_Hook_GetArgValueByName(Context, "DestBuffer", void *);
+    uint32       DestSize   = UT_Hook_GetArgValueByName(Context, "MaxNativeByteSize", uint32);
+    int32        Status;
+
+    UT_Stub_GetInt32StatusCode(Context, &Status);
+
+    if (Status == EDSLIB_SUCCESS)
+    {
+        if (UT_Stub_CopyToLocal(FuncKey ^ *EdsId, DestBuffer, DestSize) == 0)
+        {
+            memset(DestBuffer, 0, DestSize);
+        }
+    }
+}
+
+static void UT_TBL_SetEdsLibTypeInfo(void *UserObj, UT_EntryKey_t FuncKey, const UT_StubContext_t *Context)
+{
+    EdsLib_Id_t                   EdsId = UT_Hook_GetArgValueByName(Context, "EdsId", EdsLib_Id_t);
+    EdsLib_DataTypeDB_TypeInfo_t *TypeInfo =
+        UT_Hook_GetArgValueByName(Context, "TypeInfo", EdsLib_DataTypeDB_TypeInfo_t *);
+    int32 Status;
+
+    memset(TypeInfo, 0, sizeof(*TypeInfo));
+
+    UT_Stub_GetInt32StatusCode(Context, &Status);
+
+    if (Status == EDSLIB_SUCCESS && EdsLib_Get_AppIdx(EdsId) == EDS_INDEX(CFE_TBL))
+    {
+        switch (EdsLib_Get_FormatIdx(EdsId))
+        {
+            case CFE_TBL_File_Hdr_DATADICTIONARY:
+                TypeInfo->Size.Bits  = sizeof(CFE_TBL_File_Hdr_PackedBuffer_t);
+                TypeInfo->Size.Bytes = sizeof(CFE_TBL_File_Hdr_t);
+                break;
+
+            /* This is a fake UT-only EdsId referring to UT_Table1_t */
+            case cfe_tbl_DATADICTIONARY_MAX:
+                TypeInfo->Size.Bits  = sizeof(UT_Table1_t);
+                TypeInfo->Size.Bytes = sizeof(UT_Table1_t);
+                break;
+        }
+
+        if (TypeInfo->Size.Bytes > 0)
+        {
+            TypeInfo->Size.Bits *= 8;
+            TypeInfo->ElemType = EDSLIB_BASICTYPE_CONTAINER;
+        }
+    }
+}
+
 /*
  * UT helper routines
  */
@@ -93,11 +148,33 @@ void UT_TBL_SetupHeader(CFE_TBL_File_Hdr_t *TblFileHeader, size_t Offset, size_t
     TblFileHeader->Offset   = CFE_ES_MEMOFFSET_C(Offset);
     TblFileHeader->NumBytes = CFE_ES_MEMOFFSET_C(NumBytes);
 
-    if (UT_Endianess == UT_LITTLE_ENDIAN)
-    {
-        CFE_TBL_ByteSwapUint32(&TblFileHeader->Offset);
-        CFE_TBL_ByteSwapUint32(&TblFileHeader->NumBytes);
-    }
+    /* Set the fake UT EdsId in the header, which will correlate with to UT_Table1_t (see above) */
+    TblFileHeader->EdsAppId    = EDS_INDEX(CFE_TBL);
+    TblFileHeader->EdsFormatId = cfe_tbl_DATADICTIONARY_MAX;
+}
+
+void UT_TBL_SetupReadHeader(CFE_TBL_File_Hdr_t *TblFileHeader, size_t NumBytes)
+{
+    EdsLib_Id_t                            EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CFE_TBL), CFE_TBL_File_Hdr_DATADICTIONARY);
+    static CFE_TBL_File_Hdr_PackedBuffer_t LocalBuffer = {0};
+
+    UT_SetDataBuffer(UT_KEY(OS_read), LocalBuffer, sizeof(CFE_TBL_File_Hdr_PackedBuffer_t), false);
+    UT_SetDataBuffer(UT_KEY(EdsLib_DataTypeDB_UnpackCompleteObject) ^ EdsId, TblFileHeader, NumBytes, true);
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_UnpackCompleteObject), UT_TBL_SetEdsLibUnpackData, NULL);
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_GetTypeInfo), UT_TBL_SetEdsLibTypeInfo, NULL);
+}
+
+void UT_TBL_SetupCompleteLoad(UT_TempFile_t *FileData)
+{
+    EdsLib_Id_t EdsId;
+
+    UT_TBL_SetupReadHeader(&FileData->TblHeader, sizeof(FileData->TblHeader));
+
+    EdsId = EDSLIB_MAKE_ID(FileData->TblHeader.EdsAppId, FileData->TblHeader.EdsFormatId);
+
+    UT_SetDataBuffer(UT_KEY(EdsLib_DataTypeDB_UnpackPartialObject) ^ EdsId, &FileData->TblData,
+                     sizeof(FileData->TblData), true);
+    UT_SetHandlerFunction(UT_KEY(EdsLib_DataTypeDB_UnpackPartialObject), UT_TBL_SetEdsLibUnpackData, NULL);
 }
 
 /*
@@ -1176,7 +1253,7 @@ void Test_CFE_TBL_LoadCmd(void)
     UT_InitData();
     strncpy(TblFileHeader.TableName, CFE_TBL_Global.Registry[0].Name, sizeof(TblFileHeader.TableName) - 1);
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
 
@@ -1185,7 +1262,7 @@ void Test_CFE_TBL_LoadCmd(void)
 
     /* Test attempt to load a dump only table */
     UT_InitData();
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     CFE_TBL_Global.Registry[0].DumpOnly = true;
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
@@ -1193,7 +1270,7 @@ void Test_CFE_TBL_LoadCmd(void)
 
     /* Test attempt to load a table with a load already pending */
     UT_InitData();
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     CFE_TBL_Global.Registry[0].LoadPending = true;
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
@@ -1210,7 +1287,7 @@ void Test_CFE_TBL_LoadCmd(void)
     CFE_TBL_Global.Registry[0].Size                                               = sizeof(UT_Table1_t);
     CFE_TBL_Global.Registry[0].LoadInProgress                                     = CFE_TBL_NO_LOAD_IN_PROGRESS + 1;
     CFE_TBL_Global.LoadBuffs[CFE_TBL_Global.Registry[0].LoadInProgress].BufferPtr = &LoadBuffer;
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
 
@@ -1218,7 +1295,7 @@ void Test_CFE_TBL_LoadCmd(void)
     UT_InitData();
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_CMD_CTR);
 
@@ -1226,7 +1303,7 @@ void Test_CFE_TBL_LoadCmd(void)
     UT_InitData();
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 2, 0);
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
 
@@ -1241,7 +1318,7 @@ void Test_CFE_TBL_LoadCmd(void)
         CFE_TBL_Global.LoadBuffs[i].Taken = true;
     }
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
 
@@ -1254,7 +1331,7 @@ void Test_CFE_TBL_LoadCmd(void)
     CFE_TBL_Global.LoadBuffs[0].Taken                                                = false;
     strncpy(TblFileHeader.TableName, CFE_TBL_Global.Registry[0].Name, sizeof(TblFileHeader.TableName) - 1);
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
 
@@ -1262,14 +1339,14 @@ void Test_CFE_TBL_LoadCmd(void)
     UT_InitData();
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
     CFE_TBL_Global.Registry[0].Size = sizeof(UT_Table1_t) - 1;
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
 
     /* Test with table header indicating no data in the file */
     UT_InitData();
     UT_TBL_SetupHeader(&TblFileHeader, 0, 0);
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
 
@@ -1280,7 +1357,7 @@ void Test_CFE_TBL_LoadCmd(void)
     UT_TBL_SetupHeader(&TblFileHeader, 1, 1);
     CFE_TBL_Global.Registry[0].TableLoadedOnce = false;
     CFE_TBL_Global.Registry[0].Size            = sizeof(UT_Table1_t);
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
 
@@ -1291,7 +1368,7 @@ void Test_CFE_TBL_LoadCmd(void)
     UT_TBL_SetupHeader(&TblFileHeader, 0, 1);
     CFE_TBL_Global.Registry[0].TableLoadedOnce = false;
     CFE_TBL_Global.Registry[0].Size            = sizeof(UT_Table1_t);
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadCmd(&LoadCmd), CFE_TBL_INC_ERR_CTR);
 
@@ -1948,7 +2025,7 @@ void Test_CFE_TBL_Share(void)
 
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     CFE_UtAssert_SUCCESS(CFE_TBL_Load(3, CFE_TBL_SRC_FILE, "TblSrcFileName.dat"));
@@ -2077,7 +2154,7 @@ void Test_CFE_TBL_Load(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 1, sizeof(UT_Table1_t) - 1);
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     UtAssert_INT32_EQ(CFE_TBL_Load(App1TblHandle1, CFE_TBL_SRC_FILE, "TblSrcFileName.dat"), CFE_TBL_ERR_PARTIAL_LOAD);
@@ -2088,7 +2165,7 @@ void Test_CFE_TBL_Load(void)
      * loaded
      */
     UT_InitData();
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     AccessDescPtr              = &CFE_TBL_Global.Handles[App1TblHandle1];
@@ -2111,7 +2188,7 @@ void Test_CFE_TBL_Load(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     UtAssert_INT32_EQ(CFE_TBL_Load(App1TblHandle1, CFE_TBL_SRC_FILE, "TblSrcFileName.dat"),
@@ -2140,7 +2217,7 @@ void Test_CFE_TBL_Load(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     AccessDescPtr              = &CFE_TBL_Global.Handles[App1TblHandle2];
@@ -2425,7 +2502,7 @@ void Test_CFE_TBL_ReleaseAddresses(void)
         File.TblData.TblElement2 = 0x05060708;
     }
 
-    UT_SetReadBuffer(&File, sizeof(File));
+    UT_TBL_SetupCompleteLoad(&File);
     UT_SetReadHeader(&FileHeader, sizeof(FileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
 
@@ -3077,7 +3154,7 @@ void Test_CFE_TBL_TblMod(void)
         File.TblData.TblElement2 = 0x05060708;
     }
 
-    UT_SetReadBuffer(&File, sizeof(File));
+    UT_TBL_SetupCompleteLoad(&File);
     UT_SetReadHeader(&FileHeader, sizeof(FileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
 
@@ -3138,7 +3215,8 @@ void Test_CFE_TBL_TblMod(void)
 
     File.TblData.TblElement1 = 0x04030201;
     File.TblData.TblElement2 = 0x08070605;
-    UT_SetReadBuffer(&File, sizeof(File));
+
+    UT_TBL_SetupCompleteLoad(&File);
     UT_SetReadHeader(&FileHeader, sizeof(FileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
 
@@ -3260,7 +3338,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 1, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_LoadFromFile("UT", WorkingBufferPtr, RegRecPtr, Filename), CFE_TBL_ERR_FILE_TOO_LARGE);
     CFE_UtAssert_EVENTSENT(CFE_TBL_LOAD_EXCEEDS_SIZE_ERR_EID);
@@ -3276,7 +3354,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 2, sizeof(UT_Table1_t));
     UtAssert_INT32_EQ(CFE_TBL_LoadFromFile("UT", WorkingBufferPtr, RegRecPtr, Filename), CFE_TBL_ERR_FILE_TOO_LARGE);
@@ -3293,7 +3371,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 2, sizeof(UT_Table1_t) - 1);
     UT_SetDeferredRetcode(UT_KEY(OS_read), 1, 0);
@@ -3309,7 +3387,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 2, -1);
     UtAssert_INT32_EQ(CFE_TBL_LoadFromFile("UT", WorkingBufferPtr, RegRecPtr, Filename), CFE_TBL_ERR_LOAD_INCOMPLETE);
@@ -3324,7 +3402,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, -1);
     CFE_UtAssert_SUCCESS(CFE_TBL_LoadFromFile("UT", WorkingBufferPtr, RegRecPtr, Filename));
@@ -3340,7 +3418,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     UtAssert_INT32_EQ(CFE_TBL_LoadFromFile("UT", WorkingBufferPtr, RegRecPtr, Filename),
@@ -3356,7 +3434,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDefaultReturnValue(UT_KEY(OS_OpenCreate), OS_ERROR);
     UtAssert_INT32_EQ(CFE_TBL_LoadFromFile("UT", WorkingBufferPtr, RegRecPtr, Filename), CFE_TBL_ERR_ACCESS);
@@ -3371,7 +3449,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t) - 1);
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     UtAssert_INT32_EQ(CFE_TBL_LoadFromFile("UT", WorkingBufferPtr, RegRecPtr, Filename), CFE_TBL_WARN_SHORT_FILE);
@@ -3387,7 +3465,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t) - 1);
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     strncpy(Filename, "MyTestInputFilename", sizeof(Filename) - 1);
     Filename[sizeof(Filename) - 1] = '\0';
@@ -3414,7 +3492,7 @@ void Test_CFE_TBL_Internal(void)
         CFE_TBL_ByteSwapUint32(&TblFileHeader.Offset);
     }
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_ReadHeaders(FileDescriptor, &StdFileHeader, &TblFileHeader, Filename),
                       CFE_TBL_ERR_BAD_CONTENT_ID);
@@ -3429,7 +3507,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t) - 1);
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UtAssert_INT32_EQ(CFE_TBL_ReadHeaders(FileDescriptor, &StdFileHeader, &TblFileHeader, Filename),
                       CFE_TBL_ERR_BAD_SUBTYPE_ID);
@@ -3446,7 +3524,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t) - 1);
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 1, sizeof(CFE_TBL_File_Hdr_t) - 1);
     UtAssert_INT32_EQ(CFE_TBL_ReadHeaders(FileDescriptor, &StdFileHeader, &TblFileHeader, Filename),
@@ -3541,7 +3619,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     CFE_UtAssert_SUCCESS(CFE_TBL_Load(App1TblHandle1, CFE_TBL_SRC_FILE, "TblSrcFileName.dat"));
@@ -3556,7 +3634,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     CFE_UtAssert_SUCCESS(CFE_TBL_Load(App1TblHandle1, CFE_TBL_SRC_FILE, "TblSrcFileName.dat"));
@@ -3571,7 +3649,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     CFE_UtAssert_SUCCESS(CFE_TBL_Load(App1TblHandle2, CFE_TBL_SRC_FILE, "TblSrcFileName.dat"));
@@ -3586,7 +3664,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     CFE_TBL_GetAddress(&TblPtr, App1TblHandle2);
@@ -3604,7 +3682,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     UtAssert_INT32_EQ(CFE_TBL_Load(App1TblHandle2, CFE_TBL_SRC_FILE, "TblSrcFileName.dat"),
@@ -3631,7 +3709,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     UT_SetDeferredRetcode(UT_KEY(CFE_ES_CopyToCDS), 1, CFE_ES_ERR_RESOURCEID_NOT_VALID);
@@ -3658,7 +3736,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     UT_SetDeferredRetcode(UT_KEY(CFE_ES_CopyToCDS), 2, CFE_ES_ERR_RESOURCEID_NOT_VALID);
@@ -3687,7 +3765,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     UT_SetDeferredRetcode(UT_KEY(CFE_ES_CopyToCDS), 2, CFE_ES_ERR_RESOURCEID_NOT_VALID);
@@ -3742,7 +3820,7 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&TblFileHeader, 0, sizeof(UT_Table1_t));
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     UT_SetDeferredRetcode(UT_KEY(OS_read), 3, 0);
     UT_SetDeferredRetcode(UT_KEY(CFE_ES_CopyToCDS), 2, CFE_ES_ERR_RESOURCEID_NOT_VALID);
@@ -3882,7 +3960,7 @@ void Test_CFE_TBL_Internal(void)
         CFE_TBL_ByteSwapUint32(&TblFileHeader.Offset);
     }
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     strncpy(Filename, "MyTestInputFilename", sizeof(Filename) - 1);
     Filename[sizeof(Filename) - 1] = '\0';
@@ -3912,7 +3990,7 @@ void Test_CFE_TBL_Internal(void)
         CFE_TBL_ByteSwapUint32(&TblFileHeader.Offset);
     }
 
-    UT_SetReadBuffer(&TblFileHeader, sizeof(TblFileHeader));
+    UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     strncpy(Filename, "MyTestInputFilename", sizeof(Filename) - 1);
     Filename[sizeof(Filename) - 1] = '\0';
