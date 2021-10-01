@@ -36,6 +36,15 @@
 #include "ci_lab_events.h"
 #include "ci_lab_version.h"
 
+#include "cfe_config.h"
+
+#include "edslib_datatypedb.h"
+#include "ci_lab_eds_typedefs.h"
+#include "cfe_missionlib_api.h"
+#include "cfe_missionlib_runtime.h"
+#include "cfe_mission_eds_parameters.h"
+#include "cfe_mission_eds_interface_parameters.h"
+
 /*
 ** CI global data...
 */
@@ -49,7 +58,7 @@ typedef struct
 
     CI_LAB_HkTlm_t HkTlm;
 
-    CFE_SB_Buffer_t *NextIngestBufPtr;
+    CFE_HDR_Message_PackedBuffer_t NetworkBuffer;
 
 } CI_LAB_GlobalData_t;
 
@@ -351,55 +360,129 @@ void CI_LAB_ReadUpLink(void)
 {
     int    i;
     int32  status;
-    uint8 *bytes;
+    uint32 BitSize;
+    CFE_SB_SoftwareBus_PubSub_Interface_t PubSubParams;
+    CFE_SB_Listener_Component_t ListenerParams;
+    EdsLib_DataTypeDB_TypeInfo_t CmdHdrInfo;
+    EdsLib_DataTypeDB_TypeInfo_t FullCmdInfo;
+    EdsLib_Id_t EdsId;
+    CFE_SB_Buffer_t *NextIngestBufPtr;
+
+    const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
+
+    NextIngestBufPtr = NULL;
+    EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CFE_HDR), CFE_HDR_CommandHeader_DATADICTIONARY);
+    status = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &CmdHdrInfo);
+    if (status != EDSLIB_SUCCESS)
+    {
+        OS_printf("EdsLib_DataTypeDB_GetTypeInfo(): %d\n", (int)status);
+        return;
+    }
 
     for (i = 0; i <= 10; i++)
     {
-        if (CI_LAB_Global.NextIngestBufPtr == NULL)
+        status = OS_SocketRecvFrom(CI_LAB_Global.SocketID, CI_LAB_Global.NetworkBuffer,
+                sizeof(CI_LAB_Global.NetworkBuffer), &CI_LAB_Global.SocketAddress, OS_CHECK);
+
+        if (status >= 0)
         {
-            CI_LAB_Global.NextIngestBufPtr = CFE_SB_AllocateMessageBuffer(CI_LAB_MAX_INGEST);
-            if (CI_LAB_Global.NextIngestBufPtr == NULL)
-            {
-                CFE_EVS_SendEvent(CI_LAB_INGEST_ALLOC_ERR_EID, CFE_EVS_EventType_ERROR,
-                                  "CI: L%d, buffer allocation failed\n", __LINE__);
-                break;
-            }
+            BitSize = status;
+            BitSize *= 8;
+        }
+        else
+        {
+            BitSize = 0;
         }
 
-        status = OS_SocketRecvFrom(CI_LAB_Global.SocketID, CI_LAB_Global.NextIngestBufPtr, CI_LAB_MAX_INGEST,
-                                   &CI_LAB_Global.SocketAddress, OS_CHECK);
-        if (status >= (int32)sizeof(CFE_MSG_CommandHeader_t) && status <= ((int32)CI_LAB_MAX_INGEST))
+        if (BitSize >= CmdHdrInfo.Size.Bits)
         {
+            if (NextIngestBufPtr == NULL)
+            {
+                NextIngestBufPtr = CFE_SB_AllocateMessageBuffer(sizeof(CFE_HDR_CommandHeader_Buffer_t));
+                if (NextIngestBufPtr == NULL)
+                {
+                    CFE_EVS_SendEvent(CI_LAB_INGEST_ALLOC_ERR_EID, CFE_EVS_EventType_ERROR,
+                                    "CI: L%d, buffer allocation failed\n", __LINE__);
+                    break;
+                }
+            }
+
+            /* Packet is in external wire-format byte order - unpack it and copy */
+            EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CFE_HDR), CFE_HDR_CommandHeader_DATADICTIONARY);
+            status = EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer,
+                sizeof(CFE_HDR_CommandHeader_Buffer_t), BitSize, 0);
+            if (status != EDSLIB_SUCCESS)
+            {
+                OS_printf("EdsLib_DataTypeDB_UnpackPartialObject(1): %d\n", (int)status);
+                break;
+            }
+
+            /* Header decoded successfully - Now need to determine the type for the rest of the payload */
+            CFE_MissionLib_Get_PubSub_Parameters(&PubSubParams, &NextIngestBufPtr->Msg.BaseMsg);
+            CFE_MissionLib_UnmapListenerComponent(&ListenerParams, &PubSubParams);
+
+            status = CFE_MissionLib_GetArgumentType(&CFE_SOFTWAREBUS_INTERFACE,
+                    CFE_SB_Telecommand_Interface_ID, ListenerParams.Telecommand.TopicId, 1, 1, &EdsId);
+            if (status != CFE_MISSIONLIB_SUCCESS)
+            {
+                OS_printf("CFE_MissionLib_GetArgumentType(): %d\n", (int)status);
+                break;
+            }
+
+            status = EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer,
+                    sizeof(CFE_HDR_CommandHeader_Buffer_t), BitSize, sizeof(CFE_HDR_CommandHeader_t));
+            if (status != EDSLIB_SUCCESS)
+            {
+                OS_printf("EdsLib_DataTypeDB_UnpackPartialObject(2): %d\n", (int)status);
+                break;
+            }
+
+            /* Verify that the checksum and basic fields are correct, and recompute the length entry */
+            status = EdsLib_DataTypeDB_VerifyUnpackedObject(EDS_DB, EdsId, NextIngestBufPtr,
+                CI_LAB_Global.NetworkBuffer, EDSLIB_DATATYPEDB_RECOMPUTE_LENGTH);
+            if (status != EDSLIB_SUCCESS)
+            {
+                OS_printf("EdsLib_DataTypeDB_VerifyUnpackedObject(): %d\n", (int)status);
+                break;
+            }
+
+            status = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &FullCmdInfo);
+            if (status != EDSLIB_SUCCESS)
+            {
+                OS_printf("EdsLib_DataTypeDB_GetTypeInfo(): %d\n", (int)status);
+                return;
+            }
+
             CFE_ES_PerfLogEntry(CI_LAB_SOCKET_RCV_PERF_ID);
             CI_LAB_Global.HkTlm.Payload.IngestPackets++;
-            status = CFE_SB_TransmitBuffer(CI_LAB_Global.NextIngestBufPtr, false);
+            status = CFE_SB_TransmitBuffer(NextIngestBufPtr, false);
             CFE_ES_PerfLogExit(CI_LAB_SOCKET_RCV_PERF_ID);
 
             if (status == CFE_SUCCESS)
             {
                 /* Set NULL so a new buffer will be obtained next time around */
-                CI_LAB_Global.NextIngestBufPtr = NULL;
+                NextIngestBufPtr = NULL;
             }
             else
             {
                 CFE_EVS_SendEvent(CI_LAB_INGEST_SEND_ERR_EID, CFE_EVS_EventType_ERROR,
-                                  "CI: L%d, CFE_SB_TransmitBuffer() failed, status=%d\n", __LINE__, (int)status);
+                                "CI: L%d, CFE_SB_TransmitBuffer() failed, status=%d\n", __LINE__, (int)status);
             }
+
         }
         else if (status > 0)
         {
             /* bad size, report as ingest error */
             CI_LAB_Global.HkTlm.Payload.IngestErrors++;
 
-            bytes = CI_LAB_Global.NextIngestBufPtr->Msg.Byte;
             CFE_EVS_SendEvent(CI_LAB_INGEST_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
-                              "CI: L%d, cmd %0x%0x %0x%0x dropped, bad length=%d\n", __LINE__, bytes[0], bytes[1],
-                              bytes[2], bytes[3], (int)status);
+                              "CI: L%d, cmd dropped, bad length=%u bits\n", __LINE__, (unsigned int)BitSize);
         }
-        else
-        {
-            break; /* no (more) messages */
-        }
+    }
+
+    if (NextIngestBufPtr != NULL)
+    {
+        CFE_SB_ReleaseMessageBuffer(NextIngestBufPtr);
     }
 
     return;
