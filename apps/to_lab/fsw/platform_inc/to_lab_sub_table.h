@@ -31,18 +31,8 @@
 
 #include "cfe_msgids.h"
 #include "cfe_platform_cfg.h"
-#include "cfe_sb.h"
+#include "cfe_sb_api_typedefs.h"
 
-typedef struct
-{
-    CFE_SB_MsgId_t Stream;
-    CFE_SB_Qos_t   Flags;
-    uint16         BufLimit;
-} TO_LAB_Sub_t;
-
-typedef struct
-{
-    TO_LAB_Sub_t Subs[CFE_PLATFORM_SB_MAX_MSG_IDS];
-} TO_LAB_Subs_t;
+#include "to_lab_eds_typedefs.h"
 
 #endif /* to_lab_sub_table_h_ */
