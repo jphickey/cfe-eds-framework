@@ -50,6 +50,10 @@
      <Define name="MSGID_BIT_SIZE" value="32" />
   </Package>
 
+  <Package name="SCH_LAB" shortDescription="SCH_LAB configurable items">
+    <Define name="MAX_SCHEDULE_ENTRIES" value="32" />
+  </Package>
+
 	<Package name="CFE_MISSION" shortDescription="cFE mission configuration">
       <!--
          Note on header type selection - this should be defined to the bare

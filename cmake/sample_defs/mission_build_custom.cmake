@@ -19,6 +19,8 @@ add_compile_options(
     -Wpointer-arith         # Warn about suspicious pointer operations
     -Wcast-align            # Warn about casts that increase alignment requirements
     -Werror                 # Treat warnings as errors (code should be clean)
+    -Wno-format-truncation    # Many false positives/non-issues
+    -Wno-stringop-truncation  # Many false positives/non-issues
 )
 
 # The _XOPEN_SOURCE directive is required for glibc to enable conformance with the
