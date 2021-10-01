@@ -35,26 +35,20 @@
 #include "cfe_msg_api_typedefs.h"   /* For CFE_MSG_FcnCode_t */
 #include "cfe_msgids.h"
 
+#include "sch_lab_eds_typedefs.h"
+
 /*
 ** Defines
 */
-#define SCH_LAB_END_OF_TABLE         0
-#define SCH_LAB_MAX_SCHEDULE_ENTRIES 32
 #define SCH_TBL_DEFAULT_FILE         "/cf/sch_lab_table.tbl"
 
 /*
-** Typedefs
-*/
-typedef struct
-{
-    CFE_SB_MsgId_t    MessageID;  /* Message ID for the table entry */
-    uint32            PacketRate; /* Rate: Send packet every N seconds */
-    CFE_MSG_FcnCode_t FcnCode;    /* Command/Function code to set */
-} SCH_LAB_ScheduleTableEntry_t;
-
-typedef struct
-{
-    SCH_LAB_ScheduleTableEntry_t Config[SCH_LAB_MAX_SCHEDULE_ENTRIES];
-} SCH_LAB_ScheduleTable_t;
+ * The EDS defines the table type name as "SchTbl" so it matches
+ * the runtime table name, but the source code refers to the type
+ * as SCH_LAB_ScheduleTable_t
+ *
+ * This discrepancy can be worked around with a typedef for now
+ */
+typedef SCH_LAB_SchTbl_t SCH_LAB_ScheduleTable_t;
 
 #endif /* sch_lab_sched_tab_h_ */
