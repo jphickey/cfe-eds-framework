@@ -34,11 +34,11 @@
 void Test_SBR_Map_Direct(void)
 {
 
-    CFE_SB_MsgId_Atom_t msgidx;
-    CFE_SBR_RouteId_t   routeid;
-    CFE_SB_MsgId_t      msgid;
-    uint32              count;
-    uint32              i;
+    CFE_SB_MsgIdValue_Atom_t msgidx;
+    CFE_SBR_RouteId_t        routeid;
+    CFE_SB_MsgId_t           msgid;
+    uint32                   count;
+    uint32                   i;
 
     UtPrintf("Invalid msg checks");
     UtAssert_INT32_EQ(CFE_SBR_SetRouteId(CFE_SB_ValueToMsgId(0), CFE_SBR_ValueToRouteId(0)), 0);

@@ -131,8 +131,8 @@ void TestLoad(void)
     /* confirm content again (changed to alternate data) */
     UtAssert_INT32_EQ(CFE_TBL_GetAddress(&TempPtr, CFE_FT_Global.TblHandle), CFE_TBL_INFO_UPDATED);
     TablePtr = TempPtr;
-    UtAssert_UINT32_EQ(TablePtr->Int1, 0xdead);
-    UtAssert_UINT32_EQ(TablePtr->Int2, 0xbeef);
+    UtAssert_UINT32_EQ(TablePtr->Int1, 0x1a1a);
+    UtAssert_UINT32_EQ(TablePtr->Int2, 0x1b1b);
     UtAssert_INT32_EQ(CFE_TBL_ReleaseAddress(CFE_FT_Global.TblHandle), CFE_SUCCESS);
 
     /* Load from file truncated */
@@ -142,8 +142,8 @@ void TestLoad(void)
     /* confirm content again (should not be changed) */
     UtAssert_INT32_EQ(CFE_TBL_GetAddress(&TempPtr, CFE_FT_Global.TblHandle), CFE_SUCCESS);
     TablePtr = TempPtr;
-    UtAssert_UINT32_EQ(TablePtr->Int1, 0xdead);
-    UtAssert_UINT32_EQ(TablePtr->Int2, 0xbeef);
+    UtAssert_UINT32_EQ(TablePtr->Int1, 0x1a1a);
+    UtAssert_UINT32_EQ(TablePtr->Int2, 0x1b1b);
     UtAssert_INT32_EQ(CFE_TBL_ReleaseAddress(CFE_FT_Global.TblHandle), CFE_SUCCESS);
 
     /* Load the other table (nominal data) */
@@ -152,15 +152,15 @@ void TestLoad(void)
     /* confirm content of first table again (should not be changed) */
     UtAssert_INT32_EQ(CFE_TBL_GetAddress(&TempPtr, CFE_FT_Global.TblHandle), CFE_SUCCESS);
     TablePtr = TempPtr;
-    UtAssert_UINT32_EQ(TablePtr->Int1, 0xdead);
-    UtAssert_UINT32_EQ(TablePtr->Int2, 0xbeef);
+    UtAssert_UINT32_EQ(TablePtr->Int1, 0x1a1a);
+    UtAssert_UINT32_EQ(TablePtr->Int2, 0x1b1b);
     UtAssert_INT32_EQ(CFE_TBL_ReleaseAddress(CFE_FT_Global.TblHandle), CFE_SUCCESS);
 
     /* confirm content of other table (boatload) */
     UtAssert_INT32_EQ(CFE_TBL_GetAddress(&TempPtr, OtherHandle), CFE_TBL_INFO_UPDATED);
     TablePtr = TempPtr;
-    UtAssert_UINT32_EQ(TablePtr->Int1, 0xb0a7);
-    UtAssert_UINT32_EQ(TablePtr->Int2, 0x10ad);
+    UtAssert_UINT32_EQ(TablePtr->Int1, 0x2a2a);
+    UtAssert_UINT32_EQ(TablePtr->Int2, 0x2b2b);
     UtAssert_INT32_EQ(CFE_TBL_ReleaseAddress(OtherHandle), CFE_SUCCESS);
 
     /* Load from short file again (different response after successful load) */
@@ -170,8 +170,8 @@ void TestLoad(void)
     /* Should have updated the first word only */
     UtAssert_INT32_EQ(CFE_TBL_GetAddress(&TempPtr, CFE_FT_Global.TblHandle), CFE_TBL_INFO_UPDATED);
     TablePtr = TempPtr;
-    UtAssert_UINT32_EQ(TablePtr->Int1, 0x5555);
-    UtAssert_UINT32_EQ(TablePtr->Int2, 0xbeef);
+    UtAssert_UINT32_EQ(TablePtr->Int1, 0x1a1a);
+    UtAssert_UINT32_EQ(TablePtr->Int2, 0x1b1b);
     UtAssert_INT32_EQ(CFE_TBL_ReleaseAddress(CFE_FT_Global.TblHandle), CFE_SUCCESS);
 
     /* Load from short file again (different response after successful load) */
@@ -181,8 +181,8 @@ void TestLoad(void)
     /* Should have updated the second word only */
     UtAssert_INT32_EQ(CFE_TBL_GetAddress(&TempPtr, CFE_FT_Global.TblHandle), CFE_TBL_INFO_UPDATED);
     TablePtr = TempPtr;
-    UtAssert_UINT32_EQ(TablePtr->Int1, 0x5555);
-    UtAssert_UINT32_EQ(TablePtr->Int2, 0x6666);
+    UtAssert_UINT32_EQ(TablePtr->Int1, 0x1a1a);
+    UtAssert_UINT32_EQ(TablePtr->Int2, 0x1b1b);
     UtAssert_INT32_EQ(CFE_TBL_ReleaseAddress(CFE_FT_Global.TblHandle), CFE_SUCCESS);
 
     /* Table name mismatches */
@@ -370,8 +370,8 @@ void TblTest_GenerateTblFiles(void)
     UtAssert_INT32_EQ(OS_write(fh2, &buf, sizeof(buf.TblHdr)), sizeof(buf.TblHdr));
 
     /* Identifiable content, different from original */
-    buf.Content.Int1 = 0xdead;
-    buf.Content.Int2 = 0xbeef;
+    buf.Content.Int1 = 0x1a1a;
+    buf.Content.Int2 = 0x1b1b;
     UtAssert_INT32_EQ(OS_write(fh2, &buf, sizeof(buf.Content)), sizeof(buf.Content));
 
     UtAssert_INT32_EQ(OS_close(fh2), OS_SUCCESS);
@@ -390,8 +390,8 @@ void TblTest_GenerateTblFiles(void)
     UtAssert_INT32_EQ(OS_write(fh2, &buf, sizeof(buf.TblHdr)), sizeof(buf.TblHdr));
 
     /* Identifiable content, different from original */
-    buf.Content.Int1 = 0xb0a7;
-    buf.Content.Int2 = 0x10ad;
+    buf.Content.Int1 = 0x2a2a;
+    buf.Content.Int2 = 0x2b2b;
     UtAssert_INT32_EQ(OS_write(fh2, &buf, sizeof(buf.Content)), sizeof(buf.Content));
 
     UtAssert_INT32_EQ(OS_close(fh2), OS_SUCCESS);

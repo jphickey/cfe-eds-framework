@@ -19,5 +19,4 @@ target_include_directories(coverage-sb-ALL-testrunner PRIVATE
 )
 
 # The SB tests currently link with the _real_ SBR implementation (not a stub)
-target_link_libraries(coverage-sb-ALL-testrunner ut_core_private_stubs sbr)
-
+target_link_libraries(coverage-sb-ALL-testrunner ut_core_private_stubs sbr ut_edslib_stubs ut_missionlib_stubs)

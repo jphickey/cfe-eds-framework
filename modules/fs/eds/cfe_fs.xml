@@ -133,7 +133,7 @@
         </EnumerationList>
       </EnumeratedDataType>
 
-      <StringDataType name="FileDescription" length="${CFE_MISSION/FS_HDR_DESC_MAX_LEN}" shortDescription="File Description String" />
+      <StringDataType name="FileDescription" length="${CFE_FS/HDR_DESC_MAX_LEN}" shortDescription="File Description String" />
 
       <ContainerDataType name="Header" shortDescription="Standard cFE File header structure definition">
         <EntryList>

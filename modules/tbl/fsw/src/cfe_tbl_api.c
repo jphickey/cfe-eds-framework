@@ -770,7 +770,7 @@ CFE_Status_t CFE_TBL_Load(CFE_TBL_Handle_t TblHandle, CFE_TBL_SrcEnum_t SrcType,
     {
         case CFE_TBL_SRC_FILE:
             /* Load the data from the file into the specified buffer */
-            Status = CFE_TBL_LoadFromFile(AppName, WorkingBufferPtr, RegRecPtr, (const char *)SrcDataPtr);
+            Status = CFE_TBL_LoadFromFileAndDecode(AppName, WorkingBufferPtr, RegRecPtr, (const char *)SrcDataPtr);
 
             if ((Status == CFE_TBL_WARN_PARTIAL_LOAD) && (!RegRecPtr->TableLoadedOnce))
             {

@@ -35,6 +35,13 @@
 
 #include "cfe_sb_module_all.h"
 
+#include "cfe_config.h"
+#include "edslib_datatypedb.h"
+#include "cfe_missionlib_runtime.h"
+#include "cfe_missionlib_api.h"
+#include "cfe_mission_eds_parameters.h"
+#include "cfe_mission_eds_interface_parameters.h"
+
 #include <string.h>
 
 /*----------------------------------------------------------------
@@ -79,6 +86,86 @@ size_t CFE_SB_MsgHdrSize(const CFE_MSG_Message_t *MsgPtr)
 
 /*----------------------------------------------------------------
  *
+ * Function: CFE_SB_GetUserPayloadInfo
+ *
+ * Implemented per public API
+ * See description in header file for argument/return detail
+ *
+ *-----------------------------------------------------------------*/
+CFE_Status_t CFE_SB_GetUserPayloadInfo(const CFE_MSG_Message_t *MsgPtr, EdsLib_DataTypeDB_EntityInfo_t *PayloadInfo)
+{
+    union
+    {
+        CFE_SB_Listener_Component_t  Listener;
+        CFE_SB_Publisher_Component_t Publisher;
+
+    } FuncParams;
+    int32                                    EdsStatus;
+    EdsLib_Id_t                              EdsId;
+    EdsLib_DataTypeDB_DerivativeObjectInfo_t DerivObjInfo;
+    CFE_SB_SoftwareBus_PubSub_Interface_t    PubSubParams;
+
+    const EdsLib_DatabaseObject_t *               EDS_DB    = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
+    const CFE_MissionLib_SoftwareBus_Interface_t *SBINTF_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_SBINTF_DB);
+
+    EdsStatus = CFE_MISSIONLIB_FAILURE;
+    if (MsgPtr != NULL)
+    {
+        CFE_MissionLib_Get_PubSub_Parameters(&PubSubParams, &MsgPtr->BaseMsg);
+
+        if (CFE_MissionLib_PubSub_IsListenerComponent(&PubSubParams))
+        {
+            CFE_MissionLib_UnmapListenerComponent(&FuncParams.Listener, &PubSubParams);
+
+            EdsStatus = CFE_MissionLib_GetArgumentType(SBINTF_DB, CFE_SB_Telecommand_Interface_ID,
+                                                       FuncParams.Listener.Telecommand.TopicId, 1, 1, &EdsId);
+        }
+        else if (CFE_MissionLib_PubSub_IsPublisherComponent(&PubSubParams))
+        {
+            CFE_MissionLib_UnmapPublisherComponent(&FuncParams.Publisher, &PubSubParams);
+
+            EdsStatus = CFE_MissionLib_GetArgumentType(SBINTF_DB, CFE_SB_Telemetry_Interface_ID,
+                                                       FuncParams.Publisher.Telemetry.TopicId, 1, 1, &EdsId);
+        }
+    }
+
+    /*
+     * The above code yields an interface base type.  Need to potentially interpret
+     * value constraints within the headers to determine final/real type.
+     */
+    if (EdsStatus == CFE_MISSIONLIB_SUCCESS)
+    {
+        EdsStatus = EdsLib_DataTypeDB_IdentifyBuffer(EDS_DB, EdsId, MsgPtr, &DerivObjInfo);
+        if (EdsStatus == EDSLIB_SUCCESS)
+        {
+            /* Use the derived type as the actual EdsId */
+            EdsId = DerivObjInfo.EdsId;
+        }
+        else if (EdsStatus == EDSLIB_NO_MATCHING_VALUE)
+        {
+            /* This is OK if the struct is not derived or has no additional value constraints */
+            EdsStatus = EDSLIB_SUCCESS;
+        }
+    }
+
+    /*
+     * Index 0 is always the header, and index 1 should always be the first element of real data
+     */
+    if (EdsStatus == EDSLIB_SUCCESS)
+    {
+        EdsStatus = EdsLib_DataTypeDB_GetMemberByIndex(EDS_DB, EdsId, 1, PayloadInfo);
+    }
+
+    if (EdsStatus != CFE_MISSIONLIB_SUCCESS)
+    {
+        return CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
+    }
+
+    return CFE_SUCCESS;
+}
+
+/*----------------------------------------------------------------
+ *
  * Function: CFE_SB_GetUserData
  *
  * Implemented per public API
@@ -87,19 +174,16 @@ size_t CFE_SB_MsgHdrSize(const CFE_MSG_Message_t *MsgPtr)
  *-----------------------------------------------------------------*/
 void *CFE_SB_GetUserData(CFE_MSG_Message_t *MsgPtr)
 {
-    uint8 *BytePtr;
-    size_t HdrSize;
+    CFE_Status_t                   Status;
+    EdsLib_DataTypeDB_EntityInfo_t PayloadInfo;
 
-    if (MsgPtr == NULL)
+    Status = CFE_SB_GetUserPayloadInfo(MsgPtr, &PayloadInfo);
+    if (Status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("%s: Failed invalid arguments\n", __func__);
-        return 0;
+        return NULL;
     }
 
-    BytePtr = (uint8 *)MsgPtr;
-    HdrSize = CFE_SB_MsgHdrSize(MsgPtr);
-
-    return (BytePtr + HdrSize);
+    return &MsgPtr->Byte[PayloadInfo.Offset.Bytes];
 }
 
 /*----------------------------------------------------------------
@@ -112,18 +196,23 @@ void *CFE_SB_GetUserData(CFE_MSG_Message_t *MsgPtr)
  *-----------------------------------------------------------------*/
 size_t CFE_SB_GetUserDataLength(const CFE_MSG_Message_t *MsgPtr)
 {
-    CFE_MSG_Size_t TotalMsgSize = 0;
-    size_t         HdrSize;
+    CFE_Status_t                   Status;
+    CFE_MSG_Size_t                 TotalSize;
+    EdsLib_DataTypeDB_EntityInfo_t PayloadInfo;
 
-    if (MsgPtr == NULL)
+    Status = CFE_SB_GetUserPayloadInfo(MsgPtr, &PayloadInfo);
+    if (Status != CFE_SUCCESS)
     {
-        return TotalMsgSize;
+        return 0;
     }
 
-    CFE_MSG_GetSize(MsgPtr, &TotalMsgSize);
-    HdrSize = CFE_SB_MsgHdrSize(MsgPtr);
+    Status = CFE_MSG_GetSize(MsgPtr, &TotalSize);
+    if (Status != CFE_SUCCESS || TotalSize < PayloadInfo.Offset.Bytes)
+    {
+        return 0;
+    }
 
-    return TotalMsgSize - HdrSize;
+    return TotalSize - PayloadInfo.Offset.Bytes;
 }
 
 /*----------------------------------------------------------------
@@ -136,8 +225,8 @@ size_t CFE_SB_GetUserDataLength(const CFE_MSG_Message_t *MsgPtr)
  *-----------------------------------------------------------------*/
 void CFE_SB_SetUserDataLength(CFE_MSG_Message_t *MsgPtr, size_t DataLength)
 {
-    CFE_MSG_Size_t TotalMsgSize;
-    size_t         HdrSize;
+    EdsLib_DataTypeDB_EntityInfo_t PayloadInfo;
+    CFE_Status_t                   Status;
 
     if (MsgPtr == NULL)
     {
@@ -145,16 +234,14 @@ void CFE_SB_SetUserDataLength(CFE_MSG_Message_t *MsgPtr, size_t DataLength)
     }
     else
     {
-        HdrSize      = CFE_SB_MsgHdrSize(MsgPtr);
-        TotalMsgSize = HdrSize + DataLength;
-
-        if (TotalMsgSize <= CFE_MISSION_SB_MAX_SB_MSG_SIZE)
+        Status = CFE_SB_GetUserPayloadInfo(MsgPtr, &PayloadInfo);
+        if (Status != CFE_SUCCESS)
         {
-            CFE_MSG_SetSize(MsgPtr, TotalMsgSize);
+            CFE_ES_WriteToSysLog("%s: Failed unknown payload location\n", __func__);
         }
         else
         {
-            CFE_ES_WriteToSysLog("%s: Failed TotalMsgSize too large\n", __func__);
+            CFE_MSG_SetSize(MsgPtr, DataLength + PayloadInfo.Offset.Bytes);
         }
     }
 }

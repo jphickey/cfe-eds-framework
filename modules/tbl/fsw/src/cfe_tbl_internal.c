@@ -33,6 +33,9 @@
 ** Required header files...
 */
 #include "cfe_tbl_module_all.h"
+#include "edslib_datatypedb.h"
+#include "cfe_mission_eds_parameters.h"
+#include "cfe_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -810,14 +813,20 @@ int32 CFE_TBL_GetWorkingBuffer(CFE_TBL_LoadBuff_t **WorkingBufferPtr, CFE_TBL_Re
 int32 CFE_TBL_LoadFromFile(const char *AppName, CFE_TBL_LoadBuff_t *WorkingBufferPtr, CFE_TBL_RegistryRec_t *RegRecPtr,
                            const char *Filename)
 {
-    int32              Status = CFE_SUCCESS;
-    int32              OsStatus;
-    CFE_FS_Header_t    StdFileHeader;
-    CFE_TBL_File_Hdr_t TblFileHeader;
-    osal_id_t          FileDescriptor;
-    size_t             FilenameLen = strlen(Filename);
-    uint32             NumBytes;
-    uint8              ExtraByte;
+    int32                        Status = CFE_SUCCESS;
+    int32                        OsStatus;
+    CFE_FS_Header_t              StdFileHeader;
+    CFE_TBL_File_Hdr_t           TblFileHeader;
+    osal_id_t                    FileDescriptor;
+    size_t                       FilenameLen = strlen(Filename);
+    uint32                       NumBytes;
+    uint8                        ExtraByte;
+    EdsLib_Id_t                  EdsId;
+    int32                        EdsStatus;
+    EdsLib_DataTypeDB_TypeInfo_t TypeInfo;
+    size_t                       EdsPackedTableSize;
+
+    const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
 
     if (FilenameLen > (OS_MAX_PATH_LEN - 1))
     {
@@ -850,6 +859,15 @@ int32 CFE_TBL_LoadFromFile(const char *AppName, CFE_TBL_LoadBuff_t *WorkingBuffe
         return Status;
     }
 
+    EdsId     = EDSLIB_MAKE_ID(TblFileHeader.EdsAppId, TblFileHeader.EdsFormatId);
+    EdsStatus = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &TypeInfo);
+    if (EdsStatus != EDSLIB_SUCCESS)
+    {
+        return CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
+    }
+
+    EdsPackedTableSize = (TypeInfo.Size.Bits + 7) / 8;
+
     /* Verify that the specified file has compatible data for specified table */
     if (strcmp(RegRecPtr->Name, TblFileHeader.TableName) != 0)
     {
@@ -861,12 +879,12 @@ int32 CFE_TBL_LoadFromFile(const char *AppName, CFE_TBL_LoadBuff_t *WorkingBuffe
         return CFE_TBL_ERR_FILE_FOR_WRONG_TABLE;
     }
 
-    if ((TblFileHeader.Offset + TblFileHeader.NumBytes) > RegRecPtr->Size)
+    if ((TblFileHeader.Offset + TblFileHeader.NumBytes) > EdsPackedTableSize)
     {
         CFE_EVS_SendEventWithAppID(
             CFE_TBL_LOAD_EXCEEDS_SIZE_ERR_EID, CFE_EVS_EventType_ERROR, CFE_TBL_Global.TableTaskAppId,
             "%s: File reports size larger than expected (file=%lu, exp=%lu)", AppName,
-            (long unsigned int)(TblFileHeader.Offset + TblFileHeader.NumBytes), (long unsigned int)RegRecPtr->Size);
+            (long unsigned int)(TblFileHeader.Offset + TblFileHeader.NumBytes), (long unsigned int)EdsPackedTableSize);
 
         OS_close(FileDescriptor);
         return CFE_TBL_ERR_FILE_TOO_LARGE;
@@ -879,7 +897,7 @@ int32 CFE_TBL_LoadFromFile(const char *AppName, CFE_TBL_LoadBuff_t *WorkingBuffe
     {
         Status = CFE_TBL_WARN_PARTIAL_LOAD;
     }
-    else if (TblFileHeader.NumBytes < RegRecPtr->Size)
+    else if (TblFileHeader.NumBytes < EdsPackedTableSize)
     {
         Status = CFE_TBL_WARN_SHORT_FILE;
     }
@@ -936,9 +954,142 @@ int32 CFE_TBL_LoadFromFile(const char *AppName, CFE_TBL_LoadBuff_t *WorkingBuffe
 
     /* Compute the CRC on the specified table buffer */
     WorkingBufferPtr->Crc =
-        CFE_ES_CalculateCRC(WorkingBufferPtr->BufferPtr, RegRecPtr->Size, 0, CFE_MISSION_ES_DEFAULT_CRC);
+        CFE_ES_CalculateCRC(WorkingBufferPtr->BufferPtr, EdsPackedTableSize, 0, CFE_MISSION_ES_DEFAULT_CRC);
 
     OS_close(FileDescriptor);
+
+    /* Save the EDS ID for future reference */
+    WorkingBufferPtr->EdsContentId = EdsId;
+
+    return Status;
+}
+
+CFE_Status_t CFE_TBL_DecodeFromMemory(const void *SourceBuffer, EdsLib_Id_t EdsId, CFE_TBL_LoadBuff_t *WorkingBufferPtr,
+                                      CFE_TBL_RegistryRec_t *RegRecPtr)
+{
+    CFE_Status_t                 Status;
+    EdsLib_DataTypeDB_TypeInfo_t TypeInfo;
+    int32                        EdsStatus;
+
+    const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
+
+    EdsStatus = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &TypeInfo);
+    if (EdsStatus != EDSLIB_SUCCESS)
+    {
+        return CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
+    }
+
+    WorkingBufferPtr->EdsContentId = EdsId;
+    EdsStatus =
+        EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &WorkingBufferPtr->EdsContentId, WorkingBufferPtr->BufferPtr,
+                                              SourceBuffer, RegRecPtr->Size, TypeInfo.Size.Bits, 0);
+
+    if (EdsStatus == EDSLIB_SUCCESS)
+    {
+        EdsStatus =
+            EdsLib_DataTypeDB_VerifyUnpackedObject(EDS_DB, WorkingBufferPtr->EdsContentId, WorkingBufferPtr->BufferPtr,
+                                                   SourceBuffer, EDSLIB_DATATYPEDB_RECOMPUTE_LENGTH);
+    }
+
+    /* If successful, recompute the CRC */
+    if (EdsStatus == EDSLIB_SUCCESS)
+    {
+        /* Compute the CRC on the specified table buffer */
+        WorkingBufferPtr->Crc =
+            CFE_ES_CalculateCRC(WorkingBufferPtr->BufferPtr, TypeInfo.Size.Bytes, 0, CFE_MISSION_ES_DEFAULT_CRC);
+
+        Status = CFE_SUCCESS;
+    }
+    else
+    {
+        Status = CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
+    }
+
+    return Status;
+}
+
+/*----------------------------------------------------------------
+ *
+ * Function: CFE_TBL_LoadFromFileAndDecode
+ *
+ * Application-scope internal function
+ * See description in header file for argument/return detail
+ *
+ *-----------------------------------------------------------------*/
+int32 CFE_TBL_LoadFromFileAndDecode(const char *AppName, CFE_TBL_LoadBuff_t *WorkingBufferPtr,
+                                    CFE_TBL_RegistryRec_t *RegRecPtr, const char *Filename)
+{
+    CFE_TBL_LoadBuff_t *ScratchBufferPtr;
+    uint16              ScratchBuffId;
+    int32               Status;
+
+    /*
+     * EDS INTEGRATION:
+     * In order to load from a file we need to first obtain a scratch buffer, which
+     * will temporarily hold the binary data.  The binary data is then de-serialized
+     * using EDS and the actual working buffer is populated.  The scratch buffer is then
+     * freed for other use.
+     */
+    ScratchBufferPtr = NULL;
+
+    /* Take Mutex to make sure we are not trying to grab a working buffer that some */
+    /* other application is also trying to grab. */
+    Status = OS_MutSemTake(CFE_TBL_Global.WorkBufMutex);
+
+    /* Make note of any errors but continue and hope for the best */
+    if (Status != OS_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("CFE_TBL:Load-Internal error taking WorkBuf Mutex (Status=0x%08X)\n",
+                             (unsigned int)Status);
+    }
+    else
+    {
+        /* Determine if there are any common buffers available */
+        for (ScratchBuffId = 0; ScratchBuffId < CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS; ++ScratchBuffId)
+        {
+            /* If a free buffer was found, then return the address to the associated shared buffer */
+            if (CFE_TBL_Global.LoadBuffs[ScratchBuffId].Taken == false)
+            {
+                CFE_TBL_Global.LoadBuffs[ScratchBuffId].Taken = true;
+                ScratchBufferPtr                              = &CFE_TBL_Global.LoadBuffs[ScratchBuffId];
+                break;
+            }
+        }
+
+        /* Allow others to obtain a shared working buffer */
+        OS_MutSemGive(CFE_TBL_Global.WorkBufMutex);
+    }
+
+    if (ScratchBufferPtr == NULL)
+    {
+        CFE_ES_WriteToSysLog("CFE_TBL:Load-Cannot obtain shared buffer\n");
+        Status = CFE_TBL_ERR_NO_BUFFER_AVAIL;
+    }
+    else
+    {
+        // memset(ScratchBufferPtr->BufferPtr, 0, RegRecPtr->BinaryFileSize);
+
+        Status = CFE_TBL_LoadFromFile(AppName, ScratchBufferPtr, RegRecPtr, Filename);
+
+        /*
+         * NOTE - partial loads not supported here...
+         */
+        if (Status == CFE_SUCCESS)
+        {
+            CFE_TBL_DecodeFromMemory(ScratchBufferPtr->BufferPtr, ScratchBufferPtr->EdsContentId, WorkingBufferPtr,
+                                     RegRecPtr);
+        }
+
+        strncpy(WorkingBufferPtr->DataSource, Filename, sizeof(WorkingBufferPtr->DataSource) - 1);
+        WorkingBufferPtr->DataSource[sizeof(WorkingBufferPtr->DataSource) - 1] = 0;
+
+        /* Save file creation time for later storage into Registry */
+        WorkingBufferPtr->FileCreateTimeSecs    = ScratchBufferPtr->FileCreateTimeSecs;
+        WorkingBufferPtr->FileCreateTimeSubSecs = ScratchBufferPtr->FileCreateTimeSubSecs;
+
+        /* Free the scratch buffer */
+        ScratchBufferPtr->Taken = false;
+    }
 
     return Status;
 }
@@ -1086,9 +1237,12 @@ void CFE_TBL_NotifyTblUsersOfUpdate(CFE_TBL_RegistryRec_t *RegRecPtr)
 int32 CFE_TBL_ReadHeaders(osal_id_t FileDescriptor, CFE_FS_Header_t *StdFileHeaderPtr,
                           CFE_TBL_File_Hdr_t *TblFileHeaderPtr, const char *LoadFilename)
 {
-    int32 Status;
-    int32 OsStatus;
-    int32 EndianCheck = 0x01020304;
+    EdsLib_Id_t                     EdsId;
+    CFE_TBL_File_Hdr_PackedBuffer_t LocalBuffer;
+    int32                           Status;
+    int32                           OsStatus;
+
+    const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
 
 #if (CFE_PLATFORM_TBL_VALID_SCID_COUNT > 0)
     static uint32 ListSC[2] = {CFE_PLATFORM_TBL_VALID_SCID_1, CFE_PLATFORM_TBL_VALID_SCID_2};
@@ -1139,10 +1293,10 @@ int32 CFE_TBL_ReadHeaders(osal_id_t FileDescriptor, CFE_FS_Header_t *StdFileHead
             }
             else
             {
-                OsStatus = OS_read(FileDescriptor, TblFileHeaderPtr, sizeof(CFE_TBL_File_Hdr_t));
+                OsStatus = OS_read(FileDescriptor, LocalBuffer, sizeof(LocalBuffer));
 
                 /* Verify successful read of cFE Table File Header */
-                if (OsStatus != sizeof(CFE_TBL_File_Hdr_t))
+                if (OsStatus != sizeof(LocalBuffer))
                 {
                     CFE_EVS_SendEventWithAppID(
                         CFE_TBL_FILE_TBL_HDR_ERR_EID, CFE_EVS_EventType_ERROR, CFE_TBL_Global.TableTaskAppId,
@@ -1152,16 +1306,23 @@ int32 CFE_TBL_ReadHeaders(osal_id_t FileDescriptor, CFE_FS_Header_t *StdFileHead
                 }
                 else
                 {
-                    /* All "required" checks have passed and we are pointing at the data */
-                    Status = CFE_SUCCESS;
+                    EdsId  = EDSLIB_MAKE_ID(EDS_INDEX(CFE_TBL), CFE_TBL_File_Hdr_DATADICTIONARY);
+                    Status = EdsLib_DataTypeDB_UnpackCompleteObject(EDS_DB, &EdsId, TblFileHeaderPtr, LocalBuffer,
+                                                                    sizeof(*TblFileHeaderPtr), 8 * sizeof(LocalBuffer));
 
-                    if ((*(char *)&EndianCheck) == 0x04)
+                    if (Status == EDSLIB_SUCCESS)
                     {
-                        /* If this is a little endian processor, then the standard cFE Table Header,   */
-                        /* which is in big endian format, must be swapped so that the data is readable */
-                        CFE_TBL_ByteSwapTblHeader(TblFileHeaderPtr);
+                        /* All "required" checks have passed and we are pointing at the data */
+                        Status = CFE_SUCCESS;
                     }
+                    else
+                    {
+                        Status = CFE_TBL_ERR_NO_TBL_HEADER;
+                    }
+                }
 
+                if (Status == CFE_SUCCESS)
+                {
                     /*
                      * Ensure termination of all local strings. These were read from a file, so they
                      * must be treated with appropriate care.  This could happen in case the file got

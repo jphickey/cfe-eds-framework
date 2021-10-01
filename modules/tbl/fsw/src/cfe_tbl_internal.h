@@ -371,6 +371,15 @@ int32 CFE_TBL_LoadFromFile(const char *AppName, CFE_TBL_LoadBuff_t *WorkingBuffe
 /**
 ** \brief Updates the active table buffer with contents of inactive buffer
 **
+** Loads data from a file and decodes it according to EDS definition of table structure
+*/
+int32 CFE_TBL_LoadFromFileAndDecode(const char *AppName, CFE_TBL_LoadBuff_t *WorkingBufferPtr,
+                                    CFE_TBL_RegistryRec_t *RegRecPtr, const char *Filename);
+
+/*---------------------------------------------------------------------------------------*/
+/**
+** \brief Updates the active table buffer with contents of inactive buffer
+**
 ** \par Description
 **        Copies pertinent data from working buffer (inactive buffer)
 **        to the active buffer (for single buffered tables) or just
