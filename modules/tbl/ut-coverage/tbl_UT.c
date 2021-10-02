@@ -42,6 +42,7 @@
 #include "cfe_core_resourceid_basevalues.h"
 #include "edslib_datatypedb.h"
 #include "cfe_mission_eds_parameters.h"
+#include "cfe_tbl_eds_interface.h"
 
 /*
 ** External global variables
@@ -76,14 +77,17 @@ void * Tbl1Ptr = NULL;
 void * Tbl2Ptr = NULL;
 void **ArrayOfPtrsToTblPtrs[2];
 
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_MSG_HK = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_TBL_SEND_HK_MID)};
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_CMD_NOOP_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_TBL_CMD_MID),
-                                                                    .CommandCode = CFE_TBL_NOOP_CC};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_MSG_HK = {
+    .DispatchOffset = offsetof(CFE_TBL_Application_Component_Telecommand_DispatchTable_t, SEND_HK.indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_CMD_NOOP_CC = {
+    .DispatchOffset = offsetof(CFE_TBL_Application_Component_Telecommand_DispatchTable_t, CMD.NoopCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_CMD_RESET_COUNTERS_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_TBL_CMD_MID), .CommandCode = CFE_TBL_RESET_COUNTERS_CC};
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_INVALID_MID = {.MsgId = CFE_SB_MSGID_RESERVED, .CommandCode = 0};
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_CMD_INVALID_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_TBL_CMD_MID), .CommandCode = 0x7F};
+    .DispatchOffset =
+        offsetof(CFE_TBL_Application_Component_Telecommand_DispatchTable_t, CMD.ResetCountersCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_INVALID_MID    = {.DispatchOffset = -1,
+                                                                    .DispatchError  = CFE_STATUS_UNKNOWN_MSG_ID};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_TBL_CMD_INVALID_CC = {.DispatchOffset = -1,
+                                                                       .DispatchError  = CFE_STATUS_BAD_COMMAND_CODE};
 
 CFE_TBL_RegistryRec_t Original[CFE_PLATFORM_TBL_MAX_NUM_TABLES];
 
@@ -190,7 +194,6 @@ void UtTest_Setup(void)
     /* cfe_tbl_task.c functions */
     UT_ADD_TEST(Test_CFE_TBL_TaskInit);
     UT_ADD_TEST(Test_CFE_TBL_InitData);
-    UT_ADD_TEST(Test_CFE_TBL_SearchCmdHndlrTbl);
 
     /* cfe_tbl_task_cmds.c functions */
     /* This should be done first (it initializes working data structures) */
@@ -384,7 +387,7 @@ void Test_CFE_TBL_TaskInit(void)
      * message length
      */
     UT_InitData();
-    UT_CallTaskPipe(CFE_TBL_TaskPipe, &CmdBuf.Msg, sizeof(CmdBuf.NoArgsCmd) - 1, UT_TPID_CFE_TBL_CMD_NOOP_CC);
+    UT_CallTaskPipe(CFE_TBL_TaskPipe, &CmdBuf.Msg, 0, UT_TPID_CFE_TBL_CMD_NOOP_CC);
     CFE_UtAssert_EVENTSENT(CFE_TBL_LEN_ERR_EID);
 
     /* Test command pipe messages handler response to an invalid
@@ -430,43 +433,6 @@ void Test_CFE_TBL_InitData(void)
     UT_InitData();
     CFE_TBL_InitData();
     UtAssert_STUB_COUNT(CFE_MSG_Init, 3);
-}
-
-/*
-** Test command handler table message ID (or command code) search function
-*/
-void Test_CFE_TBL_SearchCmdHndlrTbl(void)
-{
-    uint16         CmdCode;
-    CFE_SB_MsgId_t MsgID;
-
-    UtPrintf("Begin Test Search Command Handler Table");
-
-    /* Test successfully finding a matching message ID and command code */
-    UT_InitData();
-    MsgID   = CFE_SB_ValueToMsgId(CFE_TBL_CMD_MID);
-    CmdCode = CFE_TBL_NOOP_CC;
-    UtAssert_INT32_EQ(CFE_TBL_SearchCmdHndlrTbl(MsgID, CmdCode), 1);
-
-    /* Test using a message that is not a command message with specific
-     * command code
-     */
-    UT_InitData();
-    MsgID = CFE_SB_ValueToMsgId(CFE_TBL_SEND_HK_MID);
-    UtAssert_INT32_EQ(CFE_TBL_SearchCmdHndlrTbl(MsgID, CmdCode), 0);
-
-    /* Test with a message ID that matches but the command code does
-     * not match
-     */
-    UT_InitData();
-    MsgID   = CFE_SB_ValueToMsgId(CFE_TBL_CMD_MID);
-    CmdCode = 0xffff;
-    UtAssert_INT32_EQ(CFE_TBL_SearchCmdHndlrTbl(MsgID, CmdCode), CFE_TBL_BAD_CMD_CODE);
-
-    /* Test with a message ID that does not match */
-    UT_InitData();
-    MsgID = CFE_SB_INVALID_MSG_ID;
-    UtAssert_INT32_EQ(CFE_TBL_SearchCmdHndlrTbl(MsgID, CmdCode), CFE_TBL_BAD_MSG_ID);
 }
 
 /*

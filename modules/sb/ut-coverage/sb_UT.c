@@ -43,6 +43,7 @@
 #include "cfe_core_resourceid_basevalues.h"
 #include "edslib_datatypedb.h"
 #include "cfe_missionlib_runtime.h"
+#include "cfe_sb_eds_interface.h"
 
 /*
  * A method to add an SB "Subtest"
@@ -79,48 +80,43 @@ const CFE_SB_MsgId_t SB_UT_TLM_MID4 = CFE_SB_MSGID_WRAP_VALUE(SB_UT_TLM_MID_VALU
 const CFE_SB_MsgId_t SB_UT_TLM_MID5 = CFE_SB_MSGID_WRAP_VALUE(SB_UT_TLM_MID_VALUE_BASE + 5);
 const CFE_SB_MsgId_t SB_UT_TLM_MID6 = CFE_SB_MSGID_WRAP_VALUE(SB_UT_TLM_MID_VALUE_BASE + 6);
 
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_NOOP_CC = {.MsgId       = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_CMD_MID),
-                                                            .CommandCode = CFE_SB_NOOP_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_RESET_COUNTERS_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_CMD_MID),
-                                                                      .CommandCode = CFE_SB_RESET_COUNTERS_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_SEND_SB_STATS_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_CMD_MID),
-                                                                     .CommandCode = CFE_SB_SEND_SB_STATS_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_WRITE_ROUTING_INFO_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_CMD_MID), .CommandCode = CFE_SB_WRITE_ROUTING_INFO_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_WRITE_PIPE_INFO_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_CMD_MID),
-                                                                       .CommandCode = CFE_SB_WRITE_PIPE_INFO_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_WRITE_MAP_INFO_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_CMD_MID),
-                                                                      .CommandCode = CFE_SB_WRITE_MAP_INFO_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_ENABLE_ROUTE_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_CMD_MID),
-                                                                    .CommandCode = CFE_SB_ENABLE_ROUTE_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_DISABLE_ROUTE_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_CMD_MID),
-                                                                     .CommandCode = CFE_SB_DISABLE_ROUTE_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SEND_HK = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_SEND_HK_MID)};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SUB_RPT_CTL_SEND_PREV_SUBS_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_SUB_RPT_CTRL_MID), .CommandCode = CFE_SB_SEND_PREV_SUBS_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SUB_RPT_CTL_ENABLE_SUB_REPORTING_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_SUB_RPT_CTRL_MID), .CommandCode = CFE_SB_ENABLE_SUB_REPORTING_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SUB_RPT_CTL_DISABLE_SUB_REPORTING_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_SUB_RPT_CTRL_MID), .CommandCode = CFE_SB_DISABLE_SUB_REPORTING_CC};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_BAD_FCNCODE = {.MsgId       = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_CMD_MID),
-                                                                .CommandCode = 99};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SUB_RPT_CTRL_BAD_FCNCODE = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_SB_SUB_RPT_CTRL_MID), .CommandCode = 99};
-
-const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_BAD_MSGID = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(SB_UT_TLM_MID_VALUE_BASE)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_NOOP_CC = {
+    .DispatchOffset = offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, CMD.NoopCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_DISABLE_ROUTE_CC = {
+    .DispatchOffset =
+        offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, CMD.DisableRouteCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_ENABLE_ROUTE_CC = {
+    .DispatchOffset =
+        offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, CMD.EnableRouteCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_RESET_COUNTERS_CC = {
+    .DispatchOffset =
+        offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, CMD.ResetCountersCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_WRITE_MAP_INFO_CC = {
+    .DispatchOffset =
+        offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, CMD.WriteMapInfoCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_WRITE_PIPE_INFO_CC = {
+    .DispatchOffset =
+        offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, CMD.WritePipeInfoCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_WRITE_ROUTING_INFO_CC = {
+    .DispatchOffset =
+        offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, CMD.WriteRoutingInfoCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_SEND_SB_STATS_CC = {
+    .DispatchOffset =
+        offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, CMD.SendSbStatsCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SUB_RPT_CTL_DISABLE_SUB_REPORTING_CC = {
+    .DispatchOffset = offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t,
+                               SUB_RPT_CTRL.DisableSubReportingCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SUB_RPT_CTL_ENABLE_SUB_REPORTING_CC = {
+    .DispatchOffset = offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t,
+                               SUB_RPT_CTRL.EnableSubReportingCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SUB_RPT_CTL_SEND_PREV_SUBS_CC = {
+    .DispatchOffset =
+        offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, SUB_RPT_CTRL.SendPrevSubsCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SEND_HK = {
+    .DispatchOffset = offsetof(CFE_SB_Application_Component_Telecommand_DispatchTable_t, SEND_HK.indication)};
+const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_CMD_BAD_FCNCODE          = {.DispatchError = CFE_STATUS_BAD_COMMAND_CODE};
+const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_SUB_RPT_CTRL_BAD_FCNCODE = {.DispatchError = CFE_STATUS_BAD_COMMAND_CODE};
+const UT_TaskPipeDispatchId_t UT_TPID_CFE_SB_BAD_MSGID                = {.DispatchError = CFE_STATUS_UNKNOWN_MSG_ID};
 
 /*
  * A MsgId value which still qualifies as valid
@@ -4367,7 +4363,8 @@ void Test_SB_TransmitMsgPaths_Nominal(void)
     /* Repress sending the no subscriptions event and process request */
     CFE_SB_Global.HKTlmMsg.Payload.NoSubscribersCounter = 0;
     CFE_SB_Global.StopRecurseFlags[1] |= CFE_BIT(CFE_SB_SEND_NO_SUBS_EID_BIT);
-    CFE_SB_ProcessCmdPipePkt(&Housekeeping.SBBuf);
+    UT_CallTaskPipe(CFE_SB_ProcessCmdPipePkt, &Housekeeping.SBBuf.Msg, sizeof(Housekeeping.Cmd),
+                    UT_TPID_CFE_SB_SEND_HK);
 
     /* The no subs event should not be in history but count should increment */
     CFE_UtAssert_EVENTNOTSENT(CFE_SB_SEND_NO_SUBS_EID);
@@ -4387,7 +4384,8 @@ void Test_SB_TransmitMsgPaths_Nominal(void)
     UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &Size, sizeof(Size), false);
 
     UT_SetDeferredRetcode(UT_KEY(CFE_ES_GetPoolBuf), 1, CFE_ES_ERR_MEM_BLOCK_SIZE);
-    CFE_SB_ProcessCmdPipePkt(&Housekeeping.SBBuf);
+    UT_CallTaskPipe(CFE_SB_ProcessCmdPipePkt, &Housekeeping.SBBuf.Msg, sizeof(Housekeeping.Cmd),
+                    UT_TPID_CFE_SB_SEND_HK);
     UtAssert_INT32_EQ(CFE_SB_Global.HKTlmMsg.Payload.MsgSendErrorCounter, 0);
 
     CFE_UtAssert_EVENTNOTSENT(CFE_SB_GET_BUF_ERR_EID);

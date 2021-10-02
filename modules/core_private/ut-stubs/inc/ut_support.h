@@ -136,6 +136,17 @@ typedef struct
      */
     CFE_MSG_FcnCode_t CommandCode;
 
+    /**
+     * Offset of handler function to invoke
+     * If set negative, prevents any handler from being invoked
+     */
+    int32 DispatchOffset;
+
+    /**
+     * Set nonzero to indicate a code to be returned from dispatcher.
+     */
+    CFE_Status_t DispatchError;
+
 } UT_TaskPipeDispatchId_t;
 
 /*

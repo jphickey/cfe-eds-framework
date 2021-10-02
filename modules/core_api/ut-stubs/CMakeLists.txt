@@ -24,6 +24,7 @@ add_library(ut_core_api_stubs STATIC
     src/cfe_evs_stubs.c
     src/cfe_fs_handlers.c
     src/cfe_fs_stubs.c
+    src/cfe_msg_dispatcher_stubs.c
     src/cfe_msg_handlers.c
     src/cfe_msg_stubs.c
     src/cfe_resourceid_handlers.c

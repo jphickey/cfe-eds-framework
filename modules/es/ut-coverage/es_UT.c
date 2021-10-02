@@ -40,6 +40,7 @@
 */
 #include "es_UT.h"
 #include "target_config.h"
+#include "cfe_es_eds_interface.h"
 
 #define ES_UT_CDS_BLOCK_SIZE 16
 
@@ -89,62 +90,77 @@ CFE_ES_GMP_IndirectBuffer_t UT_MemPoolIndirectBuffer;
 /* Create a startup script buffer for a maximum of 5 lines * 80 chars/line */
 char StartupScript[MAX_STARTUP_SCRIPT];
 
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_NOOP_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID),
-                                                                   .CommandCode = CFE_ES_NOOP_CC};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_NOOP_CC = {
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.NoopCmd_indication)};
 
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_RESET_COUNTERS_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_RESET_COUNTERS_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ResetCountersCmd_indication)};
 
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_RESTART_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID),
-                                                                      .CommandCode = CFE_ES_RESTART_CC};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_RESTART_CC = {
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.RestartCmd_indication)};
 
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_START_APP_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_START_APP_CC};
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_STOP_APP_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID),
-                                                                       .CommandCode = CFE_ES_STOP_APP_CC};
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.StartAppCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_STOP_APP_CC = {
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.StopAppCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_RESTART_APP_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_RESTART_APP_CC};
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.RestartAppCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_RELOAD_APP_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_RELOAD_APP_CC};
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ReloadAppCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_QUERY_ONE_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_QUERY_ONE_CC};
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.QueryOneCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_QUERY_ALL_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_QUERY_ALL_CC};
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.QueryAllCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_QUERY_ALL_TASKS_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_QUERY_ALL_TASKS_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.QueryAllTasksCmd_indication)};
+
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_CLEAR_SYSLOG_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_CLEAR_SYSLOG_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ClearSysLogCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_WRITE_SYSLOG_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_WRITE_SYSLOG_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.WriteSysLogCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_OVER_WRITE_SYSLOG_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_OVER_WRITE_SYSLOG_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.OverWriteSysLogCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_CLEAR_ER_LOG_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_CLEAR_ER_LOG_CC};
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ClearERLogCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_WRITE_ER_LOG_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_WRITE_ER_LOG_CC};
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.WriteERLogCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_START_PERF_DATA_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_START_PERF_DATA_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.StartPerfDataCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_STOP_PERF_DATA_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_STOP_PERF_DATA_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.StopPerfDataCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_SET_PERF_FILTER_MASK_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_SET_PERF_FILTER_MASK_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.SetPerfFilterMaskCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_SET_PERF_TRIGGER_MASK_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_SET_PERF_TRIGGER_MASK_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.SetPerfTriggerMaskCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_RESET_PR_COUNT_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_RESET_PR_COUNT_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.ResetPRCountCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_SET_MAX_PR_COUNT_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_SET_MAX_PR_COUNT_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.SetMaxPRCountCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_DELETE_CDS_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_DELETE_CDS_CC};
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.DeleteCDSCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_SEND_MEM_POOL_STATS_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_SEND_MEM_POOL_STATS_CC};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.SendMemPoolStatsCmd_indication)};
 static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_DUMP_CDS_REGISTRY_CC = {
-    .MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID), .CommandCode = CFE_ES_DUMP_CDS_REGISTRY_CC};
-
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_INVALID_CC = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_CMD_MID),
-                                                                      .CommandCode = CFE_ES_DUMP_CDS_REGISTRY_CC + 2};
-
-static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_SEND_HK = {.MsgId = CFE_SB_MSGID_WRAP_VALUE(CFE_ES_SEND_HK_MID)};
+    .DispatchOffset =
+        offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, CMD.DumpCDSRegistryCmd_indication)};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_INVALID_CC     = {.DispatchOffset = -1,
+                                                                      .DispatchError  = CFE_STATUS_BAD_COMMAND_CODE};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_CMD_INVALID_LENGTH = {.DispatchOffset = -1,
+                                                                          .DispatchError = CFE_STATUS_WRONG_MSG_LENGTH};
+static const UT_TaskPipeDispatchId_t UT_TPID_CFE_ES_SEND_HK            = {
+    .DispatchOffset = offsetof(CFE_ES_Application_Component_Telecommand_DispatchTable_t, SEND_HK.indication)};
 
 /*
 ** Functions
@@ -3206,7 +3222,7 @@ void TestTask(void)
      * length call
      */
     ES_ResetUnitTest();
-    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, UT_TPID_CFE_ES_CMD_CLEAR_ER_LOG_CC);
+    UT_CallTaskPipe(CFE_ES_TaskPipe, &CmdBuf.Msg, 0, UT_TPID_CFE_ES_CMD_INVALID_LENGTH);
     CFE_UtAssert_EVENTSENT(CFE_ES_LEN_ERR_EID);
 
     /* Test resetting and setting the max for the processor reset count */
