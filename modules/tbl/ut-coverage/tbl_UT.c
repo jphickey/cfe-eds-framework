@@ -2491,16 +2491,8 @@ void Test_CFE_TBL_ReleaseAddresses(void)
     File.TblHeader.TableName[sizeof(File.TblHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&File.TblHeader, 0, sizeof(UT_Table1_t));
 
-    if (UT_Endianess == UT_LITTLE_ENDIAN)
-    {
-        File.TblData.TblElement1 = 0x04030201;
-        File.TblData.TblElement2 = 0x08070605;
-    }
-    else
-    {
-        File.TblData.TblElement1 = 0x01020304;
-        File.TblData.TblElement2 = 0x05060708;
-    }
+    File.TblData.TblElement1 = 0x01020304;
+    File.TblData.TblElement2 = 0x05060708;
 
     UT_TBL_SetupCompleteLoad(&File);
     UT_SetReadHeader(&FileHeader, sizeof(FileHeader));
@@ -3143,16 +3135,8 @@ void Test_CFE_TBL_TblMod(void)
     File.TblHeader.TableName[sizeof(File.TblHeader.TableName) - 1] = '\0';
     UT_TBL_SetupHeader(&File.TblHeader, 0, sizeof(UT_Table1_t));
 
-    if (UT_Endianess == UT_LITTLE_ENDIAN)
-    {
-        File.TblData.TblElement1 = 0x04030201;
-        File.TblData.TblElement2 = 0x08070605;
-    }
-    else
-    {
-        File.TblData.TblElement1 = 0x01020304;
-        File.TblData.TblElement2 = 0x05060708;
-    }
+    File.TblData.TblElement1 = 0x01020304;
+    File.TblData.TblElement2 = 0x05060708;
 
     UT_TBL_SetupCompleteLoad(&File);
     UT_SetReadHeader(&FileHeader, sizeof(FileHeader));
@@ -3485,12 +3469,6 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     TblFileHeader.NumBytes                                       = sizeof(UT_Table1_t) - 1;
     TblFileHeader.Offset                                         = 0;
-
-    if (UT_Endianess == UT_LITTLE_ENDIAN)
-    {
-        CFE_TBL_ByteSwapUint32(&TblFileHeader.NumBytes);
-        CFE_TBL_ByteSwapUint32(&TblFileHeader.Offset);
-    }
 
     UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
@@ -3954,12 +3932,6 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.NumBytes                                       = sizeof(UT_Table1_t) - 1;
     TblFileHeader.Offset                                         = 0;
 
-    if (UT_Endianess == UT_LITTLE_ENDIAN)
-    {
-        CFE_TBL_ByteSwapUint32(&TblFileHeader.NumBytes);
-        CFE_TBL_ByteSwapUint32(&TblFileHeader.Offset);
-    }
-
     UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));
     strncpy(Filename, "MyTestInputFilename", sizeof(Filename) - 1);
@@ -3983,12 +3955,6 @@ void Test_CFE_TBL_Internal(void)
     TblFileHeader.TableName[sizeof(TblFileHeader.TableName) - 1] = '\0';
     TblFileHeader.NumBytes                                       = sizeof(UT_Table1_t) - 1;
     TblFileHeader.Offset                                         = 0;
-
-    if (UT_Endianess == UT_LITTLE_ENDIAN)
-    {
-        CFE_TBL_ByteSwapUint32(&TblFileHeader.NumBytes);
-        CFE_TBL_ByteSwapUint32(&TblFileHeader.Offset);
-    }
 
     UT_TBL_SetupReadHeader(&TblFileHeader, sizeof(TblFileHeader));
     UT_SetReadHeader(&StdFileHeader, sizeof(StdFileHeader));

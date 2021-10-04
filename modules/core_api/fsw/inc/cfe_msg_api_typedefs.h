@@ -106,11 +106,11 @@ typedef union CFE_MSG_Message CFE_MSG_Message_t;
 /**
  * \brief cFS command header
  */
-typedef struct CFE_MSG_CommandHeader CFE_MSG_CommandHeader_t;
+typedef struct CFE_HDR_CommandHeader CFE_MSG_CommandHeader_t;
 
 /**
  * \brief cFS telemetry header
  */
-typedef struct CFE_MSG_TelemetryHeader CFE_MSG_TelemetryHeader_t;
+typedef struct CFE_HDR_TelemetryHeader CFE_MSG_TelemetryHeader_t;
 
 #endif /* CFE_MSG_API_TYPEDEFS_H */

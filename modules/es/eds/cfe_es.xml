@@ -52,14 +52,14 @@
         <EnumerationList>
           <Enumeration label="CORE" value="1" shortDescription="CFE core application" />
           <Enumeration label="EXTERNAL"  value="2" shortDescription="CFE external application" />
-					<Enumeration label="LIBRARY" value="3" shortDescription="CFE library"/>
+          <Enumeration label="LIBRARY" value="3" shortDescription="CFE library"/>
         </EnumerationList>
       </EnumeratedDataType>
 
       <EnumeratedDataType name="RunStatus" shortDescription="Run Status and Exit Status identifiers">
         <IntegerDataEncoding sizeInBits="32" encoding="unsigned" />
         <EnumerationList>
-					<Enumeration label="UNDEFINED" value="0" shortDescription="Reserved value, should not be used"/>
+          <Enumeration label="UNDEFINED" value="0" shortDescription="Reserved value, should not be used"/>
           <Enumeration label="APP_RUN" value="1" shortDescription="Indicates that the Application should continue to run" />
           <Enumeration label="APP_EXIT" value="2" shortDescription="Indicates that the Application wants to exit normally" />
           <Enumeration label="APP_ERROR" value="3" shortDescription="Indicates that the Application is quitting with an error" />
@@ -118,129 +118,97 @@
         </EnumerationList>
       </EnumeratedDataType>
 
-      <ContainerDataType name="AppId" baseType="CFE_RESOURCEID/BaseType">
-				<LongDescription>
-					*
-					* @brief A type for Application IDs
-					*
-					* This is the type that is used for any API accepting or returning an App ID
-				</LongDescription>
-			</ContainerDataType>
+      <ContainerDataType name="AppId" baseType="CFE_RESOURCEID/BaseType" shortDescription="A type for Application IDs">
+        <LongDescription>
+          This is the type that is used for any API accepting or returning an App ID
+        </LongDescription>
+      </ContainerDataType>
 
-			<ContainerDataType name="TaskId" baseType="CFE_RESOURCEID/BaseType">
-				<LongDescription>
-					*
-					* @brief A type for Task IDs
-					*
-					* This is the type that is used for any API accepting or returning a Task ID
-				</LongDescription>
-			</ContainerDataType>
+      <ContainerDataType name="TaskId" baseType="CFE_RESOURCEID/BaseType" shortDescription="A type for Task IDs">
+        <LongDescription>
+          This is the type that is used for any API accepting or returning a Task ID
+        </LongDescription>
+      </ContainerDataType>
 
-			<ContainerDataType name="LibId" baseType="CFE_RESOURCEID/BaseType">
-				<LongDescription>
-					*
-					* @brief A type for Library IDs
-					*
-					* This is the type that is used for any API accepting or returning a Lib ID
-				</LongDescription>
-			</ContainerDataType>
+      <ContainerDataType name="LibId" baseType="CFE_RESOURCEID/BaseType" shortDescription="A type for Library IDs">
+        <LongDescription>
+          This is the type that is used for any API accepting or returning a Lib ID
+        </LongDescription>
+      </ContainerDataType>
 
-			<ContainerDataType name="CounterId" baseType="CFE_RESOURCEID/BaseType">
-				<LongDescription>
-					*
-					* @brief A type for Counter IDs
-					*
-					* This is the type that is used for any API accepting or returning an Counter ID
-				</LongDescription>
-			</ContainerDataType>
+      <ContainerDataType name="CounterId" baseType="CFE_RESOURCEID/BaseType" shortDescription="A type for Counter IDs">
+        <LongDescription>
+          This is the type that is used for any API accepting or returning an Counter ID
+        </LongDescription>
+      </ContainerDataType>
 
-			<ContainerDataType name="MemHandle" baseType="CFE_RESOURCEID/BaseType">
-				<LongDescription>
-					*
-					* @brief Memory Handle type
-					*
-					* Data type used to hold Handles of Memory Pools
-					* created via CFE_ES_PoolCreate and CFE_ES_PoolCreateNoSem
-				</LongDescription>
-				<Range>
-					<MinMaxRange rangeType="inclusiveMinInclusiveMax" min="0" max="4294967295"/>
-				</Range>
-			</ContainerDataType>
+      <ContainerDataType name="MemHandle" baseType="CFE_RESOURCEID/BaseType" shortDescription="Memory Handle type">
+        <LongDescription>
+          Data type used to hold Handles of Memory Pools
+          created via CFE_ES_PoolCreate and CFE_ES_PoolCreateNoSem
+        </LongDescription>
+      </ContainerDataType>
 
-			<ContainerDataType name="CDSHandle" baseType="CFE_RESOURCEID/BaseType">
-				<LongDescription>
-					*
-					* @brief CDS Handle type
-					*
-					* Data type used to hold Handles of Critical Data Stores. See #CFE_ES_RegisterCDS
-				</LongDescription>
-			</ContainerDataType>
+      <ContainerDataType name="CDSHandle" baseType="CFE_RESOURCEID/BaseType" shortDescription="CDS Handle type">
+        <LongDescription>
+          Data type used to hold Handles of Critical Data Stores. See #CFE_ES_RegisterCDS
+        </LongDescription>
+      </ContainerDataType>
 
-			<IntegerDataType name="TaskPriority">
-				<LongDescription>
-					*
-					* @brief Type used for task priority in CFE ES as
-					* including the commands/telemetry messages.
-					*
-					* @note the valid range is only 0-255 (same as OSAL) but
-					* a wider type is used for backward compatibility
-					* in binary formats of messages.
-				</LongDescription>
-				<IntegerDataEncoding encoding="unsigned" sizeInBits="16"/>
-				<Range>
-					<MinMaxRange rangeType="inclusiveMinInclusiveMax" min="0" max="65535"/>
-				</Range>
-			</IntegerDataType>
+      <IntegerDataType name="TaskPriority" shortDescription="Type used for task priority in CFE ES">
+        <LongDescription>
+          @note the valid range is only 0-255 (same as OSAL) but
+          a wider type is used for backward compatibility
+          in binary formats of messages.
+        </LongDescription>
+        <IntegerDataEncoding encoding="unsigned" sizeInBits="16"/>
+        <Range>
+          <MinMaxRange rangeType="inclusiveMinInclusiveMax" min="0" max="255"/>
+        </Range>
+      </IntegerDataType>
 
-			<IntegerDataType name="MemOffset">
-				<LongDescription>
-					*
-					* @brief Type used for memory sizes and offsets in commands and telemetry
-					*
-					* For backward compatibility with existing CFE code this should be uint32,
-					* but all telemetry information will be limited to 4GB in size as a result.
-					*
-					* On 64-bit platforms this can be a 64-bit value which will allow larger
-					* memory objects, but this will break compatibility with existing control
-					* systems, and may also change the alignment/padding of messages.
-					*
-					* In either case this must be an unsigned type.
-				</LongDescription>
-				<IntegerDataEncoding encoding="unsigned" sizeInBits="32"/>
-				<Range>
-					<MinMaxRange rangeType="inclusiveMinInclusiveMax" min="0" max="4294967295"/>
-				</Range>
-			</IntegerDataType>
+      <IntegerDataType name="MemOffset" shortDescription="Type used for memory sizes and offsets in commands and telemetry">
+        <LongDescription>
+          For backward compatibility with existing CFE code this should be uint32,
+          but all telemetry information will be limited to 4GB in size as a result.
 
-			<IntegerDataType name="MemAddress">
-				<LongDescription>
-					*
-					* @brief Type used for memory addresses in command and telemetry messages
-					*
-					* For backward compatibility with existing CFE code this should be uint32,
-					* but if running on a 64-bit platform, addresses in telemetry will be
-					* truncated to 32 bits and therefore will not be valid.
-					*
-					* On 64-bit platforms this can be a 64-bit address which will allow the
-					* full memory address in commands and telemetry, but this will break
-					* compatibility with existing control systems, and may also change
-					* the alignment/padding of messages.
-					*
-					* In either case this must be an unsigned type.
-					*
-					* FSW code should access this value via the macros provided, which
-					* converts to the native "cpuaddr" type provided by OSAL.  This macro
-					* provides independence between the message representation and local
-					* representation of a memory address.
-				</LongDescription>
-				<IntegerDataEncoding encoding="unsigned" sizeInBits="32"/>
-				<Range>
-					<MinMaxRange rangeType="inclusiveMinInclusiveMax" min="0" max="4294967295"/>
-				</Range>
-			</IntegerDataType>
+          On 64-bit platforms this can be a 64-bit value which will allow larger
+          memory objects, but this will break compatibility with existing control
+          systems, and may also change the alignment/padding of messages.
+
+          In either case this must be an unsigned type.
+        </LongDescription>
+        <IntegerDataEncoding sizeInBits="${CFE_ES/MEM_OFFSET_SIZE_BITS}" encoding="unsigned" />
+        <Range>
+          <MinMaxRange max="2 ^ ${CFE_ES/MEM_OFFSET_SIZE_BITS}" min="0" rangeType="inclusiveMinExclusiveMax"/>
+        </Range>
+      </IntegerDataType>
+
+      <IntegerDataType name="MemAddress" shortDescription="Type used for memory addresses in command and telemetry messages">
+        <LongDescription>
+          For backward compatibility with existing CFE code this should be uint32,
+          but if running on a 64-bit platform, addresses in telemetry will be
+          truncated to 32 bits and therefore will not be valid.
+
+          On 64-bit platforms this can be a 64-bit address which will allow the
+          full memory address in commands and telemetry, but this will break
+          compatibility with existing control systems, and may also change
+          the alignment/padding of messages.
+
+          In either case this must be an unsigned type.
+
+          FSW code should access this value via the macros provided, which
+          converts to the native "cpuaddr" type provided by OSAL.  This macro
+          provides independence between the message representation and local
+          representation of a memory address.
+        </LongDescription>
+        <IntegerDataEncoding sizeInBits="${CFE_ES/MEM_OFFSET_SIZE_BITS}" encoding="unsigned" />
+        <Range>
+          <MinMaxRange max="2 ^ ${CFE_ES/MEM_OFFSET_SIZE_BITS}" min="0" rangeType="inclusiveMinExclusiveMax"/>
+        </Range>
+      </IntegerDataType>
 
       <StringDataType name="char_x_CFE_ES_CDS_MAX_FULL_NAME_LEN" length="${CFE_MISSION/ES_CDS_MAX_FULL_NAME_LEN}" />
-
 
       <ArrayDataType name="boolean_x_CFE_ES_PERF_MAX_IDS" dataTypeRef="BASE_TYPES/StatusBit">
         <DimensionList>
@@ -363,30 +331,27 @@
         </EntryList>
       </ContainerDataType>
 
-			<ContainerDataType name="TaskInfo">
-				<LongDescription>
-					*
-					* \brief Task Information
-					*
-					* Structure that is used to provide information about a task. It is primarily
-					* used for the Query All Tasks (#CFE_ES_QUERY_ALL_TASKS_CC) command.
-					*
-					* \note There is not currently a telemetry message directly containing this
-					* data structure, but it does define the format of the data file generated
-					* by the Query All Tasks command.  Therefore it should be considered
-					* part of the overall telemetry interface.
-				</LongDescription>
-				<EntryList>
-					<Entry name="TaskId" type="TaskId" shortDescription="*&lt; \brief Task Id"/>
-					<Entry name="ExecutionCounter" type="BASE_TYPES/uint32" shortDescription="*&lt; \brief Task Execution Counter"/>
-					<Entry name="TaskName" type="BASE_TYPES/ApiName" shortDescription="*&lt; \brief Task Name"/>
-					<Entry name="AppId" type="AppId" shortDescription="*&lt; \brief Parent Application ID"/>
-					<Entry name="AppName" type="BASE_TYPES/ApiName" shortDescription="*&lt; \brief Parent Application Name"/>
-					<Entry name="StackSize" type="MemOffset" shortDescription="*&lt; Size of task stack"/>
-					<Entry name="Priority" type="TaskPriority" shortDescription="*&lt; Priority of task"/>
-					<PaddingEntry sizeInBits="16" shortDescription="*&lt; Spare bytes for alignment"/>
-				</EntryList>
-			</ContainerDataType>
+      <ContainerDataType name="TaskInfo" shortDescription="Task Information">
+        <LongDescription>
+          Structure that is used to provide information about a task. It is primarily
+          used for the Query All Tasks (#CFE_ES_QUERY_ALL_TASKS_CC) command.
+
+          @note There is not currently a telemetry message directly containing this
+          data structure, but it does define the format of the data file generated
+          by the Query All Tasks command.  Therefore it should be considered
+          part of the overall telemetry interface.
+        </LongDescription>
+        <EntryList>
+          <Entry name="TaskId" type="TaskId" shortDescription="Task Id"/>
+          <Entry name="ExecutionCounter" type="BASE_TYPES/uint32" shortDescription="Task Execution Counter"/>
+          <Entry name="TaskName" type="BASE_TYPES/ApiName" shortDescription="Task Name"/>
+          <Entry name="AppId" type="AppId" shortDescription="Parent Application ID"/>
+          <Entry name="AppName" type="BASE_TYPES/ApiName" shortDescription="Parent Application Name"/>
+          <Entry name="StackSize" type="MemOffset" shortDescription="Size of task stack"/>
+          <Entry name="Priority" type="TaskPriority" shortDescription="Priority of task"/>
+          <PaddingEntry sizeInBits="16" shortDescription="Spare bytes for alignment"/>
+        </EntryList>
+      </ContainerDataType>
 
       <ContainerDataType name="BlockStats" shortDescription="Memory Pool Statistics data type">
         <EntryList>
@@ -404,7 +369,7 @@
 
       <ContainerDataType name="MemPoolStats">
         <EntryList>
-          <Entry name="PoolSize" type="BASE_TYPES/uint32" shortDescription="Size of Memory Pool (in bytes)">
+          <Entry name="PoolSize" type="MemOffset" shortDescription="Size of Memory Pool (in bytes)">
             <LongDescription>
                \cfetlmmnemonic  \ES_POOLSIZE
             </LongDescription>
@@ -419,7 +384,7 @@
                \cfetlmmnemonic  \ES_BLKERRCTR
             </LongDescription>
           </Entry>
-          <Entry name="NumFreeBytes" type="BASE_TYPES/uint32" shortDescription="Number of bytes never allocated to a block">
+          <Entry name="NumFreeBytes" type="MemOffset" shortDescription="Number of bytes never allocated to a block">
             <LongDescription>
                \cfetlmmnemonic  \ES_FREEBYTES
             </LongDescription>
@@ -818,13 +783,13 @@
 
       <ContainerDataType name="OneAppTlm" baseType="CFE_HDR/TelemetryHeader">
         <EntryList>
-					<Entry type="OneAppTlm_Payload" name="Payload" />
+          <Entry type="OneAppTlm_Payload" name="Payload" />
         </EntryList>
       </ContainerDataType>
 
       <ContainerDataType name="MemStatsTlm" baseType="CFE_HDR/TelemetryHeader">
         <EntryList>
-					<Entry type="PoolStatsTlm_Payload" name="Payload" />
+          <Entry type="PoolStatsTlm_Payload" name="Payload" />
         </EntryList>
       </ContainerDataType>
 
@@ -2075,28 +2040,24 @@
         </EntryList>
       </ContainerDataType>
 
-			<ContainerDataType name="CDSRegDumpRec">
-				<LongDescription>
-					*
-					* \brief CDS Register Dump Record
-					*
-					* Structure that is used to provide information about a critical data store.
-					* It is primarily used for the Dump CDS registry (#CFE_ES_DUMP_CDS_REGISTRY_CC)
-					* command.
-					*
-					* \note There is not currently a telemetry message directly containing this
-					* data structure, but it does define the format of the data file generated
-					* by the Dump CDS registry command.  Therefore it should be considered
-					* part of the overall telemetry interface.
-				</LongDescription>
-				<EntryList>
-					<Entry name="Handle" type="CDSHandle" shortDescription="*&lt; \brief Handle of CDS"/>
-					<Entry name="Size" type="MemOffset" shortDescription="*&lt; \brief Size, in bytes, of the CDS memory block"/>
-					<Entry name="Table" type="BASE_TYPES/StatusBit"
-								 shortDescription="*&lt; \brief Flag that indicates whether CDS contains a Critical Table"/>
-				  <Entry name="Name" type="char_x_CFE_ES_CDS_MAX_FULL_NAME_LEN" shortDescription="*&lt; \brief Processor Unique Name of CDS"/>
-				</EntryList>
-			</ContainerDataType>
+      <ContainerDataType name="CDSRegDumpRec" shortDescription="CDS Register Dump Record">
+        <LongDescription>
+          Structure that is used to provide information about a critical data store.
+          It is primarily used for the Dump CDS registry (#CFE_ES_DUMP_CDS_REGISTRY_CC)
+          command.
+
+          @note There is not currently a telemetry message directly containing this
+          data structure, but it does define the format of the data file generated
+          by the Dump CDS registry command.  Therefore it should be considered
+          part of the overall telemetry interface.
+        </LongDescription>
+        <EntryList>
+          <Entry name="Handle" type="CDSHandle" shortDescription="Handle of CDS"/>
+          <Entry name="Size" type="MemOffset" shortDescription="Size, in bytes, of the CDS memory block"/>
+          <Entry name="Table" type="BASE_TYPES/StatusBit" shortDescription="Flag that indicates whether CDS contains a Critical Table"/>
+          <Entry name="Name" type="char_x_CFE_ES_CDS_MAX_FULL_NAME_LEN" shortDescription="Processor Unique Name of CDS"/>
+        </EntryList>
+      </ContainerDataType>
 
     </DataTypeSet>
 

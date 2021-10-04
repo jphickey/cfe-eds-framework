@@ -703,7 +703,6 @@ CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile(const char *DumpFilename, const char *Ta
     osal_id_t            FileDescriptor;
     int32                Status;
     int32                OsStatus;
-    int32                EndianCheck = 0x01020304;
 
     /* Clear Header of any garbage before copying content */
     memset(&TblFileHeader, 0, sizeof(CFE_TBL_File_Hdr_t));
@@ -736,17 +735,6 @@ CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile(const char *DumpFilename, const char *Ta
             TblFileHeader.Offset                                         = CFE_ES_MEMOFFSET_C(0);
             TblFileHeader.NumBytes                                       = CFE_ES_MEMOFFSET_C(TblSizeInBytes);
             TblFileHeader.Reserved                                       = 0;
-            /* JPHFIX: SET EDSID */
-
-            /* Determine if this is a little endian processor */
-            if ((*(char *)&EndianCheck) == 0x04)
-            {
-                /* If this is a little endian processor, then byte swap the header to a big endian format */
-                /* to maintain the cFE Header standards */
-                /* NOTE: FOR THE REMAINDER OF THIS FUNCTION, THE CONTENTS OF THE HEADER IS UNREADABLE BY */
-                /*       THIS PROCESSOR!  THE DATA WOULD NEED TO BE SWAPPED BACK BEFORE READING.         */
-                CFE_TBL_ByteSwapTblHeader(&TblFileHeader);
-            }
 
             /* Output the Table Image Header to the Dump File */
             OsStatus = OS_write(FileDescriptor, &TblFileHeader, sizeof(CFE_TBL_File_Hdr_t));

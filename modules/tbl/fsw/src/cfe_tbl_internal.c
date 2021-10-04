@@ -1387,41 +1387,6 @@ int32 CFE_TBL_ReadHeaders(osal_id_t FileDescriptor, CFE_FS_Header_t *StdFileHead
 
 /*----------------------------------------------------------------
  *
- * Function: CFE_TBL_ByteSwapTblHeader
- *
- * Application-scope internal function
- * See description in header file for argument/return detail
- *
- *-----------------------------------------------------------------*/
-void CFE_TBL_ByteSwapTblHeader(CFE_TBL_File_Hdr_t *HdrPtr)
-{
-    CFE_TBL_ByteSwapUint32(&HdrPtr->Reserved);
-    CFE_TBL_ByteSwapUint32(&HdrPtr->Offset);
-    CFE_TBL_ByteSwapUint32(&HdrPtr->NumBytes);
-}
-
-/*----------------------------------------------------------------
- *
- * Function: CFE_TBL_ByteSwapUint32
- *
- * Application-scope internal function
- * See description in header file for argument/return detail
- *
- *-----------------------------------------------------------------*/
-void CFE_TBL_ByteSwapUint32(uint32 *Uint32ToSwapPtr)
-{
-    int32 Temp   = *Uint32ToSwapPtr;
-    char *InPtr  = (char *)&Temp;
-    char *OutPtr = (char *)Uint32ToSwapPtr;
-
-    OutPtr[0] = InPtr[3];
-    OutPtr[1] = InPtr[2];
-    OutPtr[2] = InPtr[1];
-    OutPtr[3] = InPtr[0];
-}
-
-/*----------------------------------------------------------------
- *
  * Function: CFE_TBL_CleanUpApp
  *
  * Implemented per public API
