@@ -426,6 +426,10 @@ void CFE_TBL_NotifyTblUsersOfUpdate(CFE_TBL_RegistryRec_t *RegRecPtr);
 **        on header contents to ensure the acceptability of the
 **        file format.
 **
+**        In this version, the TBL headers are defined in EDS and all EDS
+**        based translations and constraints are applied.  The returned
+**        structures will be in the native byte order and encoding for the host CPU.
+**
 ** \par Assumptions, External Events, and Notes:
 **        -# FileDescriptor is assumed to be valid
 **
@@ -538,6 +542,11 @@ int32 CFE_TBL_SendNotificationMsg(CFE_TBL_RegistryRec_t *RegRecPtr);
 void CFE_TBL_DumpRegistryEventHandler(void *Meta, CFE_FS_FileWriteEvent_t Event, int32 Status, uint32 RecordNum,
                                       size_t BlockSize, size_t Position);
 bool CFE_TBL_DumpRegistryGetter(void *Meta, uint32 RecordNum, void **Buffer, size_t *BufSize);
+
+CFE_Status_t CFE_TBL_DecodeFromMemory(const void *PackedBuffer, EdsLib_Id_t EdsId, CFE_TBL_LoadBuff_t *NativeBufferPtr,
+                                      CFE_TBL_RegistryRec_t *RegRecPtr);
+CFE_Status_t CFE_TBL_EncodeFromMemory(void *PackedBuffer, const CFE_TBL_LoadBuff_t *NativeBufferPtr,
+                                      CFE_TBL_RegistryRec_t *RegRecPtr);
 
 /*
 ** Globals specific to the TBL module

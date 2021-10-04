@@ -679,19 +679,24 @@ void Test_CFE_TBL_ActivateCmd(void)
 */
 void Test_CFE_TBL_DumpToFile(void)
 {
-    uint32 TblSizeInBytes = 9;
+    CFE_TBL_LoadBuff_t TempBuff;
+    char               TableData[]    = "dumpaddress";
+    uint32             TblSizeInBytes = sizeof(TableData) - 1;
 
     UtPrintf("Begin Test Dump to File");
+
+    memset(&TempBuff, 0, sizeof(TempBuff));
+    TempBuff.BufferPtr = TableData;
 
     /* Test with an error creating the dump file */
     UT_InitData();
     UT_SetDefaultReturnValue(UT_KEY(OS_OpenCreate), OS_ERROR);
-    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", "dumpaddress", TblSizeInBytes), CFE_TBL_INC_ERR_CTR);
+    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", &TempBuff), CFE_TBL_INC_ERR_CTR);
 
     /* Test with an error writing the cFE file header */
     UT_InitData();
     UT_SetDeferredRetcode(UT_KEY(CFE_FS_WriteHeader), 1, sizeof(CFE_FS_Header_t) - 1);
-    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", "dumpaddress", TblSizeInBytes), CFE_TBL_INC_ERR_CTR);
+    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", &TempBuff), CFE_TBL_INC_ERR_CTR);
 
     /* Test with an error writing the table file header */
     UT_InitData();
@@ -701,21 +706,21 @@ void Test_CFE_TBL_DumpToFile(void)
      */
     UT_SetDeferredRetcode(UT_KEY(CFE_FS_WriteHeader), 6, sizeof(CFE_FS_Header_t));
     UT_SetDeferredRetcode(UT_KEY(OS_write), 1, sizeof(CFE_TBL_File_Hdr_t) - 1);
-    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", "dumpaddress", TblSizeInBytes), CFE_TBL_INC_ERR_CTR);
+    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", &TempBuff), CFE_TBL_INC_ERR_CTR);
 
     /* Test with an error writing the table to a file */
     UT_InitData();
     UT_SetDeferredRetcode(UT_KEY(OS_write), 2, TblSizeInBytes - 1);
-    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", "dumpaddress", TblSizeInBytes), CFE_TBL_INC_ERR_CTR);
+    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", &TempBuff), CFE_TBL_INC_ERR_CTR);
 
     /* Test successful file creation and data dumped */
     UT_InitData();
     UT_SetDeferredRetcode(UT_KEY(OS_OpenCreate), 1, OS_ERROR);
-    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", "dumpaddress", TblSizeInBytes), CFE_TBL_INC_CMD_CTR);
+    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", &TempBuff), CFE_TBL_INC_CMD_CTR);
 
     /* Test where file already exists so data is overwritten */
     UT_InitData();
-    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", "dumpaddress", TblSizeInBytes), CFE_TBL_INC_CMD_CTR);
+    UtAssert_INT32_EQ(CFE_TBL_DumpToFile("filename", "tablename", &TempBuff), CFE_TBL_INC_CMD_CTR);
 }
 
 /*
@@ -1176,6 +1181,13 @@ void Test_CFE_TBL_DumpCmd(void)
     CFE_TBL_Global.Registry[2].Buffers[(1 - CFE_TBL_Global.Registry[2].ActiveBufferIndex)].BufferPtr = BuffPtr;
     CFE_TBL_Global.Registry[2].DumpControlIndex = CFE_TBL_NO_DUMP_PENDING + 1;
     UtAssert_INT32_EQ(CFE_TBL_DumpCmd(&DumpCmd), CFE_TBL_INC_ERR_CTR);
+
+    /* Clear the ephemeral structures, as the test below needs a free entry */
+    for (u = 0; u < CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS; u++)
+    {
+        CFE_TBL_Global.LoadBuffs[u].Taken         = false;
+        CFE_TBL_Global.DumpControlBlocks[u].State = CFE_TBL_DUMP_FREE;
+    }
 
     /* Test with an inactive buffer, single-buffered, pointer created, is a
      * dump only table

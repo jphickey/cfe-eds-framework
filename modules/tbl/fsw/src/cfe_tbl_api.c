@@ -1488,7 +1488,16 @@ CFE_Status_t CFE_TBL_DumpToBuffer(CFE_TBL_Handle_t TblHandle)
         DumpCtrlPtr   = &CFE_TBL_Global.DumpControlBlocks[RegRecPtr->DumpControlIndex];
 
         /* Copy the contents of the active buffer to the assigned dump buffer */
-        memcpy(DumpCtrlPtr->DumpBufferPtr->BufferPtr, RegRecPtr->Buffers[0].BufferPtr, DumpCtrlPtr->Size);
+        Status = CFE_TBL_EncodeFromMemory(DumpCtrlPtr->DumpBufferPtr->BufferPtr, &RegRecPtr->Buffers[0], RegRecPtr);
+        if (Status == CFE_SUCCESS)
+        {
+            /* Save the Eds ID of the packed data */
+            DumpCtrlPtr->DumpBufferPtr->EdsContentId = RegRecPtr->Buffers[0].EdsContentId;
+        }
+        else
+        {
+            DumpCtrlPtr->DumpBufferPtr->EdsContentId = EDSLIB_ID_INVALID;
+        }
 
         /* Save the current time so that the header in the dump file can have the correct time */
         DumpTime                                          = CFE_TIME_GetTime();
