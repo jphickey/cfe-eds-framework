@@ -358,21 +358,21 @@ void CI_LAB_ResetCounters_Internal(void)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
 void CI_LAB_ReadUpLink(void)
 {
-    int    i;
-    int32  status;
-    uint32 BitSize;
+    int                                   i;
+    int32                                 status;
+    uint32                                BitSize;
     CFE_SB_SoftwareBus_PubSub_Interface_t PubSubParams;
-    CFE_SB_Listener_Component_t ListenerParams;
-    EdsLib_DataTypeDB_TypeInfo_t CmdHdrInfo;
-    EdsLib_DataTypeDB_TypeInfo_t FullCmdInfo;
-    EdsLib_Id_t EdsId;
-    CFE_SB_Buffer_t *NextIngestBufPtr;
+    CFE_SB_Listener_Component_t           ListenerParams;
+    EdsLib_DataTypeDB_TypeInfo_t          CmdHdrInfo;
+    EdsLib_DataTypeDB_TypeInfo_t          FullCmdInfo;
+    EdsLib_Id_t                           EdsId;
+    CFE_SB_Buffer_t *                     NextIngestBufPtr;
 
     const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
 
     NextIngestBufPtr = NULL;
-    EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CFE_HDR), CFE_HDR_CommandHeader_DATADICTIONARY);
-    status = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &CmdHdrInfo);
+    EdsId            = EDSLIB_MAKE_ID(EDS_INDEX(CFE_HDR), CFE_HDR_CommandHeader_DATADICTIONARY);
+    status           = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &CmdHdrInfo);
     if (status != EDSLIB_SUCCESS)
     {
         OS_printf("EdsLib_DataTypeDB_GetTypeInfo(): %d\n", (int)status);
@@ -382,7 +382,7 @@ void CI_LAB_ReadUpLink(void)
     for (i = 0; i <= 10; i++)
     {
         status = OS_SocketRecvFrom(CI_LAB_Global.SocketID, CI_LAB_Global.NetworkBuffer,
-                sizeof(CI_LAB_Global.NetworkBuffer), &CI_LAB_Global.SocketAddress, OS_CHECK);
+                                   sizeof(CI_LAB_Global.NetworkBuffer), &CI_LAB_Global.SocketAddress, OS_CHECK);
 
         if (status >= 0)
         {
@@ -402,15 +402,16 @@ void CI_LAB_ReadUpLink(void)
                 if (NextIngestBufPtr == NULL)
                 {
                     CFE_EVS_SendEvent(CI_LAB_INGEST_ALLOC_ERR_EID, CFE_EVS_EventType_ERROR,
-                                    "CI: L%d, buffer allocation failed\n", __LINE__);
+                                      "CI: L%d, buffer allocation failed\n", __LINE__);
                     break;
                 }
             }
 
             /* Packet is in external wire-format byte order - unpack it and copy */
             EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CFE_HDR), CFE_HDR_CommandHeader_DATADICTIONARY);
-            status = EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer,
-                sizeof(CFE_HDR_CommandHeader_Buffer_t), BitSize, 0);
+            status =
+                EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer,
+                                                      sizeof(CFE_HDR_CommandHeader_Buffer_t), BitSize, 0);
             if (status != EDSLIB_SUCCESS)
             {
                 OS_printf("EdsLib_DataTypeDB_UnpackPartialObject(1): %d\n", (int)status);
@@ -421,16 +422,17 @@ void CI_LAB_ReadUpLink(void)
             CFE_MissionLib_Get_PubSub_Parameters(&PubSubParams, &NextIngestBufPtr->Msg.BaseMsg);
             CFE_MissionLib_UnmapListenerComponent(&ListenerParams, &PubSubParams);
 
-            status = CFE_MissionLib_GetArgumentType(&CFE_SOFTWAREBUS_INTERFACE,
-                    CFE_SB_Telecommand_Interface_ID, ListenerParams.Telecommand.TopicId, 1, 1, &EdsId);
+            status = CFE_MissionLib_GetArgumentType(&CFE_SOFTWAREBUS_INTERFACE, CFE_SB_Telecommand_Interface_ID,
+                                                    ListenerParams.Telecommand.TopicId, 1, 1, &EdsId);
             if (status != CFE_MISSIONLIB_SUCCESS)
             {
                 OS_printf("CFE_MissionLib_GetArgumentType(): %d\n", (int)status);
                 break;
             }
 
-            status = EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer,
-                    sizeof(CFE_HDR_CommandHeader_Buffer_t), BitSize, sizeof(CFE_HDR_CommandHeader_t));
+            status = EdsLib_DataTypeDB_UnpackPartialObject(
+                EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer, sizeof(CFE_HDR_CommandHeader_Buffer_t),
+                BitSize, sizeof(CFE_HDR_CommandHeader_t));
             if (status != EDSLIB_SUCCESS)
             {
                 OS_printf("EdsLib_DataTypeDB_UnpackPartialObject(2): %d\n", (int)status);
@@ -438,8 +440,8 @@ void CI_LAB_ReadUpLink(void)
             }
 
             /* Verify that the checksum and basic fields are correct, and recompute the length entry */
-            status = EdsLib_DataTypeDB_VerifyUnpackedObject(EDS_DB, EdsId, NextIngestBufPtr,
-                CI_LAB_Global.NetworkBuffer, EDSLIB_DATATYPEDB_RECOMPUTE_LENGTH);
+            status = EdsLib_DataTypeDB_VerifyUnpackedObject(
+                EDS_DB, EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer, EDSLIB_DATATYPEDB_RECOMPUTE_LENGTH);
             if (status != EDSLIB_SUCCESS)
             {
                 OS_printf("EdsLib_DataTypeDB_VerifyUnpackedObject(): %d\n", (int)status);
@@ -466,9 +468,8 @@ void CI_LAB_ReadUpLink(void)
             else
             {
                 CFE_EVS_SendEvent(CI_LAB_INGEST_SEND_ERR_EID, CFE_EVS_EventType_ERROR,
-                                "CI: L%d, CFE_SB_TransmitBuffer() failed, status=%d\n", __LINE__, (int)status);
+                                  "CI: L%d, CFE_SB_TransmitBuffer() failed, status=%d\n", __LINE__, (int)status);
             }
-
         }
         else if (status > 0)
         {
