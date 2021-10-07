@@ -39,5 +39,4 @@
  */
 #include "sample_app_eds_typedefs.h"
 
-
 #endif /* SAMPLE_APP_MSG_H */

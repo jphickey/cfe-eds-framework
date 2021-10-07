@@ -268,132 +268,6 @@ void Test_SAMPLE_APP_Init(void)
     UtAssert_True(UT_GetStubCount(UT_KEY(CFE_ES_WriteToSysLog)) == 5, "CFE_ES_WriteToSysLog() called");
 }
 
-void Test_SAMPLE_APP_ProcessCommandPacket(void)
-{
-    /*
-     * Test Case For:
-     * void SAMPLE_APP_ProcessCommandPacket
-     */
-    /* a buffer large enough for any command message */
-    union
-    {
-        CFE_SB_Buffer_t      SBBuf;
-        SAMPLE_APP_NoopCmd_t Noop;
-    } TestMsg;
-    CFE_SB_MsgId_t    TestMsgId;
-    CFE_MSG_FcnCode_t FcnCode;
-    size_t            MsgSize;
-    UT_CheckEvent_t   EventTest;
-
-    memset(&TestMsg, 0, sizeof(TestMsg));
-    UT_CheckEvent_Setup(&EventTest, SAMPLE_APP_INVALID_MSGID_ERR_EID, "SAMPLE: invalid command packet,MID = 0x%x");
-
-    /*
-     * The CFE_MSG_GetMsgId() stub uses a data buffer to hold the
-     * message ID values to return.
-     */
-    TestMsgId = CFE_SB_ValueToMsgId(SAMPLE_APP_CMD_MID);
-    FcnCode   = SAMPLE_APP_NOOP_CC;
-    MsgSize   = sizeof(TestMsg.Noop);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &TestMsgId, sizeof(TestMsgId), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &MsgSize, sizeof(MsgSize), false);
-    SAMPLE_APP_ProcessCommandPacket(&TestMsg.SBBuf);
-
-    TestMsgId = CFE_SB_ValueToMsgId(SAMPLE_APP_SEND_HK_MID);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &TestMsgId, sizeof(TestMsgId), false);
-    SAMPLE_APP_ProcessCommandPacket(&TestMsg.SBBuf);
-
-    /* invalid message id */
-    TestMsgId = CFE_SB_INVALID_MSG_ID;
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &TestMsgId, sizeof(TestMsgId), false);
-    SAMPLE_APP_ProcessCommandPacket(&TestMsg.SBBuf);
-
-    /*
-     * Confirm that the event was generated only _once_
-     */
-    UtAssert_True(EventTest.MatchCount == 1, "SAMPLE_APP_COMMAND_ERR_EID generated (%u)",
-                  (unsigned int)EventTest.MatchCount);
-}
-
-void Test_SAMPLE_APP_ProcessGroundCommand(void)
-{
-    /*
-     * Test Case For:
-     * void SAMPLE_APP_ProcessGroundCommand
-     */
-    CFE_MSG_FcnCode_t FcnCode;
-    size_t            Size;
-
-    /* a buffer large enough for any command message */
-    union
-    {
-        CFE_SB_Buffer_t               SBBuf;
-        SAMPLE_APP_NoopCmd_t          Noop;
-        SAMPLE_APP_ResetCountersCmd_t Reset;
-        SAMPLE_APP_ProcessCmd_t       Process;
-    } TestMsg;
-    UT_CheckEvent_t EventTest;
-
-    memset(&TestMsg, 0, sizeof(TestMsg));
-
-    /*
-     * call with each of the supported command codes
-     * The CFE_MSG_GetFcnCode stub allows the code to be
-     * set to whatever is needed.  There is no return
-     * value here and the actual implementation of these
-     * commands have separate test cases, so this just
-     * needs to exercise the "switch" statement.
-     */
-
-    /* test dispatch of NOOP */
-    FcnCode = SAMPLE_APP_NOOP_CC;
-    Size    = sizeof(TestMsg.Noop);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &Size, sizeof(Size), false);
-    UT_CheckEvent_Setup(&EventTest, SAMPLE_APP_COMMANDNOP_INF_EID, NULL);
-
-    SAMPLE_APP_ProcessGroundCommand(&TestMsg.SBBuf);
-
-    UtAssert_True(EventTest.MatchCount == 1, "SAMPLE_COMMANDNOP_INF_EID generated (%u)",
-                  (unsigned int)EventTest.MatchCount);
-
-    /* test dispatch of RESET */
-    FcnCode = SAMPLE_APP_RESET_COUNTERS_CC;
-    Size    = sizeof(TestMsg.Reset);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &Size, sizeof(Size), false);
-    UT_CheckEvent_Setup(&EventTest, SAMPLE_APP_COMMANDRST_INF_EID, NULL);
-
-    SAMPLE_APP_ProcessGroundCommand(&TestMsg.SBBuf);
-
-    UtAssert_True(EventTest.MatchCount == 1, "SAMPLE_COMMANDRST_INF_EID generated (%u)",
-                  (unsigned int)EventTest.MatchCount);
-
-    /* test dispatch of PROCESS */
-    /* note this will end up calling SAMPLE_APP_Process(), and as such it needs to
-     * avoid dereferencing a table which does not exist. */
-    FcnCode = SAMPLE_APP_PROCESS_CC;
-    Size    = sizeof(TestMsg.Process);
-    UT_SetDefaultReturnValue(UT_KEY(CFE_TBL_GetAddress), CFE_TBL_ERR_UNREGISTERED);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &Size, sizeof(Size), false);
-
-    SAMPLE_APP_ProcessGroundCommand(&TestMsg.SBBuf);
-
-    /* test an invalid CC */
-    FcnCode = 1000;
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &FcnCode, sizeof(FcnCode), false);
-    UT_CheckEvent_Setup(&EventTest, SAMPLE_APP_COMMAND_ERR_EID, "Invalid ground command code: CC = %d");
-    SAMPLE_APP_ProcessGroundCommand(&TestMsg.SBBuf);
-
-    /*
-     * Confirm that the event was generated only _once_
-     */
-    UtAssert_True(EventTest.MatchCount == 1, "SAMPLE_APP_COMMAND_ERR_EID generated (%u)",
-                  (unsigned int)EventTest.MatchCount);
-}
-
 void Test_SAMPLE_APP_ReportHousekeeping(void)
 {
     /*
@@ -402,10 +276,6 @@ void Test_SAMPLE_APP_ReportHousekeeping(void)
      */
     CFE_MSG_Message_t *MsgSend;
     CFE_MSG_Message_t *MsgTimestamp;
-    CFE_SB_MsgId_t     MsgId = CFE_SB_ValueToMsgId(SAMPLE_APP_SEND_HK_MID);
-
-    /* Set message id to return so SAMPLE_APP_Housekeeping will be called */
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &MsgId, sizeof(MsgId), false);
 
     /* Set up to capture send message address */
     UT_SetDataBuffer(UT_KEY(CFE_SB_TransmitMsg), &MsgSend, sizeof(MsgSend), false);
@@ -414,7 +284,7 @@ void Test_SAMPLE_APP_ReportHousekeeping(void)
     UT_SetDataBuffer(UT_KEY(CFE_SB_TimeStampMsg), &MsgTimestamp, sizeof(MsgTimestamp), false);
 
     /* Call unit under test, NULL pointer confirms command access is through APIs */
-    SAMPLE_APP_ProcessCommandPacket((CFE_SB_Buffer_t *)NULL);
+    SAMPLE_APP_ReportHousekeeping(NULL);
 
     /* Confirm message sent*/
     UtAssert_True(UT_GetStubCount(UT_KEY(CFE_SB_TransmitMsg)) == 1, "CFE_SB_TransmitMsg() called once");
@@ -513,47 +383,6 @@ void Test_SAMPLE_APP_ProcessCC(void)
     UT_TEST_FUNCTION_RC(SAMPLE_APP_Process(&TestMsg), CFE_TBL_ERR_UNREGISTERED);
 }
 
-void Test_SAMPLE_APP_VerifyCmdLength(void)
-{
-    /*
-     * Test Case For:
-     * bool SAMPLE_APP_VerifyCmdLength
-     */
-    UT_CheckEvent_t   EventTest;
-    size_t            size    = 1;
-    CFE_MSG_FcnCode_t fcncode = 2;
-    CFE_SB_MsgId_t    msgid   = CFE_SB_ValueToMsgId(3);
-
-    /*
-     * test a match case
-     */
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &size, sizeof(size), false);
-    UT_CheckEvent_Setup(&EventTest, SAMPLE_APP_LEN_ERR_EID,
-                        "Invalid Msg length: ID = 0x%X,  CC = %u, Len = %u, Expected = %u");
-
-    SAMPLE_APP_VerifyCmdLength(NULL, size);
-
-    /*
-     * Confirm that the event was NOT generated
-     */
-    UtAssert_True(EventTest.MatchCount == 0, "SAMPLE_APP_LEN_ERR_EID NOT generated (%u)",
-                  (unsigned int)EventTest.MatchCount);
-
-    /*
-     * test a mismatch case
-     */
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &size, sizeof(size), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), &msgid, sizeof(msgid), false);
-    UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), &fcncode, sizeof(fcncode), false);
-    SAMPLE_APP_VerifyCmdLength(NULL, size + 1);
-
-    /*
-     * Confirm that the event WAS generated
-     */
-    UtAssert_True(EventTest.MatchCount == 1, "SAMPLE_APP_LEN_ERR_EID generated (%u)",
-                  (unsigned int)EventTest.MatchCount);
-}
-
 void Test_SAMPLE_APP_TblValidationFunc(void)
 {
     /*
@@ -617,13 +446,10 @@ void UtTest_Setup(void)
 {
     ADD_TEST(SAMPLE_APP_Main);
     ADD_TEST(SAMPLE_APP_Init);
-    ADD_TEST(SAMPLE_APP_ProcessCommandPacket);
-    ADD_TEST(SAMPLE_APP_ProcessGroundCommand);
     ADD_TEST(SAMPLE_APP_ReportHousekeeping);
     ADD_TEST(SAMPLE_APP_NoopCmd);
     ADD_TEST(SAMPLE_APP_ResetCounters);
     ADD_TEST(SAMPLE_APP_ProcessCC);
-    ADD_TEST(SAMPLE_APP_VerifyCmdLength);
     ADD_TEST(SAMPLE_APP_TblValidationFunc);
     ADD_TEST(SAMPLE_APP_GetCrc);
 }
