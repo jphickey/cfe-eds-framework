@@ -48,20 +48,6 @@
 /*
 ** CI global data...
 */
-
-typedef struct
-{
-    bool            SocketConnected;
-    CFE_SB_PipeId_t CommandPipe;
-    osal_id_t       SocketID;
-    OS_SockAddr_t   SocketAddress;
-
-    CI_LAB_HkTlm_t HkTlm;
-
-    CFE_HDR_Message_PackedBuffer_t NetworkBuffer;
-
-} CI_LAB_GlobalData_t;
-
 CI_LAB_GlobalData_t CI_LAB_Global;
 
 static CFE_EVS_BinFilter_t CI_LAB_EventFilters[] =
@@ -70,19 +56,6 @@ static CFE_EVS_BinFilter_t CI_LAB_EventFilters[] =
      {CI_LAB_COMMAND_ERR_EID, 0x0000},      {CI_LAB_COMMANDNOP_INF_EID, 0x0000}, {CI_LAB_COMMANDRST_INF_EID, 0x0000},
      {CI_LAB_INGEST_INF_EID, 0x0000},       {CI_LAB_INGEST_LEN_ERR_EID, 0x0000}, {CI_LAB_INGEST_ALLOC_ERR_EID, 0x0000},
      {CI_LAB_INGEST_SEND_ERR_EID, 0x0000}};
-
-/*
- * Individual message handler function prototypes
- *
- * Per the recommended code pattern, these should accept a const pointer
- * to a structure type which matches the message, and return an int32
- * where CFE_SUCCESS (0) indicates successful handling of the message.
- */
-int32 CI_LAB_Noop(const CI_LAB_NoopCmd_t *data);
-int32 CI_LAB_ResetCounters(const CI_LAB_ResetCountersCmd_t *data);
-
-/* Housekeeping message handler */
-int32 CI_LAB_ReportHousekeeping(const CFE_MSG_CommandHeader_t *data);
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* CI_Lab_AppMain() -- Application entry point and main process loop          */
@@ -203,83 +176,6 @@ void CI_LAB_TaskInit(void)
 
 } /* End of CI_LAB_TaskInit() */
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*  Name:  CI_LAB_ProcessCommandPacket                                        */
-/*                                                                            */
-/*  Purpose:                                                                  */
-/*     This routine will process any packet that is received on the CI command*/
-/*     pipe. The packets received on the CI command pipe are listed here:     */
-/*                                                                            */
-/*        1. NOOP command (from ground)                                       */
-/*        2. Request to reset telemetry counters (from ground)                */
-/*        3. Request for housekeeping telemetry packet (from HS task)         */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * *  * * * * * * *  * *  * * * * */
-void CI_LAB_ProcessCommandPacket(CFE_SB_Buffer_t *SBBufPtr)
-{
-    CFE_SB_MsgId_t MsgId = CFE_SB_INVALID_MSG_ID;
-
-    CFE_MSG_GetMsgId(&SBBufPtr->Msg, &MsgId);
-
-    switch (CFE_SB_MsgIdToValue(MsgId))
-    {
-        case CI_LAB_CMD_MID:
-            CI_LAB_ProcessGroundCommand(SBBufPtr);
-            break;
-
-        case CI_LAB_SEND_HK_MID:
-            CI_LAB_ReportHousekeeping((const CFE_MSG_CommandHeader_t *)SBBufPtr);
-            break;
-
-        default:
-            CI_LAB_Global.HkTlm.Payload.CommandErrorCounter++;
-            CFE_EVS_SendEvent(CI_LAB_COMMAND_ERR_EID, CFE_EVS_EventType_ERROR, "CI: invalid command packet,MID = 0x%x",
-                              (unsigned int)CFE_SB_MsgIdToValue(MsgId));
-            break;
-    }
-
-    return;
-
-} /* End CI_LAB_ProcessCommandPacket */
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*                                                                            */
-/* CI_LAB_ProcessGroundCommand() -- CI ground commands                        */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-
-void CI_LAB_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr)
-{
-    CFE_MSG_FcnCode_t CommandCode = 0;
-
-    CFE_MSG_GetFcnCode(&SBBufPtr->Msg, &CommandCode);
-
-    /* Process "known" CI task ground commands */
-    switch (CommandCode)
-    {
-        case CI_LAB_NOOP_CC:
-            if (CI_LAB_VerifyCmdLength(&SBBufPtr->Msg, sizeof(CI_LAB_NoopCmd_t)))
-            {
-                CI_LAB_Noop((const CI_LAB_NoopCmd_t *)SBBufPtr);
-            }
-            break;
-
-        case CI_LAB_RESET_COUNTERS_CC:
-            if (CI_LAB_VerifyCmdLength(&SBBufPtr->Msg, sizeof(CI_LAB_ResetCountersCmd_t)))
-            {
-                CI_LAB_ResetCounters((const CI_LAB_ResetCountersCmd_t *)SBBufPtr);
-            }
-            break;
-
-        /* default case already found during FC vs length test */
-        default:
-            break;
-    }
-
-    return;
-
-} /* End of CI_LAB_ProcessGroundCommand() */
-
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*  Name:  CI_LAB_Noop                                                         */
 /*                                                                             */
@@ -358,21 +254,21 @@ void CI_LAB_ResetCounters_Internal(void)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
 void CI_LAB_ReadUpLink(void)
 {
-    int    i;
-    int32  status;
-    uint32 BitSize;
+    int                                   i;
+    int32                                 status;
+    uint32                                BitSize;
     CFE_SB_SoftwareBus_PubSub_Interface_t PubSubParams;
-    CFE_SB_Listener_Component_t ListenerParams;
-    EdsLib_DataTypeDB_TypeInfo_t CmdHdrInfo;
-    EdsLib_DataTypeDB_TypeInfo_t FullCmdInfo;
-    EdsLib_Id_t EdsId;
-    CFE_SB_Buffer_t *NextIngestBufPtr;
+    CFE_SB_Listener_Component_t           ListenerParams;
+    EdsLib_DataTypeDB_TypeInfo_t          CmdHdrInfo;
+    EdsLib_DataTypeDB_TypeInfo_t          FullCmdInfo;
+    EdsLib_Id_t                           EdsId;
+    CFE_SB_Buffer_t *                     NextIngestBufPtr;
 
     const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
 
     NextIngestBufPtr = NULL;
-    EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CFE_HDR), CFE_HDR_CommandHeader_DATADICTIONARY);
-    status = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &CmdHdrInfo);
+    EdsId            = EDSLIB_MAKE_ID(EDS_INDEX(CFE_HDR), CFE_HDR_CommandHeader_DATADICTIONARY);
+    status           = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &CmdHdrInfo);
     if (status != EDSLIB_SUCCESS)
     {
         OS_printf("EdsLib_DataTypeDB_GetTypeInfo(): %d\n", (int)status);
@@ -382,7 +278,7 @@ void CI_LAB_ReadUpLink(void)
     for (i = 0; i <= 10; i++)
     {
         status = OS_SocketRecvFrom(CI_LAB_Global.SocketID, CI_LAB_Global.NetworkBuffer,
-                sizeof(CI_LAB_Global.NetworkBuffer), &CI_LAB_Global.SocketAddress, OS_CHECK);
+                                   sizeof(CI_LAB_Global.NetworkBuffer), &CI_LAB_Global.SocketAddress, OS_CHECK);
 
         if (status >= 0)
         {
@@ -402,15 +298,16 @@ void CI_LAB_ReadUpLink(void)
                 if (NextIngestBufPtr == NULL)
                 {
                     CFE_EVS_SendEvent(CI_LAB_INGEST_ALLOC_ERR_EID, CFE_EVS_EventType_ERROR,
-                                    "CI: L%d, buffer allocation failed\n", __LINE__);
+                                      "CI: L%d, buffer allocation failed\n", __LINE__);
                     break;
                 }
             }
 
             /* Packet is in external wire-format byte order - unpack it and copy */
             EdsId = EDSLIB_MAKE_ID(EDS_INDEX(CFE_HDR), CFE_HDR_CommandHeader_DATADICTIONARY);
-            status = EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer,
-                sizeof(CFE_HDR_CommandHeader_Buffer_t), BitSize, 0);
+            status =
+                EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer,
+                                                      sizeof(CFE_HDR_CommandHeader_Buffer_t), BitSize, 0);
             if (status != EDSLIB_SUCCESS)
             {
                 OS_printf("EdsLib_DataTypeDB_UnpackPartialObject(1): %d\n", (int)status);
@@ -421,16 +318,17 @@ void CI_LAB_ReadUpLink(void)
             CFE_MissionLib_Get_PubSub_Parameters(&PubSubParams, &NextIngestBufPtr->Msg.BaseMsg);
             CFE_MissionLib_UnmapListenerComponent(&ListenerParams, &PubSubParams);
 
-            status = CFE_MissionLib_GetArgumentType(&CFE_SOFTWAREBUS_INTERFACE,
-                    CFE_SB_Telecommand_Interface_ID, ListenerParams.Telecommand.TopicId, 1, 1, &EdsId);
+            status = CFE_MissionLib_GetArgumentType(&CFE_SOFTWAREBUS_INTERFACE, CFE_SB_Telecommand_Interface_ID,
+                                                    ListenerParams.Telecommand.TopicId, 1, 1, &EdsId);
             if (status != CFE_MISSIONLIB_SUCCESS)
             {
                 OS_printf("CFE_MissionLib_GetArgumentType(): %d\n", (int)status);
                 break;
             }
 
-            status = EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer,
-                    sizeof(CFE_HDR_CommandHeader_Buffer_t), BitSize, sizeof(CFE_HDR_CommandHeader_t));
+            status = EdsLib_DataTypeDB_UnpackPartialObject(
+                EDS_DB, &EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer, sizeof(CFE_HDR_CommandHeader_Buffer_t),
+                BitSize, sizeof(CFE_HDR_CommandHeader_t));
             if (status != EDSLIB_SUCCESS)
             {
                 OS_printf("EdsLib_DataTypeDB_UnpackPartialObject(2): %d\n", (int)status);
@@ -438,8 +336,8 @@ void CI_LAB_ReadUpLink(void)
             }
 
             /* Verify that the checksum and basic fields are correct, and recompute the length entry */
-            status = EdsLib_DataTypeDB_VerifyUnpackedObject(EDS_DB, EdsId, NextIngestBufPtr,
-                CI_LAB_Global.NetworkBuffer, EDSLIB_DATATYPEDB_RECOMPUTE_LENGTH);
+            status = EdsLib_DataTypeDB_VerifyUnpackedObject(
+                EDS_DB, EdsId, NextIngestBufPtr, CI_LAB_Global.NetworkBuffer, EDSLIB_DATATYPEDB_RECOMPUTE_LENGTH);
             if (status != EDSLIB_SUCCESS)
             {
                 OS_printf("EdsLib_DataTypeDB_VerifyUnpackedObject(): %d\n", (int)status);
@@ -466,9 +364,8 @@ void CI_LAB_ReadUpLink(void)
             else
             {
                 CFE_EVS_SendEvent(CI_LAB_INGEST_SEND_ERR_EID, CFE_EVS_EventType_ERROR,
-                                "CI: L%d, CFE_SB_TransmitBuffer() failed, status=%d\n", __LINE__, (int)status);
+                                  "CI: L%d, CFE_SB_TransmitBuffer() failed, status=%d\n", __LINE__, (int)status);
             }
-
         }
         else if (status > 0)
         {
@@ -488,37 +385,3 @@ void CI_LAB_ReadUpLink(void)
     return;
 
 } /* End of CI_LAB_ReadUpLink() */
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-/*                                                                            */
-/* CI_LAB_VerifyCmdLength() -- Verify command packet length                   */
-/*                                                                            */
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
-bool CI_LAB_VerifyCmdLength(CFE_MSG_Message_t *MsgPtr, size_t ExpectedLength)
-{
-    bool              result       = true;
-    size_t            ActualLength = 0;
-    CFE_MSG_FcnCode_t FcnCode      = 0;
-    CFE_SB_MsgId_t    MsgId        = CFE_SB_INVALID_MSG_ID;
-
-    CFE_MSG_GetSize(MsgPtr, &ActualLength);
-
-    /*
-    ** Verify the command packet length...
-    */
-    if (ExpectedLength != ActualLength)
-    {
-        CFE_MSG_GetMsgId(MsgPtr, &MsgId);
-        CFE_MSG_GetFcnCode(MsgPtr, &FcnCode);
-
-        CFE_EVS_SendEvent(CI_LAB_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
-                          "Invalid msg length: ID = 0x%X,  CC = %u, Len = %u, Expected = %u",
-                          (unsigned int)CFE_SB_MsgIdToValue(MsgId), (unsigned int)FcnCode, (unsigned int)ActualLength,
-                          (unsigned int)ExpectedLength);
-        result = false;
-        CI_LAB_Global.HkTlm.Payload.CommandErrorCounter++;
-    }
-
-    return (result);
-
-} /* End of CI_LAB_VerifyCmdLength() */

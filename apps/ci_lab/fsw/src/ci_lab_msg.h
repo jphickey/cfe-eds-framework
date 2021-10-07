@@ -39,7 +39,6 @@
  */
 #include "ci_lab_eds_typedefs.h"
 
-
 #endif /* _ci_lab_msg_h_ */
 
 /************************/
