@@ -40,7 +40,7 @@
 /*
 ** Defines
 */
-#define SCH_TBL_DEFAULT_FILE         "/cf/sch_lab_table.tbl"
+#define SCH_TBL_DEFAULT_FILE "/cf/sch_lab_table.tbl"
 
 /*
  * The EDS defines the table type name as "SchTbl" so it matches
