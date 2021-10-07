@@ -328,16 +328,14 @@ int32 CFE_TBL_AbortLoadCmd(const CFE_TBL_AbortLoadCmd_t *data);
 **
 ** \param[in] TableName       Name of table being dumped to a file
 **
-** \param[in] DumpDataAddr    Address of data buffer whose contents are to be written
+** \param[in] SrcBufferPtr    Working buffer whose contents are to be written
 **                            to the specified file
-**
-** \param[in] TblSizeInBytes  Size of block of data to be written to the file
 **
 ** \retval #CFE_TBL_INC_ERR_CTR  \copydoc CFE_TBL_INC_ERR_CTR
 ** \retval #CFE_TBL_INC_CMD_CTR  \copydoc CFE_TBL_INC_CMD_CTR
 */
-extern CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile(const char *DumpFilename, const char *TableName,
-                                               const void *DumpDataAddr, size_t TblSizeInBytes);
+CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile(const char *DumpFilename, const char *TableName,
+                                        const CFE_TBL_LoadBuff_t *SrcBufferPtr);
 
 /*---------------------------------------------------------------------------------------*/
 /**

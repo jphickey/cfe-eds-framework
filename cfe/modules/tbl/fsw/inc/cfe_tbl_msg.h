@@ -45,12 +45,4 @@
  */
 #include "cfe_tbl_eds_cc.h"
 
-/*
- * In some circumstances the EDS tool does not generate a symbol
- * name identically to the historical name due to naming inconsistencies
- *
- * For those cases, create a local define from the historic name to the EDS name
- */
-#define CFE_TBL_DUMP_REGISTRY_CC CFE_TBL_SEND_REGISTRY_CC
-
 #endif /* CFE_TBL_MSG_H */

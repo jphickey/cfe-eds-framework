@@ -426,6 +426,10 @@ void CFE_TBL_NotifyTblUsersOfUpdate(CFE_TBL_RegistryRec_t *RegRecPtr);
 **        on header contents to ensure the acceptability of the
 **        file format.
 **
+**        In this version, the TBL headers are defined in EDS and all EDS
+**        based translations and constraints are applied.  The returned
+**        structures will be in the native byte order and encoding for the host CPU.
+**
 ** \par Assumptions, External Events, and Notes:
 **        -# FileDescriptor is assumed to be valid
 **
@@ -466,22 +470,6 @@ int32 CFE_TBL_ReadHeaders(osal_id_t FileDescriptor, CFE_FS_Header_t *StdFileHead
 **
 */
 void CFE_TBL_InitRegistryRecord(CFE_TBL_RegistryRec_t *RegRecPtr);
-
-/*---------------------------------------------------------------------------------------*/
-/**
-** \brief Byte swaps a CFE_TBL_File_Hdr_t structure
-**
-** \par Description
-**        Converts a big-endian version of a CFE_TBL_File_Hdr_t structure to
-**        a little-endian version and vice-versa.
-**
-** \par Assumptions, External Events, and Notes:
-**          None
-**
-** \param[in, out]  HdrPtr   Pointer to table header that needs to be swapped. *HdrPtr provides the swapped header
-**
-*/
-void CFE_TBL_ByteSwapTblHeader(CFE_TBL_File_Hdr_t *HdrPtr);
 
 /*---------------------------------------------------------------------------------------*/
 /**
@@ -545,22 +533,6 @@ void CFE_TBL_UpdateCriticalTblCDS(CFE_TBL_RegistryRec_t *RegRecPtr);
 */
 int32 CFE_TBL_SendNotificationMsg(CFE_TBL_RegistryRec_t *RegRecPtr);
 
-/*---------------------------------------------------------------------------------------*/
-/**
-** \brief Performs a byte swap on a uint32 integer
-**
-** \par Description
-**        Converts a big-endian uint32 integer to a little-endian uint32 integer
-**        and vice-versa.
-**
-** \par Assumptions, External Events, and Notes:
-**          None
-**
-** \param[in, out]  Uint32ToSwapPtr Pointer to uint32 value to be swapped. *Uint32ToSwapPtr is the swapped uint32 value
-**
-*/
-extern void CFE_TBL_ByteSwapUint32(uint32 *Uint32ToSwapPtr);
-
 /*
  * Internal helper functions for Table Registry dump
  *
@@ -570,6 +542,11 @@ extern void CFE_TBL_ByteSwapUint32(uint32 *Uint32ToSwapPtr);
 void CFE_TBL_DumpRegistryEventHandler(void *Meta, CFE_FS_FileWriteEvent_t Event, int32 Status, uint32 RecordNum,
                                       size_t BlockSize, size_t Position);
 bool CFE_TBL_DumpRegistryGetter(void *Meta, uint32 RecordNum, void **Buffer, size_t *BufSize);
+
+CFE_Status_t CFE_TBL_DecodeFromMemory(const void *PackedBuffer, EdsLib_Id_t EdsId, CFE_TBL_LoadBuff_t *NativeBufferPtr,
+                                      CFE_TBL_RegistryRec_t *RegRecPtr);
+CFE_Status_t CFE_TBL_EncodeFromMemory(void *PackedBuffer, const CFE_TBL_LoadBuff_t *NativeBufferPtr,
+                                      CFE_TBL_RegistryRec_t *RegRecPtr);
 
 /*
 ** Globals specific to the TBL module

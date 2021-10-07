@@ -33,6 +33,7 @@
 ** Includes
 */
 #include "ut_support.h"
+#include "cfe_msg_dispatcher.h"
 #include "cfe_core_resourceid_basevalues.h"
 
 #include <string.h>
@@ -197,6 +198,38 @@ void UT_ResetPoolBufferIndex(void)
     UT_SetDataBuffer(UT_KEY(CFE_ES_GetPoolBuf), &UT_CFE_ES_MemoryPool, sizeof(UT_CFE_ES_MemoryPool), false);
 }
 
+void UT_DispatchHandler(void *UserObj, UT_EntryKey_t FuncKey, const UT_StubContext_t *Context)
+{
+    UT_TaskPipeDispatchId_t *DispatchId    = UserObj;
+    const CFE_SB_Buffer_t *  Buffer        = UT_Hook_GetArgValueByName(Context, "Buffer", const CFE_SB_Buffer_t *);
+    const void *             DispatchTable = UT_Hook_GetArgValueByName(Context, "DispatchTable", const void *);
+    const uint8 *            Addr;
+    CFE_Status_t (*MsgHandler)(const CFE_SB_Buffer_t *);
+    CFE_Status_t Status;
+
+    MsgHandler = NULL;
+    UT_Stub_GetInt32StatusCode(Context, &Status);
+
+    if (Status == 0 && DispatchId != NULL)
+    {
+        Status = DispatchId->DispatchError;
+
+        if (DispatchId->DispatchOffset >= 0 && DispatchTable != NULL)
+        {
+            Addr = DispatchTable;
+            Addr += DispatchId->DispatchOffset;
+            memcpy(&MsgHandler, Addr, sizeof(void *));
+        }
+    }
+
+    if (MsgHandler != NULL)
+    {
+        Status = MsgHandler(Buffer);
+    }
+
+    UT_Stub_SetReturnValue(FuncKey, Status);
+}
+
 /*
 ** Sets up the MSG stubs in preparation to invoke a "TaskPipe" dispatch function
 **
@@ -206,21 +239,36 @@ void UT_ResetPoolBufferIndex(void)
 void UT_SetupBasicMsgDispatch(const UT_TaskPipeDispatchId_t *DispatchReq, CFE_MSG_Size_t MsgSize,
                               bool ExpectFailureEvent)
 {
+    CFE_Status_t ErrorCode;
     if (DispatchReq != NULL)
     {
-        /* Set up for the typical task pipe related calls */
-        UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), (void *)&DispatchReq->MsgId, sizeof(DispatchReq->MsgId), true);
-        UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &MsgSize, sizeof(MsgSize), true);
-        UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), (void *)&DispatchReq->CommandCode,
-                         sizeof(DispatchReq->CommandCode), true);
-
-        /* If a failure event is being set up, also set for MsgId/FcnCode retrieval as part of failure event reporting
-         */
-        if (ExpectFailureEvent)
+        /* If a failure event is being set up, set for MsgId/FcnCode retrieval as part of failure event reporting  */
+        if (ExpectFailureEvent || DispatchReq->DispatchError != CFE_SUCCESS)
         {
             UT_SetDataBuffer(UT_KEY(CFE_MSG_GetMsgId), (void *)&DispatchReq->MsgId, sizeof(DispatchReq->MsgId), true);
+            UT_SetDataBuffer(UT_KEY(CFE_MSG_GetSize), &MsgSize, sizeof(MsgSize), true);
             UT_SetDataBuffer(UT_KEY(CFE_MSG_GetFcnCode), (void *)&DispatchReq->CommandCode,
                              sizeof(DispatchReq->CommandCode), true);
+
+            /* If the code uses EDS dispatch, this will cause it to return the specified error */
+            if (DispatchReq->DispatchError != CFE_SUCCESS)
+            {
+                ErrorCode = DispatchReq->DispatchError;
+            }
+            else
+            {
+                /* If not specified, default to WRONG_MSG_LENGTH as this feature was historically used for testing bad
+                 * length */
+                ErrorCode = CFE_STATUS_WRONG_MSG_LENGTH;
+            }
+
+            UT_SetDefaultReturnValue(UT_KEY(CFE_MSG_EdsDispatch), ErrorCode);
+        }
+        else
+        {
+            /* If the code uses EDS dispatch, this will invoke the right member function from the table (based on
+             * offset) */
+            UT_SetHandlerFunction(UT_KEY(CFE_MSG_EdsDispatch), UT_DispatchHandler, (void *)DispatchReq);
         }
     }
     else
@@ -229,6 +277,7 @@ void UT_SetupBasicMsgDispatch(const UT_TaskPipeDispatchId_t *DispatchReq, CFE_MS
         UT_ResetState(UT_KEY(CFE_MSG_GetMsgId));
         UT_ResetState(UT_KEY(CFE_MSG_GetSize));
         UT_ResetState(UT_KEY(CFE_MSG_GetFcnCode));
+        UT_ResetState(UT_KEY(CFE_MSG_EdsDispatch));
     }
 }
 

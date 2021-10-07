@@ -418,16 +418,16 @@ void CFE_TIME_GetHkData(const CFE_TIME_Reference_t *Reference)
 ** 1Hz STCF adjustment values (server only)...
 */
 #if (CFE_PLATFORM_TIME_CFG_SERVER == true)
-    CFE_TIME_Global.HkPacket.Payload.Seconds1HzAdj = CFE_TIME_Global.OneHzAdjust.Seconds;
-    CFE_TIME_Global.HkPacket.Payload.Subsecs1HzAdj = CFE_TIME_Global.OneHzAdjust.Subseconds;
+    CFE_TIME_Global.HkPacket.Payload.AdjustmentFactor.Seconds    = CFE_TIME_Global.OneHzAdjust.Seconds;
+    CFE_TIME_Global.HkPacket.Payload.AdjustmentFactor.Subseconds = CFE_TIME_Global.OneHzAdjust.Subseconds;
 #endif
 
 /*
 ** Time at tone delay values (client only)...
 */
 #if (CFE_PLATFORM_TIME_CFG_CLIENT == true)
-    CFE_TIME_Global.HkPacket.Payload.SecondsDelay = Reference->AtToneDelay.Seconds;
-    CFE_TIME_Global.HkPacket.Payload.SubsecsDelay = Reference->AtToneDelay.Subseconds;
+    CFE_TIME_Global.HkPacket.Payload.AdjustmentFactor.Seconds    = Reference->AtToneDelay.Seconds;
+    CFE_TIME_Global.HkPacket.Payload.AdjustmentFactor.Subseconds = Reference->AtToneDelay.Subseconds;
 #endif
 
     return;

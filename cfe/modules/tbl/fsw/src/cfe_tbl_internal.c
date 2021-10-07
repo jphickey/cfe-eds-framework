@@ -964,7 +964,7 @@ int32 CFE_TBL_LoadFromFile(const char *AppName, CFE_TBL_LoadBuff_t *WorkingBuffe
     return Status;
 }
 
-CFE_Status_t CFE_TBL_DecodeFromMemory(const void *SourceBuffer, EdsLib_Id_t EdsId, CFE_TBL_LoadBuff_t *WorkingBufferPtr,
+CFE_Status_t CFE_TBL_DecodeFromMemory(const void *PackedBuffer, EdsLib_Id_t EdsId, CFE_TBL_LoadBuff_t *NativeBufferPtr,
                                       CFE_TBL_RegistryRec_t *RegRecPtr)
 {
     CFE_Status_t                 Status;
@@ -979,25 +979,56 @@ CFE_Status_t CFE_TBL_DecodeFromMemory(const void *SourceBuffer, EdsLib_Id_t EdsI
         return CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
     }
 
-    WorkingBufferPtr->EdsContentId = EdsId;
+    NativeBufferPtr->EdsContentId = EdsId;
     EdsStatus =
-        EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &WorkingBufferPtr->EdsContentId, WorkingBufferPtr->BufferPtr,
-                                              SourceBuffer, RegRecPtr->Size, TypeInfo.Size.Bits, 0);
+        EdsLib_DataTypeDB_UnpackPartialObject(EDS_DB, &NativeBufferPtr->EdsContentId, NativeBufferPtr->BufferPtr,
+                                              PackedBuffer, RegRecPtr->Size, TypeInfo.Size.Bits, 0);
 
     if (EdsStatus == EDSLIB_SUCCESS)
     {
         EdsStatus =
-            EdsLib_DataTypeDB_VerifyUnpackedObject(EDS_DB, WorkingBufferPtr->EdsContentId, WorkingBufferPtr->BufferPtr,
-                                                   SourceBuffer, EDSLIB_DATATYPEDB_RECOMPUTE_LENGTH);
+            EdsLib_DataTypeDB_VerifyUnpackedObject(EDS_DB, NativeBufferPtr->EdsContentId, NativeBufferPtr->BufferPtr,
+                                                   PackedBuffer, EDSLIB_DATATYPEDB_RECOMPUTE_LENGTH);
     }
 
     /* If successful, recompute the CRC */
     if (EdsStatus == EDSLIB_SUCCESS)
     {
         /* Compute the CRC on the specified table buffer */
-        WorkingBufferPtr->Crc =
-            CFE_ES_CalculateCRC(WorkingBufferPtr->BufferPtr, TypeInfo.Size.Bytes, 0, CFE_MISSION_ES_DEFAULT_CRC);
+        NativeBufferPtr->Crc =
+            CFE_ES_CalculateCRC(NativeBufferPtr->BufferPtr, TypeInfo.Size.Bytes, 0, CFE_MISSION_ES_DEFAULT_CRC);
 
+        Status = CFE_SUCCESS;
+    }
+    else
+    {
+        Status = CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
+    }
+
+    return Status;
+}
+
+CFE_Status_t CFE_TBL_EncodeFromMemory(void *PackedBuffer, const CFE_TBL_LoadBuff_t *NativeBufferPtr,
+                                      CFE_TBL_RegistryRec_t *RegRecPtr)
+{
+    CFE_Status_t                 Status;
+    EdsLib_DataTypeDB_TypeInfo_t TypeInfo;
+    int32                        EdsStatus;
+    EdsLib_Id_t                  EdsId;
+
+    const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
+
+    EdsId     = NativeBufferPtr->EdsContentId;
+    EdsStatus = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &TypeInfo);
+    if (EdsStatus != EDSLIB_SUCCESS)
+    {
+        return CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
+    }
+
+    EdsStatus = EdsLib_DataTypeDB_PackCompleteObject(EDS_DB, &EdsId, PackedBuffer, NativeBufferPtr->BufferPtr,
+                                                     TypeInfo.Size.Bits, RegRecPtr->Size);
+    if (EdsStatus == EDSLIB_SUCCESS)
+    {
         Status = CFE_SUCCESS;
     }
     else
@@ -1383,41 +1414,6 @@ int32 CFE_TBL_ReadHeaders(osal_id_t FileDescriptor, CFE_FS_Header_t *StdFileHead
     }
 
     return Status;
-}
-
-/*----------------------------------------------------------------
- *
- * Function: CFE_TBL_ByteSwapTblHeader
- *
- * Application-scope internal function
- * See description in header file for argument/return detail
- *
- *-----------------------------------------------------------------*/
-void CFE_TBL_ByteSwapTblHeader(CFE_TBL_File_Hdr_t *HdrPtr)
-{
-    CFE_TBL_ByteSwapUint32(&HdrPtr->Reserved);
-    CFE_TBL_ByteSwapUint32(&HdrPtr->Offset);
-    CFE_TBL_ByteSwapUint32(&HdrPtr->NumBytes);
-}
-
-/*----------------------------------------------------------------
- *
- * Function: CFE_TBL_ByteSwapUint32
- *
- * Application-scope internal function
- * See description in header file for argument/return detail
- *
- *-----------------------------------------------------------------*/
-void CFE_TBL_ByteSwapUint32(uint32 *Uint32ToSwapPtr)
-{
-    int32 Temp   = *Uint32ToSwapPtr;
-    char *InPtr  = (char *)&Temp;
-    char *OutPtr = (char *)Uint32ToSwapPtr;
-
-    OutPtr[0] = InPtr[3];
-    OutPtr[1] = InPtr[2];
-    OutPtr[2] = InPtr[1];
-    OutPtr[3] = InPtr[0];
 }
 
 /*----------------------------------------------------------------

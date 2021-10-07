@@ -287,12 +287,6 @@ bool CFE_ES_ValidateHandle(CFE_ES_MemHandle_t Handle);
 
 /*---------------------------------------------------------------------------------------*/
 /**
- * \brief  Verify command packet length
- */
-bool CFE_ES_VerifyCmdLength(CFE_MSG_Message_t *MsgPtr, size_t ExpectedLength);
-
-/*---------------------------------------------------------------------------------------*/
-/**
  * \brief Notify of file write inconsistency
  *
  * Send event to inform ground that a byte count discrepancy has been

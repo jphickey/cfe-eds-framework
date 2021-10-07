@@ -42,8 +42,8 @@
 
   <Package name="CFE_FS" shortDescription="File Services Configuration">
      <Define name="FILE_CONTENT_ID" value="0x63464531" shortDescription="Magic Number for cFE compliant files (= cFE1)" />
-		 <Define name="HDR_DESC_MAX_LEN" value="32"/>
-	</Package>
+     <Define name="HDR_DESC_MAX_LEN" value="32"/>
+  </Package>
 
   <Package name="CFE_SB" shortDescription="Software Bus Configuration">
      <Define name="SUB_ENTRIES_PER_PKT" value="20" />
@@ -54,7 +54,18 @@
     <Define name="MAX_SCHEDULE_ENTRIES" value="32" />
   </Package>
 
-	<Package name="CFE_MISSION" shortDescription="cFE mission configuration">
+  <Package name="CFE_ES" shortDescription="CFE_ES configurable items">
+    <!-- 
+      Memory size values in CFE CMD/TLM messages.
+      Traditionally in CFE these were only 32 bit values.  Keeping as 32-bit
+      (4 bytes) allows more compatibility with older (non-EDS) tools, but
+      can be increased for large object support.
+    -->
+    <Define name="MEM_OFFSET_SIZE_BITS" value="32" />
+  </Package>
+
+
+  <Package name="CFE_MISSION" shortDescription="cFE mission configuration">
       <!--
          Note on header type selection - this should be defined to the bare
          (non-qualified) EDS type name.  The MSG EDS file and associated
@@ -66,15 +77,14 @@
      <!-- <Define name="MSG_HEADER_TYPE" value="SpacePacketApidQ" /> -->
 
      <!-- Use 16-bit subseconds field for a 48-bit timestamp in TLM messages -->
-	  <Define name="MSG_TELEMETRY_SUBSECONDS_TYPE" value="uint16"/>
-
-		<Define name="DATA_BYTE_ORDER" value="bigEndian"/>
-		<Define name="SIGNED_INTEGER_ENCODING" value="twosComplement"/>
-		<Define name="SPACECRAFT_ID" value="66"/>
-		<Define name="TELECOMMAND_BASE_TOPICID" value="1"/>
-		<Define name="TELECOMMAND_MAX_TOPICID" value="61"/>
-		<Define name="TELEMETRY_BASE_TOPICID" value="61"/>
-		<Define name="TELEMETRY_MAX_TOPICID" value="121"/>
+     <Define name="MSG_TELEMETRY_SUBSECONDS_TYPE" value="uint16"/>
+     <Define name="DATA_BYTE_ORDER" value="bigEndian"/>
+     <Define name="SIGNED_INTEGER_ENCODING" value="twosComplement"/>
+     <Define name="SPACECRAFT_ID" value="66"/>
+     <Define name="TELECOMMAND_BASE_TOPICID" value="1"/>
+     <Define name="TELECOMMAND_MAX_TOPICID" value="61"/>
+     <Define name="TELEMETRY_BASE_TOPICID" value="61"/>
+     <Define name="TELEMETRY_MAX_TOPICID" value="121"/>
 
     <Define name="ES_CDS_MAX_NAME_LENGTH" value="16">
       <LongDescription>
@@ -180,7 +190,7 @@
     </LongDescription>
     </Define>
 
-		<Define name="TBL_MAX_FULL_NAME_LEN" value="${CFE_MISSION/TBL_MAX_NAME_LENGTH} + ${CFE_MISSION/MAX_API_LEN} + 4">
+    <Define name="TBL_MAX_FULL_NAME_LEN" value="${CFE_MISSION/TBL_MAX_NAME_LENGTH} + ${CFE_MISSION/MAX_API_LEN} + 4">
       <LongDescription>
         \cfetblcfg Maximum Length of Full Table Name in messages
 
@@ -526,7 +536,7 @@
       </LongDescription>
     </Define>
 
-		<Define name="ES_CDS_MAX_FULL_NAME_LEN" value="${CFE_MISSION/ES_CDS_MAX_NAME_LENGTH} + ${CFE_MISSION/MAX_API_LEN} + 4">
+    <Define name="ES_CDS_MAX_FULL_NAME_LEN" value="${CFE_MISSION/ES_CDS_MAX_NAME_LENGTH} + ${CFE_MISSION/MAX_API_LEN} + 4">
       <LongDescription>
         \cfeescfg Maximum Length of Full CDS Name in messages
 
@@ -547,6 +557,6 @@
       </LongDescription>
     </Define>
 
-	</Package>
+  </Package>
 
 </DesignParameters>

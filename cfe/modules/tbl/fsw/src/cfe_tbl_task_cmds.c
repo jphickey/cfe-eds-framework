@@ -34,6 +34,9 @@
 */
 #include "cfe_tbl_module_all.h"
 #include "cfe_version.h"
+#include "edslib_datatypedb.h"
+#include "cfe_mission_eds_parameters.h"
+#include "cfe_config.h"
 
 #include <string.h>
 
@@ -93,7 +96,7 @@ int32 CFE_TBL_HousekeepingCmd(const CFE_MSG_CommandHeader_t *data)
         {
             DumpCtrlPtr = &CFE_TBL_Global.DumpControlBlocks[i];
             Status      = CFE_TBL_DumpToFile(DumpCtrlPtr->DumpBufferPtr->DataSource, DumpCtrlPtr->TableName,
-                                        DumpCtrlPtr->DumpBufferPtr->BufferPtr, DumpCtrlPtr->Size);
+                                        DumpCtrlPtr->DumpBufferPtr);
 
             /* If dump file was successfully written, update the file header so that the timestamp */
             /* is the time of the actual capturing of the data, NOT the time when it was written to the file */
@@ -555,17 +558,23 @@ int32 CFE_TBL_DumpCmd(const CFE_TBL_DumpCmd_t *data)
     char                             DumpFilename[OS_MAX_PATH_LEN];
     char                             TableName[CFE_TBL_MAX_FULL_NAME_LEN];
     CFE_TBL_RegistryRec_t *          RegRecPtr;
-    void *                           DumpDataAddr = NULL;
+    CFE_TBL_LoadBuff_t *             SrcBufferPtr;
     CFE_TBL_LoadBuff_t *             WorkingBufferPtr;
-    int32                            DumpIndex;
-    int32                            Status;
+    int32                            i;
+    int32                            OsStatus;
     CFE_TBL_DumpControl_t *          DumpCtrlPtr;
+    CFE_TIME_SysTime_t               DumpTime;
 
     /* Make sure all strings are null terminated before attempting to process them */
     CFE_SB_MessageStringGet(DumpFilename, (char *)CmdPtr->DumpFilename, NULL, sizeof(DumpFilename),
                             sizeof(CmdPtr->DumpFilename));
 
     CFE_SB_MessageStringGet(TableName, (char *)CmdPtr->TableName, NULL, sizeof(TableName), sizeof(CmdPtr->TableName));
+
+    SrcBufferPtr     = NULL;
+    WorkingBufferPtr = NULL;
+    RegRecPtr        = NULL;
+    DumpCtrlPtr      = NULL;
 
     /* Before doing anything, lets make sure the table that is to be dumped exists */
     RegIndex = CFE_TBL_FindTableInRegistry(TableName);
@@ -578,14 +587,14 @@ int32 CFE_TBL_DumpCmd(const CFE_TBL_DumpCmd_t *data)
         /* Determine what data is to be dumped */
         if (CmdPtr->ActiveTableFlag == CFE_TBL_BufferSelect_ACTIVE)
         {
-            DumpDataAddr = RegRecPtr->Buffers[RegRecPtr->ActiveBufferIndex].BufferPtr;
+            SrcBufferPtr = &RegRecPtr->Buffers[RegRecPtr->ActiveBufferIndex];
         }
         else if (CmdPtr->ActiveTableFlag == CFE_TBL_BufferSelect_INACTIVE) /* Dumping Inactive Buffer */
         {
             /* If this is a double buffered table, locating the inactive buffer is trivial */
             if (RegRecPtr->DoubleBuffered)
             {
-                DumpDataAddr = RegRecPtr->Buffers[(1U - RegRecPtr->ActiveBufferIndex)].BufferPtr;
+                SrcBufferPtr = &RegRecPtr->Buffers[(1U - RegRecPtr->ActiveBufferIndex)];
             }
             else
             {
@@ -593,7 +602,7 @@ int32 CFE_TBL_DumpCmd(const CFE_TBL_DumpCmd_t *data)
                 /* Unless this is a table whose address was defined by the owning Application.              */
                 if ((RegRecPtr->LoadInProgress != CFE_TBL_NO_LOAD_IN_PROGRESS) && (!RegRecPtr->UserDefAddr))
                 {
-                    DumpDataAddr = CFE_TBL_Global.LoadBuffs[RegRecPtr->LoadInProgress].BufferPtr;
+                    SrcBufferPtr = &CFE_TBL_Global.LoadBuffs[RegRecPtr->LoadInProgress];
                 }
                 else
                 {
@@ -608,73 +617,6 @@ int32 CFE_TBL_DumpCmd(const CFE_TBL_DumpCmd_t *data)
                               "Cmd for Table '%s' had illegal buffer parameter (0x%08X)", TableName,
                               (unsigned int)CmdPtr->ActiveTableFlag);
         }
-
-        /* If we have located the data to be dumped, then proceed with creating the file and dumping the data */
-        if (DumpDataAddr != NULL)
-        {
-            /* If this is not a dump only table, then we can perform the dump immediately */
-            if (!RegRecPtr->DumpOnly)
-            {
-                ReturnCode = CFE_TBL_DumpToFile(DumpFilename, TableName, DumpDataAddr, RegRecPtr->Size);
-            }
-            else /* Dump Only tables need to synchronize their dumps with the owner's execution */
-            {
-                /* Make sure a dump is not already in progress */
-                if (RegRecPtr->DumpControlIndex == CFE_TBL_NO_DUMP_PENDING)
-                {
-                    /* Find a free Dump Control Block */
-                    DumpIndex = 0;
-                    while ((DumpIndex < CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS) &&
-                           (CFE_TBL_Global.DumpControlBlocks[DumpIndex].State != CFE_TBL_DUMP_FREE))
-                    {
-                        DumpIndex++;
-                    }
-
-                    if (DumpIndex < CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS)
-                    {
-                        /* Allocate a shared memory buffer for storing the data to be dumped */
-                        Status = CFE_TBL_GetWorkingBuffer(&WorkingBufferPtr, RegRecPtr, false);
-
-                        if (Status == CFE_SUCCESS)
-                        {
-                            DumpCtrlPtr            = &CFE_TBL_Global.DumpControlBlocks[DumpIndex];
-                            DumpCtrlPtr->State     = CFE_TBL_DUMP_PENDING;
-                            DumpCtrlPtr->RegRecPtr = RegRecPtr;
-
-                            /* Save the name of the desired dump filename, table name and size for later */
-                            DumpCtrlPtr->DumpBufferPtr = WorkingBufferPtr;
-                            memcpy(DumpCtrlPtr->DumpBufferPtr->DataSource, DumpFilename, OS_MAX_PATH_LEN);
-                            memcpy(DumpCtrlPtr->TableName, TableName, CFE_TBL_MAX_FULL_NAME_LEN);
-                            DumpCtrlPtr->Size = RegRecPtr->Size;
-
-                            /* Notify the owning application that a dump is pending */
-                            RegRecPtr->DumpControlIndex = DumpIndex;
-
-                            /* If application requested notification by message, then do so */
-                            CFE_TBL_SendNotificationMsg(RegRecPtr);
-
-                            /* Consider the command completed successfully */
-                            ReturnCode = CFE_TBL_INC_CMD_CTR;
-                        }
-                        else
-                        {
-                            CFE_EVS_SendEvent(CFE_TBL_NO_WORK_BUFFERS_ERR_EID, CFE_EVS_EventType_ERROR,
-                                              "No working buffers available for table '%s'", TableName);
-                        }
-                    }
-                    else
-                    {
-                        CFE_EVS_SendEvent(CFE_TBL_TOO_MANY_DUMPS_ERR_EID, CFE_EVS_EventType_ERROR,
-                                          "Too many Dump Only Table Dumps have been requested");
-                    }
-                }
-                else
-                {
-                    CFE_EVS_SendEvent(CFE_TBL_DUMP_PENDING_ERR_EID, CFE_EVS_EventType_ERROR,
-                                      "A dump for '%s' is already pending", TableName);
-                }
-            }
-        }
     }
     else /* Table could not be found in Registry */
     {
@@ -682,7 +624,128 @@ int32 CFE_TBL_DumpCmd(const CFE_TBL_DumpCmd_t *data)
                           "Unable to locate '%s' in Table Registry", TableName);
     }
 
-    return ReturnCode;
+    /* If anything above failed or the table is not in an appropriate state to dump, return now */
+    if (SrcBufferPtr == NULL || RegRecPtr == NULL || SrcBufferPtr->BufferPtr == NULL)
+    {
+        return ReturnCode;
+    }
+
+    /*
+     * EDS Integration note:
+     * Previously this would dump the memory directly from memory to the file, but only for
+     * normal tables (i.e. not "dump only" tables).  For dump-only tables, it would defer the dump
+     * to a background task, using a temporary buffer.
+     *
+     * With EDS added, all dumps need to go through a translation from in-memory representation
+     * to the file representation.  As a side effect, this means now _all_ table dumps need to have
+     * a temporary buffer for holding the packed data, before it is written
+     *
+     * This fact can be leveraged to make everything more consistent - ALL dump operations need
+     * to obtain a scratch buffer, and all actual file writes can be done by the background task.
+     * While this pattern was previously only for "dump-only" tables, now this pattern can apply
+     * to all dump ops.
+     *
+     * There are actually two separate ephemeral objects to allocate for the procedure:
+     * 1. Temporary/scratch buffer from "LoadBuffs" (misnamed here, dump not load, but same purpose)
+     * 2. "DumpControlBlock" entry that will be picked up by background task
+     */
+    /* allocate a scratch buffer, which other tasks may also do, so needs a mutex */
+    OsStatus = OS_MutSemTake(CFE_TBL_Global.WorkBufMutex);
+    if (OsStatus != OS_SUCCESS)
+    {
+        CFE_ES_WriteToSysLog("%s: Internal error taking WorkBuf Mutex (Status=%ld)\n", __func__, (long)OsStatus);
+        return ReturnCode;
+    }
+
+    /* Determine if there are any common buffers available */
+    i = 0;
+    while ((i < CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS) && (CFE_TBL_Global.LoadBuffs[i].Taken == true))
+    {
+        i++;
+    }
+
+    /* If a free buffer was found, then return the address to the associated shared buffer */
+    if (i < CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS)
+    {
+        /* hang on to the LoadBuffs slot but do not reserve it yet */
+        WorkingBufferPtr = &CFE_TBL_Global.LoadBuffs[i];
+
+        /* Find a free Dump Control Block */
+        /* This is not done w/lock, but assumed that this is the only thread allocating these entries */
+        i = 0;
+        while ((i < CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS) &&
+               (CFE_TBL_Global.DumpControlBlocks[i].State != CFE_TBL_DUMP_FREE))
+        {
+            i++;
+        }
+
+        /* If a free buffer was found, then move forward */
+        if (i < CFE_PLATFORM_TBL_MAX_SIMULTANEOUS_LOADS)
+        {
+            /* reserve the LoadBuffs slot found earlier */
+            WorkingBufferPtr->Taken = true;
+
+            /* also hang onto the dump control entry */
+            DumpCtrlPtr = &CFE_TBL_Global.DumpControlBlocks[i];
+        }
+        else
+        {
+            WorkingBufferPtr = NULL;
+        }
+    }
+
+    /* Allow others to obtain a shared working buffer */
+    OS_MutSemGive(CFE_TBL_Global.WorkBufMutex);
+
+    /* If successful, the code above should have set _both_ pointers non-null */
+    if (DumpCtrlPtr == NULL || WorkingBufferPtr == NULL)
+    {
+        CFE_EVS_SendEvent(CFE_TBL_TOO_MANY_DUMPS_ERR_EID, CFE_EVS_EventType_ERROR,
+                          "Too many table dumps are in progress");
+        return ReturnCode;
+    }
+
+    DumpCtrlPtr->RegRecPtr = RegRecPtr;
+
+    /* Save the name of the desired dump filename, table name and size for later */
+    DumpCtrlPtr->DumpBufferPtr = WorkingBufferPtr;
+    memcpy(DumpCtrlPtr->DumpBufferPtr->DataSource, DumpFilename, OS_MAX_PATH_LEN);
+    memcpy(DumpCtrlPtr->TableName, TableName, CFE_TBL_MAX_FULL_NAME_LEN);
+    DumpCtrlPtr->Size = RegRecPtr->Size;
+
+    ReturnCode = CFE_TBL_EncodeFromMemory(WorkingBufferPtr->BufferPtr, SrcBufferPtr, RegRecPtr);
+    if (ReturnCode != CFE_SUCCESS)
+    {
+        CFE_EVS_SendEvent(CFE_TBL_INTERNAL_ERROR_ERR_EID, CFE_EVS_EventType_ERROR, "Cannot encode table '%s'",
+                          TableName);
+
+        /* Free the working buffer + dump control buffer too */
+        WorkingBufferPtr->Taken = false;
+
+        return ReturnCode;
+    }
+
+    /* Save the Eds ID of the packed data */
+    WorkingBufferPtr->EdsContentId = SrcBufferPtr->EdsContentId;
+
+    /* Save the current time so that the header in the dump file can have the correct time */
+    DumpTime = CFE_TIME_GetTime();
+
+    DumpCtrlPtr->DumpBufferPtr->FileCreateTimeSecs    = DumpTime.Seconds;
+    DumpCtrlPtr->DumpBufferPtr->FileCreateTimeSubSecs = DumpTime.Subseconds;
+
+    /*
+     * Normal status / finish up -
+     * indicate to the background task that the dump was performed (i.e. packed data
+     * in working buffer is valid) so it can write to file.
+     */
+    DumpCtrlPtr->State = CFE_TBL_DUMP_PERFORMED;
+
+    /* If application requested notification by message, then do so */
+    CFE_TBL_SendNotificationMsg(RegRecPtr);
+
+    /* Consider the command completed successfully */
+    return CFE_TBL_INC_CMD_CTR;
 }
 
 /*----------------------------------------------------------------
@@ -693,8 +756,8 @@ int32 CFE_TBL_DumpCmd(const CFE_TBL_DumpCmd_t *data)
  * See description in header file for argument/return detail
  *
  *-----------------------------------------------------------------*/
-CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile(const char *DumpFilename, const char *TableName, const void *DumpDataAddr,
-                                        size_t TblSizeInBytes)
+CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile(const char *DumpFilename, const char *TableName,
+                                        const CFE_TBL_LoadBuff_t *PackedBufferPtr)
 {
     CFE_TBL_CmdProcRet_t ReturnCode      = CFE_TBL_INC_ERR_CTR; /* Assume failure */
     bool                 FileExistedPrev = false;
@@ -703,8 +766,28 @@ CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile(const char *DumpFilename, const char *Ta
     osal_id_t            FileDescriptor;
     int32                Status;
     int32                OsStatus;
-    int32                EndianCheck = 0x01020304;
+    size_t               TblSizeInBytes;
 
+    EdsLib_Id_t                     EdsId;
+    EdsLib_DataTypeDB_TypeInfo_t    TypeInfo;
+    CFE_TBL_File_Hdr_PackedBuffer_t LocalBuffer;
+    int32                           EdsStatus;
+
+    const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
+
+    /*
+     * NOTE: The data in the "PackedBufferPtr" has already been encoded before getting to this point.
+     * This only needs to encode the actual headers.
+     */
+
+    EdsId     = PackedBufferPtr->EdsContentId;
+    EdsStatus = EdsLib_DataTypeDB_GetTypeInfo(EDS_DB, EdsId, &TypeInfo);
+    if (EdsStatus != EDSLIB_SUCCESS)
+    {
+        return CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
+    }
+
+    TblSizeInBytes = (TypeInfo.Size.Bits + 7) / 8;
     /* Clear Header of any garbage before copying content */
     memset(&TblFileHeader, 0, sizeof(CFE_TBL_File_Hdr_t));
 
@@ -736,27 +819,43 @@ CFE_TBL_CmdProcRet_t CFE_TBL_DumpToFile(const char *DumpFilename, const char *Ta
             TblFileHeader.Offset                                         = CFE_ES_MEMOFFSET_C(0);
             TblFileHeader.NumBytes                                       = CFE_ES_MEMOFFSET_C(TblSizeInBytes);
             TblFileHeader.Reserved                                       = 0;
-            /* JPHFIX: SET EDSID */
 
-            /* Determine if this is a little endian processor */
-            if ((*(char *)&EndianCheck) == 0x04)
+            /* The EdsContentId defines how the data is packed */
+            TblFileHeader.EdsAppId    = EdsLib_Get_AppIdx(EdsId);
+            TblFileHeader.EdsFormatId = EdsLib_Get_FormatIdx(EdsId);
+
+            EdsId     = EDSLIB_MAKE_ID(EDS_INDEX(CFE_TBL), CFE_TBL_File_Hdr_DATADICTIONARY);
+            EdsStatus = EdsLib_DataTypeDB_PackCompleteObject(EDS_DB, &EdsId, LocalBuffer, &TblFileHeader,
+                                                             8 * sizeof(LocalBuffer), sizeof(TblFileHeader));
+            if (EdsStatus == EDSLIB_SUCCESS)
             {
-                /* If this is a little endian processor, then byte swap the header to a big endian format */
-                /* to maintain the cFE Header standards */
-                /* NOTE: FOR THE REMAINDER OF THIS FUNCTION, THE CONTENTS OF THE HEADER IS UNREADABLE BY */
-                /*       THIS PROCESSOR!  THE DATA WOULD NEED TO BE SWAPPED BACK BEFORE READING.         */
-                CFE_TBL_ByteSwapTblHeader(&TblFileHeader);
+                Status = CFE_SUCCESS;
             }
+            else
+            {
+                /* Something went wrong with byteswapping/packing the TBL header */
+                CFE_EVS_SendEventWithAppID(
+                    CFE_TBL_FILE_TBL_HDR_ERR_EID, CFE_EVS_EventType_ERROR, CFE_TBL_Global.TableTaskAppId,
+                    "Unable to pack tbl header for '%s', Status = %ld", DumpFilename, (long)EdsStatus);
+                Status = CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
+            }
+        }
+        else if (Status >= CFE_SUCCESS)
+        {
+            Status = CFE_STATUS_EXTERNAL_RESOURCE_FAIL;
+        }
 
+        if (Status >= CFE_SUCCESS)
+        {
             /* Output the Table Image Header to the Dump File */
-            OsStatus = OS_write(FileDescriptor, &TblFileHeader, sizeof(CFE_TBL_File_Hdr_t));
+            OsStatus = OS_write(FileDescriptor, LocalBuffer, sizeof(LocalBuffer));
 
             /* Make sure the header was output completely */
-            if ((long)OsStatus == sizeof(CFE_TBL_File_Hdr_t))
+            if ((long)OsStatus == sizeof(LocalBuffer))
             {
                 /* Output the requested data to the dump file */
                 /* Output the active table image data to the dump file */
-                OsStatus = OS_write(FileDescriptor, DumpDataAddr, TblSizeInBytes);
+                OsStatus = OS_write(FileDescriptor, PackedBufferPtr->BufferPtr, TblSizeInBytes);
 
                 if ((long)OsStatus == TblSizeInBytes)
                 {
