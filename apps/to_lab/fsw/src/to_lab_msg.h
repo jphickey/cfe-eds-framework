@@ -45,14 +45,13 @@
  *
  * For those cases, create a local define from the historic name to the EDS name
  */
-#define TO_NOP_CC              TO_LAB_NOOP_CC
-#define TO_RESET_STATUS_CC     TO_LAB_RESET_COUNTERS_CC
-#define TO_ADD_PKT_CC          TO_LAB_ADD_PACKET_CC
-#define TO_SEND_DATA_TYPES_CC  TO_LAB_SEND_DATA_TYPES_CC
-#define TO_REMOVE_PKT_CC       TO_LAB_REMOVE_PACKET_CC
-#define TO_REMOVE_ALL_PKT_CC   TO_LAB_REMOVE_ALL_CC
-#define TO_OUTPUT_ENABLE_CC    TO_LAB_ENABLE_OUTPUT_CC
-
+#define TO_NOP_CC             TO_LAB_NOOP_CC
+#define TO_RESET_STATUS_CC    TO_LAB_RESET_COUNTERS_CC
+#define TO_ADD_PKT_CC         TO_LAB_ADD_PACKET_CC
+#define TO_SEND_DATA_TYPES_CC TO_LAB_SEND_DATA_TYPES_CC
+#define TO_REMOVE_PKT_CC      TO_LAB_REMOVE_PACKET_CC
+#define TO_REMOVE_ALL_PKT_CC  TO_LAB_REMOVE_ALL_CC
+#define TO_OUTPUT_ENABLE_CC   TO_LAB_ENABLE_OUTPUT_CC
 
 #endif /* _to_lab_msg_h_ */
 
