@@ -567,13 +567,13 @@ int32 TO_LAB_RemoveAll(const TO_LAB_RemoveAllCmd_t *data)
 
 int32 TO_LAB_EDS_PackOutputMessage(void *DestBuffer, const CFE_MSG_Message_t *SourceBuffer, size_t *DestBufferSize)
 {
-    EdsLib_Id_t EdsId;
-    EdsLib_DataTypeDB_TypeInfo_t TypeInfo;
+    EdsLib_Id_t                           EdsId;
+    EdsLib_DataTypeDB_TypeInfo_t          TypeInfo;
     CFE_SB_SoftwareBus_PubSub_Interface_t PubSubParams;
-    CFE_SB_Publisher_Component_t PublisherParams;
-    uint16 TopicId;
-    int32 Status;
-    size_t SourceBufferSize;
+    CFE_SB_Publisher_Component_t          PublisherParams;
+    uint16                                TopicId;
+    int32                                 Status;
+    size_t                                SourceBufferSize;
 
     const EdsLib_DatabaseObject_t *EDS_DB = CFE_Config_GetObjPointer(CFE_CONFIGID_MISSION_EDS_DB);
 
@@ -583,15 +583,15 @@ int32 TO_LAB_EDS_PackOutputMessage(void *DestBuffer, const CFE_MSG_Message_t *So
     CFE_MissionLib_UnmapPublisherComponent(&PublisherParams, &PubSubParams);
     TopicId = PublisherParams.Telemetry.TopicId;
 
-    Status = CFE_MissionLib_GetArgumentType(&CFE_SOFTWAREBUS_INTERFACE,
-            CFE_SB_Telemetry_Interface_ID, TopicId, 1, 1, &EdsId);
+    Status = CFE_MissionLib_GetArgumentType(&CFE_SOFTWAREBUS_INTERFACE, CFE_SB_Telemetry_Interface_ID, TopicId, 1, 1,
+                                            &EdsId);
     if (Status != CFE_MISSIONLIB_SUCCESS)
     {
         return CFE_STATUS_UNKNOWN_MSG_ID;
     }
 
-    Status = EdsLib_DataTypeDB_PackCompleteObject(EDS_DB, &EdsId, DestBuffer, SourceBuffer,
-            8 * *DestBufferSize, SourceBufferSize);
+    Status = EdsLib_DataTypeDB_PackCompleteObject(EDS_DB, &EdsId, DestBuffer, SourceBuffer, 8 * *DestBufferSize,
+                                                  SourceBufferSize);
     if (Status != EDSLIB_SUCCESS)
     {
         return CFE_SB_INTERNAL_ERR;
@@ -618,7 +618,7 @@ void TO_LAB_forward_telemetry(void)
     int32            status;
     int32            CFE_SB_status;
     CFE_SB_Buffer_t *SBBufPtr;
-    size_t DataSize;
+    size_t           DataSize;
 
     OS_SocketAddrInit(&d_addr, OS_SocketDomain_INET);
     OS_SocketAddrSetPort(&d_addr, cfgTLM_PORT);
@@ -635,19 +635,17 @@ void TO_LAB_forward_telemetry(void)
             {
                 CFE_ES_PerfLogEntry(TO_SOCKET_SEND_PERF_ID);
 
-                DataSize = sizeof(TO_LAB_Global.NetworkBuffer);
-                CFE_SB_status =
-                    TO_LAB_EDS_PackOutputMessage(TO_LAB_Global.NetworkBuffer, &SBBufPtr->Msg, &DataSize);
+                DataSize      = sizeof(TO_LAB_Global.NetworkBuffer);
+                CFE_SB_status = TO_LAB_EDS_PackOutputMessage(TO_LAB_Global.NetworkBuffer, &SBBufPtr->Msg, &DataSize);
 
                 if (CFE_SB_status != CFE_SUCCESS)
                 {
-                    CFE_EVS_SendEvent(TO_MSGID_ERR_EID, CFE_EVS_EventType_ERROR,
-                                      "Error packing output: %d\n", (int)CFE_SB_status);
+                    CFE_EVS_SendEvent(TO_MSGID_ERR_EID, CFE_EVS_EventType_ERROR, "Error packing output: %d\n",
+                                      (int)CFE_SB_status);
                 }
                 else
                 {
-                    status =
-                        OS_SocketSendTo(TO_LAB_Global.TLMsockid, TO_LAB_Global.NetworkBuffer, DataSize, &d_addr);
+                    status = OS_SocketSendTo(TO_LAB_Global.TLMsockid, TO_LAB_Global.NetworkBuffer, DataSize, &d_addr);
                 }
 
                 CFE_ES_PerfLogExit(TO_SOCKET_SEND_PERF_ID);
