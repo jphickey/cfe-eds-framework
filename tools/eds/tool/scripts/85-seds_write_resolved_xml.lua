@@ -73,6 +73,11 @@ local function write_node(output,node,name_prefix)
         attrval = string.format("%g",attrval)
       end
     end
+    if (type(attrval) == "string") then
+      attrval = attrval:gsub("&", "&amp;")
+      attrval = attrval:gsub("<", "&lt;")
+      attrval = attrval:gsub(">", "&gt;")
+    end
     my_attrs = string.format("%s %s=\"%s\"",my_attrs, node.xml_attrname[attr], tostring(attrval))
   end
   local cdata = ""
