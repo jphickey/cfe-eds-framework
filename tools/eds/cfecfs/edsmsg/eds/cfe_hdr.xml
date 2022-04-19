@@ -79,7 +79,7 @@
 		 <ContainerDataType name="CommandHeader" baseType="Message" shortDescription="Complete Command Packet Header">
 			 <ConstraintSet>
 				 <ValueConstraint entry="CCSDS.SecHdrFlags" value="Cmd" />
-			 </ConstraintSet>-->
+			 </ConstraintSet>
 			 <EntryList>
 				 <Entry name="Sec" type="CmdSecHdr" shortDescription="Command Secondary Header" />
 			 </EntryList>
@@ -88,7 +88,7 @@
 		 <ContainerDataType name="TelemetryHeader" baseType="Message" shortDescription="Complete Telemetry Packet Header">
 			 <ConstraintSet>
 				 <ValueConstraint entry="CCSDS.SecHdrFlags" value="Tlm" />
-			 </ConstraintSet>-->
+			 </ConstraintSet>
 			 <EntryList>
 				 <Entry name="Sec" type="TlmSecHdr" shortDescription="Telemetry Secondary Header" />
 			 </EntryList>
